@@ -1,9 +1,12 @@
+import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import {useAuthContext} from '@/context/AuthContext';
 import {Outlet, useNavigate} from '@tanstack/react-router';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 
 const AppLayout = () => {
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const {isAuthenticated, user} = useAuthContext();
 
   // useEffect(() => {
@@ -13,20 +16,30 @@ const AppLayout = () => {
   //   }
 
   //   if (user?.role === 'ADMIN') {
-  //     navigate({to: '/superadmin/admin'});
-  //   } else if (user?.role === 'COMPANY') {
+  //     navigate({to: '/dashboard'});
+  //   } else if (user?.role === 'MANAGER') {
   //     navigate({to: '/'});
   //   } else if (user?.role === 'EMPLOYEE') {
-  //     navigate({to: '/employee/empdashboard'});
+  //     navigate({to: '/dashboard'});
+  //   } else if (user?.role === 'SUPERADMIN') {
+  //     navigate({to: '/superadmin/superadmindash'});
   //   }
   // }, [isAuthenticated, user, navigate]);
 
   return (
-    <div className="relative dark:bg-boxdark-2 dark:text-bodydark">
+    <div className="dark:bg-boxdark-2 dark:text-bodydark">
       <div className="flex h-screen overflow-hidden">
+        {user?.role !== 'EMPLOYEE' && (
+          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        )}
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <div className="hidden md:block">
+            {' '}
+            <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          </div>
+
           <main>
-            <div className="mx-auto mt-12 py-1 md:px-5">
+            <div className="mx-auto max-w-screen-2xl p-1 pb-20 md:pb-0">
               <Outlet />
             </div>
           </main>
