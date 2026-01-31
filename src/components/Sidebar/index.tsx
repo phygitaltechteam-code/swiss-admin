@@ -71,6 +71,21 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/dashboard',
             icon: <MdDashboard size={22} />,
           },
+          {
+            label: 'Client',
+            path: '/client/displayclient',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Client Profile',
+            path: '/client/profile',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Client Transaction History',
+            path: '/client/transactionhistory',
+            icon: <MdDashboard size={22} />,
+          },
 
           isCompany && {
             label: 'Profile Management',
