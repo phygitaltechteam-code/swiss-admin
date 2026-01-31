@@ -19,8 +19,11 @@ import {
   TopUpsVsTransfersChart,
   VolumeVsFeesChart,
 } from '@/components/Dashboard/Charts';
+import {useAuthContext} from '@/context/AuthContext';
 
 const Dashboard: React.FC = () => {
+  const {user} = useAuthContext();
+  console.log('userrrrr', user);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // For mobile responsiveness if needed
 
