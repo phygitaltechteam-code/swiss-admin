@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Croissant+One&display=swap"
+      rel="stylesheet"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Banquet Management</title>
+  </head>
+  <style>
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    /* Disable number input scroll arrows in all browsers */
+    input[type='number'] {
+      -moz-appearance: textfield; /* Firefox */
+      -webkit-appearance: none; /* Chrome, Safari */
+      appearance: none; /* Modern browsers */
+    }
+
+    input[type='number']:focus {
+      outline: none; /* Optional: Prevent focus outline */
+    }
+
+    .product-image {
+      width: 100%;
+      height: 120px;
+      object-fit: scale-down;
+      object-position: center;
+      border-radius: 6px;
+    }
+
+/* Dark mode select options */
+.dark select option {
+  background-color: #1f2937; /* gray-800 */
+  color: white;
+}
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      input,
+      select,
+      button {
+        pointer-events: none;
+        border: none;
+        background: transparent;
+      }
+    }
+  </style>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

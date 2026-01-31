@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Apply Tailwind styles to react-select components */
+.react-select__control {
+  @apply h-full w-full rounded-md border border-stroke bg-transparent px-3 py-1.5 text-black dark:border-strokedark dark:bg-boxdark dark:text-white;
+}
+
+.react-select__menu {
+  @apply rounded-md border border-stroke bg-white dark:bg-boxdark;
+}
+
+.react-select__option {
+  @apply text-black dark:text-white;
+}
+
+.react-select__option--is-selected {
+  @apply bg-primary text-white;
+}
+
+.react-select__placeholder {
+  @apply text-graydark dark:text-gray-2;
+}
+
+.react-select__single-value {
+  @apply text-black dark:text-white;
+}
+body {
+  font-family: 'Croissant One', cursive;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
