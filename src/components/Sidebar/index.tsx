@@ -49,23 +49,6 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
       ]
     : isAdmin
       ? [
-          // {
-          //   label: 'Industry',
-          //   path: '/superadmin/industry',
-          //   icon: <PiSquaresFourLight size={22} />,
-          // },
-          // {
-          //   label: 'Department',
-          //   path: '/superadmin/department',
-          //   icon: <PiSquaresFourLight size={22} />,
-          // },
-          // {
-          //   label: 'Company Register',
-          //   path: '/superadmin/admin',
-          //   icon: <PiSquaresFourLight size={22} />,
-          // },
-        ]
-      : [
           {
             label: 'Dashboard',
             path: '/dashboard',
@@ -86,6 +69,40 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/client/transactionhistory',
             icon: <MdDashboard size={22} />,
           },
+
+          {
+            label: 'Verifications',
+            path: '/Approval/customerregisterapprove',
+            icon: <MdDashboard size={22} />,
+          },
+        ]
+      : [
+          // {
+          //   label: 'Dashboard',
+          //   path: '/dashboard',
+          //   icon: <MdDashboard size={22} />,
+          // },
+          // {
+          //   label: 'Client',
+          //   path: '/client/displayclient',
+          //   icon: <MdDashboard size={22} />,
+          // },
+          // {
+          //   label: 'Client Profile',
+          //   path: '/client/profile',
+          //   icon: <MdDashboard size={22} />,
+          // },
+          // {
+          //   label: 'Client Transaction History',
+          //   path: '/client/transactionhistory',
+          //   icon: <MdDashboard size={22} />,
+          // },
+
+          // {
+          //   label: 'Verifications',
+          //   path: '/Approval/customerregisterapprove',
+          //   icon: <MdDashboard size={22} />,
+          // },
 
           isCompany && {
             label: 'Profile Management',

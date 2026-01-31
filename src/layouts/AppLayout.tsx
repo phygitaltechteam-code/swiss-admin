@@ -9,22 +9,24 @@ const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const {isAuthenticated, user} = useAuthContext();
 
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     navigate({to: '/signin'});
-  //     return;
-  //   }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate({to: '/signin'});
+      return;
+    }
 
-  //   if (user?.role === 'ADMIN') {
-  //     navigate({to: '/dashboard'});
-  //   } else if (user?.role === 'MANAGER') {
-  //     navigate({to: '/'});
-  //   } else if (user?.role === 'EMPLOYEE') {
-  //     navigate({to: '/dashboard'});
-  //   } else if (user?.role === 'SUPERADMIN') {
-  //     navigate({to: '/superadmin/superadmindash'});
-  //   }
-  // }, [isAuthenticated, user, navigate]);
+    if (user?.role === 'ADMIN') {
+      navigate({to: '/dashboard'});
+    }
+
+    // else if (user?.role === 'MANAGER') {
+    //   navigate({to: '/'});
+    // } else if (user?.role === 'EMPLOYEE') {
+    //   navigate({to: '/dashboard'});
+    // } else if (user?.role === 'SUPERADMIN') {
+    //   navigate({to: '/superadmin/superadmindash'});
+    // }
+  }, [isAuthenticated, user, navigate]);
 
   return (
     <div className="dark:bg-boxdark-2 dark:text-bodydark">
