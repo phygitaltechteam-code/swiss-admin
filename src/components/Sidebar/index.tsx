@@ -49,22 +49,21 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
       ]
     : isAdmin
       ? [
-          {
-            label: 'Industry',
-            path: '/superadmin/industry',
-            icon: <PiSquaresFourLight size={22} />,
-          },
-          {
-            label: 'Department',
-            path: '/superadmin/department',
-            icon: <PiSquaresFourLight size={22} />,
-          },
-
-          {
-            label: 'Company Register',
-            path: '/superadmin/admin',
-            icon: <PiSquaresFourLight size={22} />,
-          },
+          // {
+          //   label: 'Industry',
+          //   path: '/superadmin/industry',
+          //   icon: <PiSquaresFourLight size={22} />,
+          // },
+          // {
+          //   label: 'Department',
+          //   path: '/superadmin/department',
+          //   icon: <PiSquaresFourLight size={22} />,
+          // },
+          // {
+          //   label: 'Company Register',
+          //   path: '/superadmin/admin',
+          //   icon: <PiSquaresFourLight size={22} />,
+          // },
         ]
       : [
           {
@@ -72,33 +71,6 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/dashboard',
             icon: <MdDashboard size={22} />,
           },
-
-          {
-            label: 'Employee Management',
-            path: '/employee/CreateEmp',
-            icon: <MdPeople size={22} />,
-          },
-
-          {
-            label: 'Department',
-            path: '/company/department',
-            icon: <MdPeople size={22} />,
-          },
-          {
-            label: 'Department Positions',
-            path: '/company/departmentpositions',
-            icon: <MdPeople size={22} />,
-          },
-
-          // {
-          //   label: 'Reports',
-          //   icon: <FiBarChart size={20} />,
-          //   subRoutes: [
-          //     {label: 'Booking report', path: '/manager/reports/bookingreport'},
-          //     {label: 'Income report', path: '/manager/incomereport'},
-          //   ],
-
-          // },
 
           isCompany && {
             label: 'Profile Management',
