@@ -75,6 +75,33 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/Approval/customerregisterapprove',
             icon: <MdDashboard size={22} />,
           },
+          {
+            label: 'Report Center',
+            path: '/reportCenter',
+            icon: <MdDashboard size={22} />,
+          },
+
+          {
+            label: 'Transaction Report',
+            path: '/transactionReport',
+            icon: <MdDashboard size={22} />,
+          },
+
+          {
+            label: 'All Transaction Report',
+            path: '/alltransaction',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Wallet Top-Up Report',
+            path: '/wallettopupreport',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Transfers Report',
+            path: '/transfersReport',
+            icon: <MdDashboard size={22} />,
+          },
         ]
       : [
           // {
