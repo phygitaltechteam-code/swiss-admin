@@ -8,7 +8,6 @@ import AuthContextProvider from './context/AuthContextProvider';
 import {ModalProvider} from './context/ModalContext';
 import NotFound404 from './layouts/NotFound404';
 import {Toaster} from 'react-hot-toast';
-import {AppProvider} from './components/common/PopUp';
 
 // Create a new router instance
 const router = createRouter({
@@ -144,19 +143,15 @@ const App: React.FC = () => {
             }}
           ></div>
         </div>
-      </div>
-
-      <AppProvider>
-        {' '}
-        <AuthContextProvider>
-          <ModalProvider>
-            <QueryProvider>
-              <Toaster />
-              <RouterProvider router={router} />
-            </QueryProvider>
-          </ModalProvider>
-        </AuthContextProvider>
-      </AppProvider>
+      </div>{' '}
+      <AuthContextProvider>
+        <ModalProvider>
+          <QueryProvider>
+            <Toaster />
+            <RouterProvider router={router} />
+          </QueryProvider>
+        </ModalProvider>
+      </AuthContextProvider>
     </>
   );
 };
