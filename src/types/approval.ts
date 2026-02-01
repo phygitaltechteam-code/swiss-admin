@@ -2,22 +2,40 @@ import React from 'react';
 
 export type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
 
-export interface UserRequest {
-  id: string;
-  name: string;
+type User = {
+  fullname: string;
   email: string;
-  caseId: string;
-  regDate: string;
-  status: RequestStatus;
-  avatarUrl: string;
+  phoneNumber: string;
+  isActive: boolean;
+  dob: string | null;
+  isVerified: boolean;
+  isRejected: boolean;
+};
+
+export type UserRequest = {
+  id: string;
+  userId: string;
+  passport: string | null;
+  aadharCard: string | null;
+  panCard: string | null;
+  passportNumber: string | null;
+  aadharCardNumber: string | null;
+  panCardNumber: string | null;
+  nationality: string;
+  SWIFTBIC: string;
+  accountNumber: string;
   address: string;
-  docName: string;
-  docNumber: string;
-  docImageUrl: string;
-  rejectionReason?: string;
-  needsReview?: boolean;
-  assignedToYou?: boolean;
-}
+  city: string;
+  state: string;
+  country: string;
+  pincode: string;
+  photo: string;
+  securityPin: string;
+  rejectedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: User;
+};
 
 export interface NavItem {
   label: string;

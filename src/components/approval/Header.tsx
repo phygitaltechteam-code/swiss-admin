@@ -1,16 +1,18 @@
+import {useNavigate} from '@tanstack/react-router';
 import React from 'react';
 import {MdArrowBack, MdFlag} from 'react-icons/md';
 
 const Header: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <header className="border-theme-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 shadow-sm backdrop-blur-md">
       <div className="flex items-center gap-4">
-        <a
-          href="#"
+        <button
+          onClick={() => navigate({to: '/Approval/customerregisterapprove'})}
           className="hover:bg-gray-100 border-gray-100 rounded-lg border p-1.5 transition-colors"
         >
           <MdArrowBack className="text-gray-500 text-lg" />
-        </a>
+        </button>
         <div>
           <h1 className="text-theme-header text-lg font-bold">
             Client Registration Review
