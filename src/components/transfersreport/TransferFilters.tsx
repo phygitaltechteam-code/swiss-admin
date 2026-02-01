@@ -1,59 +1,104 @@
+// TransferFilters.tsx
 import React from 'react';
 import {MdCalendarToday, MdExpandMore, MdSearch} from 'react-icons/md';
 
-const TransferFilters = () => {
+interface TransferFiltersProps {
+  filters: {
+    dateRange: string;
+    country: string;
+    status: string;
+    search: string;
+  };
+  onFilterChange: (key: string, value: string) => void;
+}
+
+const TransferFilters: React.FC<TransferFiltersProps> = ({
+  filters,
+  onFilterChange,
+}) => {
+  const countries = [
+    'All Countries',
+    'United States',
+    'United Kingdom',
+    'Germany',
+    'Singapore',
+    'Japan',
+    'Australia',
+    'Canada',
+    'France',
+  ];
+  const statuses = [
+    'All Statuses',
+    'Completed',
+    'Pending',
+    'Failed',
+    'Under Review',
+  ];
+
   return (
-    <div className="bg-card-bg dark:border-gray-800 flex flex-col items-start justify-between gap-4 rounded-xl border border-[#e5e7eb] p-4 shadow-sm dark:bg-[#111a22] xl:flex-row xl:items-center">
-      <div className="flex w-full flex-wrap items-center gap-3 xl:w-auto">
+    <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
+      <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
         {/* Date Picker */}
         <div className="relative min-w-[200px] flex-1 lg:flex-none">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MdCalendarToday className="text-secondary-text text-[20px]" />
+            <MdCalendarToday className="text-secondary-text text-lg" />
           </div>
           <input
             type="text"
-            className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2 pl-10 pr-3 leading-5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white sm:text-sm"
+            value={filters.dateRange}
+            onChange={(e) => onFilterChange('dateRange', e.target.value)}
+            className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
             placeholder="Oct 1 - Oct 31, 2023"
           />
         </div>
 
         {/* Country Select */}
         <div className="relative min-w-[180px] flex-1 lg:flex-none">
-          <select className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary dark:text-white sm:text-sm">
-            <option>All Countries</option>
-            <option>United States</option>
-            <option>United Kingdom</option>
-            <option>Germany</option>
-            <option>Singapore</option>
+          <select
+            value={filters.country}
+            onChange={(e) => onFilterChange('country', e.target.value)}
+            className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
+          >
+            {countries.map((country) => (
+              <option key={country} value={country}>
+                {country}
+              </option>
+            ))}
           </select>
           <div className="text-secondary-text pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-            <MdExpandMore className="text-[20px]" />
+            <MdExpandMore className="text-xl" />
           </div>
         </div>
 
         {/* Status Select */}
         <div className="relative min-w-[160px] flex-1 lg:flex-none">
-          <select className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary dark:text-white sm:text-sm">
-            <option>All Statuses</option>
-            <option>Completed</option>
-            <option>Pending</option>
-            <option>Failed</option>
-            <option>Under Review</option>
+          <select
+            value={filters.status}
+            onChange={(e) => onFilterChange('status', e.target.value)}
+            className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
+          >
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
           </select>
           <div className="text-secondary-text pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-            <MdExpandMore className="text-[20px]" />
+            <MdExpandMore className="text-xl" />
           </div>
         </div>
       </div>
 
       {/* Search Input */}
-      <div className="relative w-full xl:w-72">
+      <div className="relative w-full lg:w-72">
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <MdSearch className="text-secondary-text text-[20px]" />
+          <MdSearch className="text-secondary-text text-lg" />
         </div>
         <input
           type="text"
-          className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2 pl-10 pr-3 leading-5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white sm:text-sm"
+          value={filters.search}
+          onChange={(e) => onFilterChange('search', e.target.value)}
+          className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
           placeholder="Search ID, Name, IBAN..."
         />
       </div>
