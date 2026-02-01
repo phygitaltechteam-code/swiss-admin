@@ -1,11 +1,208 @@
 import React from 'react';
 
-import Header from '@/components/reports/Header';
-import ReportCard from '@/components/reports/ReportCard';
 import {reports} from '@/components/reports/constants';
+import {
+  MdHistory,
+  MdSearch,
+  MdCalendarToday,
+  MdFilterList,
+  MdMoreVert,
+  MdDownload,
+  MdPayments,
+  MdReceiptLong,
+  MdAddCard,
+  MdSwapCalls,
+  MdGroup,
+  MdContacts,
+  MdCarCrash,
+} from 'react-icons/md';
 
-// import ReportCard from './components/ReportCard';
-// import { reports } from './constants';
+// Updated Header component to match HTML design
+const Header: React.FC = () => {
+  return (
+    <header className="bg-bg-main/95 sticky top-0 z-10 w-full px-8 py-6 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+        {/* Top Row: Title & Action Button */}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-3xl font-bold tracking-tight text-black">
+              Reports Center
+            </h2>
+            <p className="text-slate-custom text-base font-normal">
+              Generate and manage financial statements and audit logs.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="border-gray-300 text-slate-custom hover:border-gray-400 hover:text-navy flex h-10 items-center justify-center gap-2 rounded-lg border bg-white px-4 text-sm font-medium shadow-sm transition-colors">
+              <MdHistory className="text-lg" />
+              Recent Downloads
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Row: Controls */}
+        <div className="border-gray-200 flex flex-wrap items-center gap-4 rounded-xl border bg-white p-4 shadow-sm">
+          {/* Search Bar */}
+          <div className="min-w-[240px] flex-1">
+            <div className="group relative">
+              <MdSearch className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 text-xl transition-colors group-focus-within:text-primary" />
+              <input
+                className="border-gray-200 bg-bg-main text-navy placeholder-gray-400 h-10 w-full rounded-lg border pl-10 pr-4 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="Search by report name or ID..."
+                type="text"
+              />
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="bg-gray-200 hidden h-8 w-px sm:block"></div>
+
+          {/* Date & Filters */}
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:flex-nowrap">
+            <label className="flex w-full min-w-[180px] cursor-pointer items-center gap-2 sm:w-auto">
+              <span className="text-slate-custom whitespace-nowrap text-sm">
+                Date Range:
+              </span>
+              <div className="relative w-full">
+                <select className="border-gray-200 bg-bg-main text-navy h-10 w-full cursor-pointer appearance-none rounded-lg border pl-3 pr-10 text-sm font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                  <option>Last 30 Days</option>
+                  <option>This Quarter</option>
+                  <option>This Year</option>
+                  <option>Custom Range</option>
+                </select>
+                <MdCalendarToday className="text-gray-400 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base" />
+              </div>
+            </label>
+            <button className="border-gray-200 bg-bg-main text-slate-custom hover:bg-gray-50 hover:text-navy flex h-10 w-10 items-center justify-center rounded-lg border transition-colors">
+              <MdFilterList className="text-xl" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// ReportCard component matching HTML design
+interface ReportItem {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{className?: string}>;
+  iconColor: string;
+  hasGradient?: boolean;
+}
+
+const ReportCard: React.FC<{item: ReportItem}> = ({item}) => {
+  const Icon = item.icon;
+
+  return (
+    <div
+      className={`border-gray-200 group relative flex h-full flex-col overflow-hidden rounded-xl border bg-white p-5 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 ${item.hasGradient ? 'bg-white' : ''}`}
+    >
+      {item.hasGradient && (
+        <div className="absolute right-0 top-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-bl from-primary/10 to-transparent"></div>
+      )}
+
+      <div
+        className={`relative z-10 mb-4 flex items-start justify-between ${item.hasGradient ? 'z-10' : ''}`}
+      >
+        <div
+          className={`bg-gray-50 flex h-12 w-12 items-center justify-center rounded-lg group-hover:scale-110 ${item.iconColor} transition-transform`}
+        >
+          <Icon className="text-2xl" />
+        </div>
+        <MdMoreVert className="text-gray-400 hover:text-navy cursor-pointer" />
+      </div>
+
+      <h3
+        className={`text-navy relative z-10 mb-2 text-lg font-bold ${item.hasGradient ? 'z-10' : ''}`}
+      >
+        {item.title}
+      </h3>
+      <p
+        className={`text-slate-custom relative z-10 mb-6 flex-1 text-sm leading-relaxed ${item.hasGradient ? 'z-10' : ''}`}
+      >
+        {item.description}
+      </p>
+
+      <div
+        className={`relative z-10 mt-auto flex gap-2 ${item.hasGradient ? 'z-10' : ''}`}
+      >
+        <button className="h-9 flex-1 rounded-lg bg-primary text-sm font-bold text-white shadow-sm shadow-orange-100 transition-colors hover:bg-primary/90">
+          Generate
+        </button>
+        <button
+          className="border-gray-200 text-slate-custom hover:border-gray-300 hover:bg-gray-50 hover:text-navy flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
+          title="Export"
+        >
+          <MdDownload className="text-lg" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Updated reports data matching HTML
+const reportsData: ReportItem[] = [
+  {
+    id: 1,
+    title: 'Transactions Fee',
+    description:
+      'Analyze revenue generated from transaction fees across all channels and gateways.',
+    icon: MdPayments,
+    iconColor: 'text-primary',
+  },
+  {
+    id: 2,
+    title: 'All Transactions',
+    description:
+      'Complete log of all incoming and outgoing funds system-wide with granular details.',
+    icon: MdReceiptLong,
+    iconColor: 'text-blue-600',
+  },
+  {
+    id: 3,
+    title: 'Wallet Top-Up',
+    description:
+      'Overview of user wallet funding sources, success rates, and volume metrics.',
+    icon: MdAddCard,
+    iconColor: 'text-green-600',
+  },
+  {
+    id: 4,
+    title: 'Transfers Log',
+    description:
+      'Detailed records of internal P2P and external bank transfer activities.',
+    icon: MdSwapCalls,
+    iconColor: 'text-purple-600',
+  },
+  {
+    id: 5,
+    title: 'Client List',
+    description:
+      'Comprehensive database of active and inactive clients with KYC status.',
+    icon: MdGroup,
+    iconColor: 'text-yellow-500',
+  },
+  {
+    id: 6,
+    title: 'Beneficiary List',
+    description:
+      'Registry of all saved external beneficiaries linked to client accounts.',
+    icon: MdContacts,
+    iconColor: 'text-pink-500',
+  },
+  {
+    id: 7,
+    title: 'Cash Flow',
+    description:
+      'High-level inflow vs. outflow summary for executive financial review.',
+    icon: MdCarCrash,
+    iconColor: 'text-teal-600',
+    hasGradient: true,
+  },
+];
 
 const ReportPage: React.FC = () => {
   return (
@@ -14,37 +211,12 @@ const ReportPage: React.FC = () => {
         <Header />
 
         <div className="flex-1 overflow-y-auto px-8 py-8">
-          <div className="mx-auto max-w-[1600px] pb-10">
+          <div className="mx-auto max-w-7xl pb-10">
+            {/* Reports Grid */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {reports && reports.length > 0 ? (
-                reports.map((report) => (
-                  <ReportCard key={report.id} item={report} />
-                ))
-              ) : (
-                <div className="text-slate-custom col-span-full flex flex-col items-center justify-center py-20">
-                  <div className="mb-4 text-6xl font-bold text-slate-200">
-                    404
-                  </div>
-                  <p className="text-lg font-medium">No reports found.</p>
-                </div>
-              )}
-            </div>
-
-            <div className="text-slate-custom mt-12 flex flex-col items-center justify-between gap-6 border-t border-slate-200 pt-8 sm:flex-row">
-              <p className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold shadow-sm">
-                System Status: <span className="text-green-500">●</span> Online
-              </p>
-              <div className="flex items-center gap-6">
-                <span className="cursor-pointer text-xs font-bold transition-colors hover:text-primary">
-                  Help Center
-                </span>
-                <span className="cursor-pointer text-xs font-bold transition-colors hover:text-primary">
-                  Privacy
-                </span>
-                <span className="cursor-pointer text-xs font-bold transition-colors hover:text-primary">
-                  Terms
-                </span>
-              </div>
+              {reportsData.map((report) => (
+                <ReportCard key={report.id} item={report} />
+              ))}
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+// types.ts
 import React from 'react';
 
 export interface Transaction {
@@ -25,4 +26,11 @@ export interface StatCardProps {
   icon: React.ReactNode;
   highlightValue?: boolean;
   alert?: boolean;
+}
+
+// For table export
+export interface TableExportData {
+  headers: string[];
+  rows: string[][];
+  fileName: string;
 }

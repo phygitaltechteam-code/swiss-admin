@@ -1,26 +1,41 @@
-import React from 'react';
+// ChartSection.tsx
+import React, {useState} from 'react';
 import {CHART_DATA} from './constants';
 
 const ChartSection: React.FC = () => {
-  // Find maximum value to normalize bar heights, adding some headroom
+  const [timeRange, setTimeRange] = useState<'6months' | 'ytd' | '1year'>(
+    '6months',
+  );
+
+  // Find maximum value to normalize bar heights
   const maxValue = Math.max(...CHART_DATA.map((d) => d.value)) * 1.1;
 
+  const timeRangeButtons = [
+    {id: '6months', label: '6 Months'},
+    {id: 'ytd', label: 'YTD'},
+    {id: '1year', label: '1 Year'},
+  ];
+
   return (
-    <div className="bg-card-light rounded-xl border border-[#e5e7eb] p-6 shadow-sm">
+    <div className="dark:border-gray-800 rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm dark:bg-[#111a22]">
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <h3 className="text-text-primary text-lg font-bold">
+        <h3 className="text-header-text text-lg font-bold dark:text-white">
           Fees Collected Trend
         </h3>
-        <div className="flex items-center rounded-lg bg-[#f3f4f6] p-1">
-          <button className="rounded-md bg-white px-3 py-1.5 text-xs font-bold text-orange-500 shadow-sm transition-all">
-            6 Months
-          </button>
-          <button className="text-text-secondary hover:text-text-primary px-3 py-1.5 text-xs font-medium transition-colors">
-            YTD
-          </button>
-          <button className="text-text-secondary hover:text-text-primary px-3 py-1.5 text-xs font-medium transition-colors">
-            1 Year
-          </button>
+        <div className="bg-gray-100 dark:bg-gray-800 flex items-center rounded-lg p-1">
+          {timeRangeButtons.map((button) => (
+            <button
+              key={button.id}
+              onClick={() => setTimeRange(button.id as any)}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                timeRange === button.id
+                  ? 'dark:bg-gray-700 bg-white text-primary shadow-sm dark:text-orange-400'
+                  : 'text-secondary-text dark:text-gray-400 hover:text-header-text dark:hover:text-white'
+              }`}
+            >
+              {button.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -29,10 +44,10 @@ const ChartSection: React.FC = () => {
         <div className="pointer-events-none absolute inset-0 flex flex-col justify-between pb-6">
           {[1, 0.75, 0.5, 0.25, 0].map((tick, i) => (
             <div key={i} className="flex w-full items-center">
-              <span className="text-text-secondary mr-2 w-8 text-right text-[10px]">
+              <span className="text-secondary-text dark:text-gray-400 mr-2 w-8 text-right text-[10px]">
                 {tick === 0 ? '0' : `$${Math.round((maxValue * tick) / 1000)}k`}
               </span>
-              <div className="border-gray-200 h-px flex-1 border-b border-dashed"></div>
+              <div className="border-gray-200 dark:border-gray-700 h-px flex-1 border-b border-dashed"></div>
             </div>
           ))}
         </div>
@@ -47,21 +62,21 @@ const ChartSection: React.FC = () => {
                 className="group relative mx-1 flex h-full flex-1 cursor-pointer flex-col items-center justify-end sm:mx-2"
               >
                 {/* Tooltip */}
-                <div className="bg-gray-900 pointer-events-none absolute -top-12 left-1/2 z-10 -translate-x-1/2 transform whitespace-nowrap rounded px-2.5 py-1.5 text-xs text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
+                <div className="bg-gray-900 dark:bg-gray-800 pointer-events-none absolute -top-12 left-1/2 z-10 -translate-x-1/2 transform whitespace-nowrap rounded px-2.5 py-1.5 text-xs text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
                   <span className="font-bold">
                     ${item.value.toLocaleString()}
                   </span>
-                  <div className="bg-gray-900 absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 transform"></div>
+                  <div className="bg-gray-900 dark:bg-gray-800 absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 transform"></div>
                 </div>
 
                 {/* Bar Visual */}
                 <div
-                  className="w-full max-w-[48px] rounded-t-sm bg-orange-400 transition-all duration-300 ease-out hover:bg-orange-500"
+                  className="w-full max-w-[48px] rounded-t-sm bg-gradient-to-t from-primary to-orange-400 transition-all duration-300 ease-out hover:opacity-90"
                   style={{height: `${heightPercentage}%`}}
                 ></div>
 
                 {/* X-Axis Label */}
-                <span className="text-text-secondary absolute -bottom-6 mt-2 text-[10px] font-medium">
+                <span className="text-secondary-text dark:text-gray-400 absolute -bottom-6 mt-2 text-[10px] font-medium">
                   {item.name}
                 </span>
               </div>
@@ -70,10 +85,10 @@ const ChartSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-8 flex justify-center gap-6">
+      <div className="mt-8 flex justify-center">
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-primary/80"></span>
-          <span className="text-text-secondary text-xs font-medium">
+          <span className="h-3 w-3 rounded-full bg-primary"></span>
+          <span className="text-secondary-text dark:text-gray-400 text-xs font-medium">
             Total Fees
           </span>
         </div>
