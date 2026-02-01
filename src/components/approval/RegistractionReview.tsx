@@ -4,16 +4,24 @@ import SummaryChecklist from './SummaryCheckList';
 import DecisionActions from './DesicionActions';
 import ApplicantDetails from './ApplicantDetails';
 import {Route} from '@/routes/_app/approval/registrationDetails.$id';
-import {useGetCustomerById} from '@/lib/react-query/Customer';
+import {
+  useAcceptCustomer,
+  useGetCustomerById,
+  useRejectCustomer,
+} from '@/lib/react-query/Customer';
+import {getRequestStatus} from './methods';
 
 const RegistrationReview: React.FC = () => {
   const {id} = Route.useParams();
   const {data: CustomerDetails} = useGetCustomerById(id);
+  const {mutateAsync: acceptCustomer} = useAcceptCustomer();
+  const {mutateAsync: rejectCustomer} = useRejectCustomer();
+  const status = getRequestStatus(CustomerDetails);
   console.log('each customerrr', CustomerDetails);
   return (
     <div className="bg-subtle-pattern flex h-screen overflow-hidden">
       <main className="relative flex h-screen flex-1 flex-col overflow-hidden transition-all duration-300">
-        <Header />
+        <Header status={status} />
 
         <div className="custom-scroll flex-1 overflow-y-auto p-4 md:p-6">
           <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 lg:grid-cols-12">
@@ -23,7 +31,10 @@ const RegistrationReview: React.FC = () => {
                 name={CustomerDetails?.user?.fullname}
                 photo={CustomerDetails?.photo}
               />
-              <DecisionActions />
+              <DecisionActions
+                onAccept={() => acceptCustomer(id)}
+                onReject={(note: string) => rejectCustomer({id, note})}
+              />
             </div>
 
             <div className="lg:col-span-7">
