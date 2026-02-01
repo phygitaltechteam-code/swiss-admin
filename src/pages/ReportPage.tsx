@@ -47,7 +47,7 @@ const Header: React.FC = () => {
             <div className="group relative">
               <MdSearch className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 text-xl transition-colors group-focus-within:text-primary" />
               <input
-                className="border-gray-200 bg-bg-main text-navy placeholder-gray-400 h-10 w-full rounded-lg border pl-10 pr-4 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
                 placeholder="Search by report name or ID..."
                 type="text"
               />
@@ -64,13 +64,12 @@ const Header: React.FC = () => {
                 Date Range:
               </span>
               <div className="relative w-full">
-                <select className="border-gray-200 bg-bg-main text-navy h-10 w-full cursor-pointer appearance-none rounded-lg border pl-3 pr-10 text-sm font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                <select className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white">
                   <option>Last 30 Days</option>
                   <option>This Quarter</option>
                   <option>This Year</option>
                   <option>Custom Range</option>
                 </select>
-                <MdCalendarToday className="text-gray-400 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base" />
               </div>
             </label>
             <button className="border-gray-200 bg-bg-main text-slate-custom hover:bg-gray-50 hover:text-navy flex h-10 w-10 items-center justify-center rounded-lg border transition-colors">
