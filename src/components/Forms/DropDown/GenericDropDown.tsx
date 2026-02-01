@@ -43,7 +43,7 @@ const GenericDropdown: React.FC<GenericDropdownProps> = ({
           <label className="mb-3 block text-black dark:text-white">
             {label}
             <span className="text-lg font-bold text-red-600">
-              &nbsp;{required && '*'}
+              {/* &nbsp;{required && '*'} */}
             </span>
           </label>
 
