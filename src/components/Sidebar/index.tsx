@@ -86,6 +86,31 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/client/transactionhistory',
             icon: <MdDashboard size={22} />,
           },
+          {
+            label: 'Commission Structure',
+            path: '/client/comission',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Beneficiary',
+            path: '/client/beneficiary',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Verification',
+            path: '/client/verification',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Transfer Approvals',
+            path: '/client/transfer-approvals',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Top-Up Approvals',
+            path: '/client/topup-approvals',
+            icon: <MdDashboard size={22} />,
+          },
 
           isCompany && {
             label: 'Profile Management',
