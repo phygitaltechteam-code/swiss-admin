@@ -96,6 +96,11 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
           },
 
           {
+            label: 'Verifications',
+            path: '/Approval/customerregisterapprove',
+            icon: <MdDashboard size={22} />,
+          },
+          {
             label: 'Report Center',
             path: '/reportCenter',
             icon: <MdDashboard size={22} />,
