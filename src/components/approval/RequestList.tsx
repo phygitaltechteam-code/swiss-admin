@@ -22,9 +22,12 @@ const RequestList: React.FC<RequestListProps> = ({
   onSelect,
   selectedId,
 }) => {
+  console.log('requests', requests);
   // Separate requests by some mock date logic for "Today" vs "Yesterday"
-  const todayRequests = requests.filter((r) => r.status === 'Pending');
-  const yesterdayRequests = requests.filter((r) => r.status !== 'Pending');
+  const todayRequests = requests.filter((r) => r?.user?.isVerified === true);
+  const yesterdayRequests = requests.filter(
+    (r) => r?.user?.isVerified !== false,
+  );
   const navigate = useNavigate();
 
   return (
@@ -90,7 +93,7 @@ const RequestList: React.FC<RequestListProps> = ({
               request={req}
               onClick={() => {
                 onSelect(req);
-                navigate({to: `/Approval/registractionapprovedetails`});
+                navigate({to: `/Approval/registrationDetails/${req.id}`});
               }}
               isSelected={selectedId === req.id}
             />
@@ -190,32 +193,34 @@ const RequestCard: React.FC<RequestCardProps> = ({
     >
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-start gap-4 md:items-center">
-          {request.avatarUrl ? (
+          {request?.photo ? (
             <img
-              alt={request.name}
+              alt={request?.user?.fullname}
               className="h-14 w-14 rounded-full border-2 border-white object-cover shadow-sm"
-              src={request.avatarUrl}
+              src={request?.photo}
             />
           ) : (
             <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-white bg-green-100 text-xl font-bold text-green-600">
-              {request.name
+              {request?.user?.fullname
                 .split(' ')
                 .map((n) => n[0])
                 .join('')}
             </div>
           )}
           <div>
-            <h3 className="text-gray-900 text-lg font-bold">{request.name}</h3>
+            <h3 className="text-gray-900 text-lg font-bold">
+              {request?.user?.fullname}
+            </h3>
             <div className="text-gray-500 mt-1 flex flex-wrap gap-x-3 text-sm">
               <span>
-                ID: <span className="font-mono">#{request.id}</span>
+                SWIFTBIC: <span className="font-mono">{request?.SWIFTBIC}</span>
               </span>
-              <span className="text-gray-300 hidden md:inline">•</span>
-              <span>Reg: {request.regDate}</span>
+              {/* <span className="text-gray-300 hidden md:inline">•</span>
+              <span>Reg: {request.regDate}</span> */}
             </div>
 
             {/* Rejection Reason Block */}
-            {request.rejectionReason && (
+            {/* {request.rejectionReason && (
               <div className="mt-2 inline-block w-full max-w-xl rounded-md border border-red-100 bg-red-50 p-2 md:w-auto">
                 <p className="mb-0.5 text-xs font-semibold text-red-700">
                   Rejection Reason:
@@ -224,19 +229,19 @@ const RequestCard: React.FC<RequestCardProps> = ({
                   {request.rejectionReason}
                 </p>
               </div>
-            )}
+            )} */}
           </div>
         </div>
-        <div className="flex items-center self-start md:self-center">
+        {/* <div className="flex items-center self-start md:self-center">
           <span
             className={`rounded-md border px-3 py-1 text-xs font-bold uppercase tracking-wide ${statusColors[request.status]}`}
           >
             {request.status}
           </span>
-        </div>
+        </div> */}
       </div>
 
-      <div className="mt-4 flex flex-col items-center justify-between gap-4 border-t border-stroke pt-4 md:flex-row">
+      {/* <div className="mt-4 flex flex-col items-center justify-between gap-4 border-t border-stroke pt-4 md:flex-row">
         <div className="text-gray-600 flex w-full items-center gap-2 text-sm md:w-auto">
           {request.needsReview && (
             <>
@@ -284,7 +289,7 @@ const RequestCard: React.FC<RequestCardProps> = ({
             View History <MdArrowForward />
           </button>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

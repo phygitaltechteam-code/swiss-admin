@@ -3,11 +3,12 @@ import React, {useEffect, useRef, useState} from 'react';
 
 // Import the generated route tree
 import {routeTree} from './routeTree.gen';
-import QueryProvider from './lib/react-query/QueryProvider';
+
 import AuthContextProvider from './context/AuthContextProvider';
 import {ModalProvider} from './context/ModalContext';
 import NotFound404 from './layouts/NotFound404';
 import {Toaster} from 'react-hot-toast';
+import QueryProvider from './lib/react-query/QueryProvider';
 
 // Create a new router instance
 const router = createRouter({

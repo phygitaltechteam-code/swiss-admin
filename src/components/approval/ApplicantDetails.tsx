@@ -1,3 +1,4 @@
+import {UserRequest} from '@/types/approval';
 import React from 'react';
 import {
   MdBadge,
@@ -22,7 +23,11 @@ const Value: React.FC<{children: React.ReactNode; className?: string}> = ({
   </div>
 );
 
-const ApplicantDetails: React.FC = () => {
+type props = {
+  customerDetails: UserRequest;
+};
+
+const ApplicantDetails: React.FC<props> = ({customerDetails}) => {
   return (
     <section className="bg-theme-card shadow-warm border-theme-border flex h-full max-h-[85vh] flex-col overflow-hidden rounded-xl border">
       <div className="border-gray-100 border-b bg-white p-4">
@@ -42,45 +47,49 @@ const ApplicantDetails: React.FC = () => {
             <div className="col-span-2">
               <Label>Full Legal Name</Label>
               <div className="text-theme-header text-lg font-bold">
-                Asha Joshi
+                {customerDetails?.user?.fullname}
               </div>
             </div>
-            <div>
-              <Label>Date of Birth</Label>
-              <div className="text-theme-header text-sm font-semibold">
-                15 May 1988
+            {customerDetails?.user?.dob && (
+              <div>
+                <Label>Date of Birth</Label>
+                <div className="text-theme-header text-sm font-semibold">
+                  {customerDetails?.user?.dob}
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <Label>Nationality</Label>
               <div className="text-theme-header flex items-center gap-2 text-sm font-semibold">
-                <span className="text-lg opacity-80">🇮🇳</span> Indian
+                {customerDetails?.nationality}
               </div>
             </div>
             <div className="col-span-2">
               <Label>Residential Address</Label>
               <div className="text-theme-header text-sm font-semibold">
-                123 Fintech Lane, Bandra West, Mumbai, 400050
+                {customerDetails?.address}
               </div>
             </div>
             <div>
               <Label>Mobile Number</Label>
               <div className="text-theme-header text-sm font-semibold">
-                +91 98765 43210
+                {customerDetails?.user?.phoneNumber}
               </div>
             </div>
             <div>
               <Label>Email Address</Label>
-              <Value className="break-words">asha.joshi@example.com</Value>
+              <Value className="break-words">
+                {customerDetails?.user?.email}
+              </Value>
             </div>
           </div>
         </div>
 
         {/* Bank ID Section */}
         <div>
-          <h3 className="text-gray-400 border-gray-200 mb-6 border-b pb-2 text-[10px] font-bold uppercase tracking-widest">
+          {/* <h3 className="text-gray-400 border-gray-200 mb-6 border-b pb-2 text-[10px] font-bold uppercase tracking-widest">
             Bank Identification
-          </h3>
+          </h3> */}
           <div className="bg-gray-50 border-gray-200 rounded-xl border p-5">
             <div className="mb-6 flex items-center gap-3">
               <div className="text-gray-600 border-gray-200 flex h-10 w-10 items-center justify-center rounded-lg border bg-white shadow-sm">
@@ -88,10 +97,7 @@ const ApplicantDetails: React.FC = () => {
               </div>
               <div>
                 <div className="text-theme-header text-sm font-bold">
-                  HDFC Bank
-                </div>
-                <div className="text-gray-400 text-[10px] font-bold uppercase">
-                  India
+                  Bank Details
                 </div>
               </div>
             </div>
@@ -99,45 +105,14 @@ const ApplicantDetails: React.FC = () => {
               <div className="col-span-1 sm:col-span-2">
                 <Label>Account Number</Label>
                 <div className="font-mono text-theme-header border-gray-200 inline-block rounded-lg border bg-white px-3 py-2 text-sm font-bold tracking-widest shadow-sm">
-                  **** **** 8922
+                  {customerDetails?.accountNumber}
                 </div>
               </div>
               <div>
                 <Label>SWIFT / BIC</Label>
                 <div className="font-mono text-theme-header text-sm font-bold">
-                  HDFCCINBB
+                  {customerDetails?.SWIFTBIC}
                 </div>
-              </div>
-              <div>
-                <Label>IBAN / IFSC</Label>
-                <div className="font-mono text-theme-header text-sm font-bold">
-                  HDFC0001234
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Business Info */}
-        <div>
-          <h3 className="text-gray-400 border-gray-200 mb-6 flex items-center justify-between border-b pb-2 text-[10px] font-bold uppercase tracking-widest">
-            Business Info
-            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700">
-              BUSINESS ACCOUNT
-            </span>
-          </h3>
-          <div className="grid grid-cols-2 gap-x-10 gap-y-6">
-            <div className="col-span-2">
-              <Label>Legal Business Name</Label>
-              <div className="text-theme-header flex items-center gap-2 text-sm font-bold">
-                <MdStore className="text-gray-400 text-sm" />
-                Joshi Tech Solutions Ltd.
-              </div>
-            </div>
-            <div>
-              <Label>Tax ID (TIN)</Label>
-              <div className="font-mono text-theme-header text-sm font-bold">
-                22AAAAA0000A1Z5
               </div>
             </div>
           </div>
@@ -163,7 +138,7 @@ const ApplicantDetails: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-4">
+          <div className="mt-4 grid grid-cols-2 gap-4">
             <div className="border-gray-200 rounded-lg border bg-white/80 p-3">
               <span className="text-gray-400 mb-1 block text-[9px] font-bold uppercase">
                 Doc Type
@@ -178,14 +153,6 @@ const ApplicantDetails: React.FC = () => {
               </span>
               <span className="text-theme-header font-mono text-xs font-bold">
                 P45892201
-              </span>
-            </div>
-            <div className="border-gray-200 rounded-lg border bg-white/80 p-3">
-              <span className="text-gray-400 mb-1 block text-[9px] font-bold uppercase">
-                Expiry
-              </span>
-              <span className="text-theme-header text-xs font-bold">
-                12 Aug 2028
               </span>
             </div>
           </div>

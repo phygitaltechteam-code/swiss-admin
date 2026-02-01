@@ -1,7 +1,12 @@
 import React from 'react';
 import {MdFactCheck, MdCheckCircle, MdPending, MdInfo} from 'react-icons/md';
 
-const SummaryChecklist: React.FC = () => {
+type props = {
+  SWIFTBIC: string;
+  photo: string;
+  name: string;
+};
+const SummaryChecklist: React.FC<props> = ({SWIFTBIC, photo}) => {
   return (
     <section className="bg-theme-card shadow-warm border-theme-border overflow-hidden rounded-xl border">
       <div className="border-gray-100 flex items-center justify-between border-b bg-white p-4">
@@ -9,9 +14,6 @@ const SummaryChecklist: React.FC = () => {
           <MdFactCheck className="text-gray-400 text-lg" />
           Summary Checklist
         </h2>
-        <span className="rounded border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-          98% Match
-        </span>
       </div>
 
       <div className="space-y-5 p-5">
@@ -21,37 +23,36 @@ const SummaryChecklist: React.FC = () => {
             <img
               alt="Live Capture"
               className="relative z-10 h-16 w-16 rounded-lg border-2 border-white object-cover shadow-sm"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6uNxrLeJZda1Ck1TROAjrLQmi99Dx-srEYxMrnufvQBZ11qQOqEJItRpLkajnd-pC6RxVpvfatWrouS289x-OW1-JR-TOnqKw7wJL-dl_07wMIhR54obAQMocsbx-kaVEK3Dn8SaKjq3Qa9xQOZWZS9C0nKr1vJYHWcOI23S60_jWsjN2DpOCNz_JvYPjycIeUqs6r3WUKxtyIOgS65eLZeCY0qPjYpq0HGWYIGP3fwoc88bO6plqH-wYbh9lEOSTWMl8QZO_Yi3-"
+              src={photo}
             />
-            <img
+            {/* <img
               alt="ID Document Crop"
               className="relative z-0 h-16 w-16 rounded-lg border-2 border-white object-cover shadow-sm"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY21lnx8hk9RCQixJT7ZzOwtfw_pH2UODjwyMMITxIm3HBQJLDZz1OQ2K3P_BJ0Mw6sZAYrO6rAWtPq0Z5zwLwqC-8H0iE2hE0qBHXBAozVPLkjH7tVGi-ALx_xJuA_3NKdmI_96tLy6zcvyeJZCF3QYS95iwmpQD7M_1FMXuey5bdh_PrfOXncgLC-UKGRqfx3NnIswgNFvGrGHEGcUhYqTy1bSnfGjeclPlO63Ob7D91F7x9YtwoTZt-Dx4OM5sNIl7AGcQW716n"
-            />
+            /> */}
           </div>
           <div className="flex-1">
             <div className="text-theme-header mb-1 text-xs font-bold">
-              Identity Verification
+              SWIFTBIC
             </div>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div>
-                <span className="text-gray-400">Doc:</span>{' '}
                 <span className="text-gray-700 ml-1 font-semibold">
-                  Passport
+                  {SWIFTBIC}
                 </span>
               </div>
-              <div>
+              {/* <div>
                 <span className="text-gray-400">Exp:</span>{' '}
                 <span className="text-gray-700 ml-1 font-semibold">
                   12 Aug 2028
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
 
         {/* Checklist Items */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <div className="border-gray-100 bg-gray-50/50 flex items-center gap-3 rounded-lg border p-2.5">
             <MdCheckCircle className="flex-shrink-0 text-lg text-emerald-500" />
             <div className="text-xs">
@@ -89,18 +90,7 @@ const SummaryChecklist: React.FC = () => {
               <span className="text-theme-body">No hits on watchlists</span>
             </div>
           </div>
-        </div>
-
-        {/* Info Box */}
-        <div className="bg-gray-50 border-gray-200 rounded-lg border p-3">
-          <div className="flex gap-2">
-            <MdInfo className="text-gray-500 mt-0.5 flex-shrink-0 text-sm" />
-            <p className="text-gray-600 text-[11px] font-medium leading-relaxed">
-              Please ensure business TIN is verified against external registry
-              before approval.
-            </p>
-          </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

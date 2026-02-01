@@ -1,15 +1,23 @@
-import React, {useState} from 'react';
-
+import React, {useEffect, useState} from 'react';
 import {UserRequest} from '@/types/approval';
 import {MdMenu, MdSecurity} from 'react-icons/md';
 import RequestList from '@/components/approval/RequestList';
 import DetailPanel from '@/components/approval/DetailPanel';
-import {MOCK_REQUESTS} from '@/components/approval/constants';
+import {useGetCustomer} from '@/lib/react-query/Customer';
 
 const CustomerRegisterApprove: React.FC = () => {
-  const [selectedRequest, setSelectedRequest] = useState<UserRequest>(
-    MOCK_REQUESTS[0],
+  const {data: AllCustomers} = useGetCustomer();
+  console.log('allCustomers', AllCustomers);
+  const [selectedRequest, setSelectedRequest] = useState<UserRequest | null>(
+    null,
   );
+
+  useEffect(() => {
+    if (AllCustomers && AllCustomers.length > 0) {
+      setSelectedRequest(AllCustomers[0]);
+    }
+  }, [AllCustomers]);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -48,20 +56,18 @@ const CustomerRegisterApprove: React.FC = () => {
         {/* Center Content (Request List) */}
         <main className="flex flex-1 overflow-hidden">
           <RequestList
-            requests={MOCK_REQUESTS}
+            requests={AllCustomers || []}
             onSelect={(req) => {
               setSelectedRequest(req);
-              // On mobile, we might want to navigate or open a modal,
-              // but for this dashboard layout, we'll keep the 3-pane structure logic.
             }}
-            selectedId={selectedRequest.id}
+            selectedId={selectedRequest?.id}
           />
         </main>
 
         {/* Right Panel (Details) - Hidden on smaller than xl screens usually, but we'll adapt */}
-        <div className="hidden xl:block">
+        {/* <div className="hidden xl:block">
           <DetailPanel request={selectedRequest} />
-        </div>
+        </div> */}
       </div>
     </div>
   );
