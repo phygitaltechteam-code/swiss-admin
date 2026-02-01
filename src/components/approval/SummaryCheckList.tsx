@@ -8,15 +8,15 @@ type props = {
 };
 const SummaryChecklist: React.FC<props> = ({SWIFTBIC, photo}) => {
   return (
-    <section className="bg-theme-card shadow-warm border-theme-border overflow-hidden rounded-xl border">
-      <div className="border-gray-100 flex items-center justify-between border-b bg-white p-4">
+    <section className="bg-theme-card shadow-warm overflow-hidden rounded-xl border border-stroke">
+      <div className="flex items-center justify-between border-b border-stroke bg-white p-4">
         <h2 className="text-theme-header flex items-center gap-2 text-sm font-bold uppercase tracking-tight">
           <MdFactCheck className="text-gray-400 text-lg" />
           Summary Checklist
         </h2>
       </div>
 
-      <div className="space-y-5 p-5">
+      <div className="space-y-5 bg-white p-5">
         {/* Images Row */}
         <div className="flex gap-4">
           <div className="flex -space-x-4">
@@ -25,19 +25,14 @@ const SummaryChecklist: React.FC<props> = ({SWIFTBIC, photo}) => {
               className="relative z-10 h-16 w-16 rounded-lg border-2 border-white object-cover shadow-sm"
               src={photo}
             />
-            {/* <img
-              alt="ID Document Crop"
-              className="relative z-0 h-16 w-16 rounded-lg border-2 border-white object-cover shadow-sm"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY21lnx8hk9RCQixJT7ZzOwtfw_pH2UODjwyMMITxIm3HBQJLDZz1OQ2K3P_BJ0Mw6sZAYrO6rAWtPq0Z5zwLwqC-8H0iE2hE0qBHXBAozVPLkjH7tVGi-ALx_xJuA_3NKdmI_96tLy6zcvyeJZCF3QYS95iwmpQD7M_1FMXuey5bdh_PrfOXncgLC-UKGRqfx3NnIswgNFvGrGHEGcUhYqTy1bSnfGjeclPlO63Ob7D91F7x9YtwoTZt-Dx4OM5sNIl7AGcQW716n"
-            /> */}
           </div>
           <div className="flex-1">
-            <div className="text-theme-header mb-1 text-xs font-bold">
+            <div className="mb-1 text-sm font-bold text-neutral-500">
               SWIFTBIC
             </div>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div>
-                <span className="text-gray-700 ml-1 font-semibold">
+                <span className="ml-1 font-semibold text-black">
                   {SWIFTBIC}
                 </span>
               </div>
