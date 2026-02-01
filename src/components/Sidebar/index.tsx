@@ -127,6 +127,21 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/transfersReport',
             icon: <MdDashboard size={22} />,
           },
+          {
+            label: 'Client List Report',
+            path: '/clientlistreport',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Beneficiary Report',
+            path: '/beneficiaryreport',
+            icon: <MdDashboard size={22} />,
+          },
+          {
+            label: 'Cash Flow Report',
+            path: '/cashflowreport',
+            icon: <MdDashboard size={22} />,
+          },
         ]
       : [
           // {
