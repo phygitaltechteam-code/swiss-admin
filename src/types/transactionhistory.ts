@@ -46,22 +46,35 @@ export interface SidebarItem {
 
 export type TransactionStatus = 'Pending' | 'Approved' | 'Rejected';
 
-export interface Transaction {
+// types/transactionhistory.ts
+export interface TransactionTopup {
+  _id: string;
   id: string;
   transactionId: string;
   clientName: string;
   clientId: string;
-  accountType: 'E Private' | 'Temporarily' | 'Standard';
+  accountType: string;
   amount: number;
-  date: string; // ISO string or formatted string for display
+  date: string;
   rawDate: Date;
-  status: TransactionStatus;
+  status: 'Pending' | 'Approved' | 'Rejected';
   avatarUrl: string;
   trustScore: number;
   receiptUrl: string;
   referenceNo: string;
   paymentMethod: string;
   accountNo: string;
+  email?: string;
+  phoneNumber?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  fullname?: string;
+  walletId?: string;
+  amountType?: string;
+  type?: string;
+  isPending?: boolean;
+  isRejected?: boolean;
+  createdAt?: string;
 }
 
 export interface SummaryStats {
@@ -72,7 +85,6 @@ export interface SummaryStats {
   approvedCount: number;
   rejectedCount: number;
 }
-
 export type TransactionTopupStatus = 'Pending' | 'Approved' | 'Rejected';
 
 export interface TransactionTopup {
