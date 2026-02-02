@@ -1,6 +1,9 @@
 export const getRequestStatus = (request: any) => {
-  if (request?.user?.isRejected) return 'REJECTED';
-  if (request?.user?.isVerified) return 'APPROVED';
+  const isRejected = request?.user?.isRejected ?? request?.isRejected;
+  const isVerified = request?.user?.isVerified ?? request?.isVerified;
+
+  if (isRejected) return 'REJECTED';
+  if (isVerified) return 'APPROVED';
   return 'PENDING';
 };
 
