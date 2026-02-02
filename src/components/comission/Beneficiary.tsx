@@ -205,16 +205,16 @@ const BeneficiaryContent: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#f8f7f5] p-4 dark:bg-[#221710] md:p-8">
-      <div className="mx-auto max-w-7xl">
+    <div className="flex-1 overflow-y-auto bg-white/50 p-4 dark:bg-[#221710] md:p-8">
+      <div className="mx-auto">
         {/* Search and Filter Section */}
         <div className="mb-6 flex flex-col items-end justify-between gap-4 md:flex-row md:items-center">
           <div className="relative w-full md:w-96">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MdSearch className="text-[20px] text-[#9c6949]" />
+              <MdSearch className="text-[20px] text-neutral-500" />
             </span>
             <input
-              className="w-full rounded-lg border border-[#f4ece7] bg-white py-2.5 pl-10 pr-4 text-sm text-[#0F1535] placeholder-[#9c6949] shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
+              className="w-full rounded-lg border border-stroke bg-white py-2.5 pl-10 pr-4 text-sm text-[#0F1535] shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
               placeholder="Search by client name..."
               type="text"
             />
@@ -222,21 +222,21 @@ const BeneficiaryContent: React.FC = () => {
 
           <div className="flex w-full gap-4 md:w-auto">
             <div className="flex w-full items-center gap-2 md:w-auto">
-              <label className="hidden whitespace-nowrap text-sm text-[#9c6949] sm:block">
+              <label className="hidden whitespace-nowrap text-sm text-neutral-500 sm:block">
                 From:
               </label>
               <input
-                className="w-full rounded-lg border border-[#f4ece7] bg-white px-3 py-2 text-sm text-[#0F1535] shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
+                className="w-full rounded-lg border border-stroke bg-white px-3 py-2 text-sm text-[#0F1535] shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
                 type="date"
               />
             </div>
 
             <div className="flex w-full items-center gap-2 md:w-auto">
-              <label className="hidden whitespace-nowrap text-sm text-[#9c6949] sm:block">
+              <label className="hidden whitespace-nowrap text-sm text-neutral-500 sm:block">
                 To:
               </label>
               <input
-                className="w-full rounded-lg border border-[#f4ece7] bg-white px-3 py-2 text-sm text-[#0F1535] shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
+                className="w-full rounded-lg border border-stroke bg-white px-3 py-2 text-sm text-[#0F1535] shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
                 type="date"
               />
             </div>
@@ -246,10 +246,10 @@ const BeneficiaryContent: React.FC = () => {
         {/* Stats Cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* Pending Card */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#f4ece7] bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
+          <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-[#9c6949]">
+                <p className="text-sm font-medium text-neutral-500">
                   Pending Requests
                 </p>
                 <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
@@ -260,17 +260,17 @@ const BeneficiaryContent: React.FC = () => {
                 <MdSchedule className="text-[20px] text-primary" />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-sm text-[#9c6949]">
+            <div className="mt-4 flex items-center text-sm text-neutral-500">
               <MdSchedule className="mr-1 text-base" />
               <span>Requires review</span>
             </div>
           </div>
 
           {/* Approved Card */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#f4ece7] bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
+          <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-[#9c6949]">
+                <p className="text-sm font-medium text-neutral-500">
                   Approved Requests
                 </p>
                 <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
@@ -288,10 +288,10 @@ const BeneficiaryContent: React.FC = () => {
           </div>
 
           {/* Rejected Card */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#f4ece7] bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
+          <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-[#9c6949]">
+                <p className="text-sm font-medium text-neutral-500">
                   Rejected Requests
                 </p>
                 <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
@@ -328,7 +328,7 @@ const BeneficiaryContent: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-[#f4ece7] bg-[#f8f7f5]/50 text-xs font-semibold uppercase tracking-wider text-[#9c6949] dark:border-[#3a2a20] dark:bg-[#3a2a20]/50">
+                <tr className="border-b border-stroke bg-white text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:border-[#3a2a20] dark:bg-[#3a2a20]/50">
                   <th className="w-12 px-6 py-4"></th>
                   <th className="px-6 py-4">Client Name</th>
                   <th className="px-6 py-4">Account Number</th>
@@ -338,7 +338,7 @@ const BeneficiaryContent: React.FC = () => {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f4ece7] dark:divide-[#3a2a20]">
+              <tbody className="divide-y divide-stroke dark:divide-[#3a2a20]">
                 {MOCK_CLIENTS.map((client) => {
                   const isExpanded = expandedRows.has(client.id);
                   const rotationClass = isExpanded
@@ -349,11 +349,11 @@ const BeneficiaryContent: React.FC = () => {
                     <React.Fragment key={client.id}>
                       {/* Main Row */}
                       <tr
-                        className="group cursor-pointer transition-colors hover:bg-[#f8f7f5] dark:hover:bg-[#3a2a20]/30"
+                        className="group cursor-pointer transition-colors dark:hover:bg-[#3a2a20]/30"
                         onClick={() => toggleRow(client.id)}
                       >
                         <td className="px-6 py-4 text-center">
-                          <button className="text-[#9c6949] transition-colors focus:outline-none group-hover:text-primary">
+                          <button className="text-neutral-500 transition-colors focus:outline-none">
                             <MdExpandMore
                               className={`text-[20px] ${rotationClass}`}
                             />
@@ -362,7 +362,7 @@ const BeneficiaryContent: React.FC = () => {
                         <td className="px-6 py-4 font-medium text-[#0F1535] dark:text-white">
                           {client.name}
                         </td>
-                        <td className="font-mono px-6 py-4 text-sm text-[#9c6949]">
+                        <td className="font-mono px-6 py-4 text-sm text-neutral-500">
                           {client.accountNumber}
                         </td>
                         <td className="font-mono px-6 py-4 text-sm text-[#0F1535] dark:text-white">
@@ -409,17 +409,17 @@ const BeneficiaryContent: React.FC = () => {
 
                       {/* Expanded Row Content */}
                       {isExpanded && (
-                        <tr className="bg-[#f8f7f5]/50 dark:bg-[#221710]">
+                        <tr className="bg-white dark:bg-[#221710]">
                           <td className="px-6 py-4" colSpan={7}>
-                            <div className="overflow-hidden rounded-lg border border-[#f4ece7] bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]">
-                              <div className="flex items-center justify-between border-b border-[#f4ece7] bg-[#f8f7f5] px-4 py-3 dark:border-[#3a2a20] dark:bg-[#3a2a20]">
-                                <h4 className="text-sm font-semibold uppercase tracking-wider text-[#9c6949]">
+                            <div className="overflow-hidden rounded-lg border border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]">
+                              <div className="flex items-center justify-between border-b border-stroke bg-[#f8f7f5] px-4 py-3 dark:border-[#3a2a20] dark:bg-[#3a2a20]">
+                                <h4 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
                                   Beneficiaries List
                                 </h4>
                               </div>
                               <table className="w-full text-sm">
                                 <thead>
-                                  <tr className="border-b border-[#f4ece7] bg-[#f8f7f5]/50 text-xs text-[#9c6949] dark:border-[#3a2a20] dark:bg-[#3a2a20]/50">
+                                  <tr className="border-b border-stroke bg-white text-xs text-neutral-500 dark:border-[#3a2a20] dark:bg-[#3a2a20]/50">
                                     <th className="px-4 py-3 font-medium">
                                       Name
                                     </th>
@@ -453,16 +453,16 @@ const BeneficiaryContent: React.FC = () => {
                                         <td className="font-mono px-4 py-3 text-xs text-[#0F1535] dark:text-white">
                                           {beneficiary.accountNo}
                                         </td>
-                                        <td className="max-w-[150px] truncate px-4 py-3 text-[#9c6949]">
+                                        <td className="max-w-[150px] truncate px-4 py-3 text-neutral-500">
                                           {beneficiary.address}
                                         </td>
-                                        <td className="px-4 py-3 text-[#9c6949]">
+                                        <td className="px-4 py-3 text-neutral-500">
                                           {beneficiary.city}
                                         </td>
-                                        <td className="px-4 py-3 text-[#9c6949]">
+                                        <td className="px-4 py-3 text-neutral-500">
                                           {beneficiary.state}
                                         </td>
-                                        <td className="px-4 py-3 text-[#9c6949]">
+                                        <td className="px-4 py-3 text-neutral-500">
                                           {beneficiary.country}
                                         </td>
                                         <td className="px-4 py-3">
@@ -476,7 +476,7 @@ const BeneficiaryContent: React.FC = () => {
                                     <tr>
                                       <td
                                         colSpan={7}
-                                        className="px-4 py-8 text-center text-sm italic text-[#9c6949]"
+                                        className="px-4 py-8 text-center text-sm italic text-neutral-500"
                                       >
                                         No beneficiaries found for this client.
                                       </td>
@@ -496,8 +496,8 @@ const BeneficiaryContent: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between border-t border-[#f4ece7] px-6 py-4 dark:border-[#3a2a20]">
-            <div className="text-sm text-[#9c6949]">
+          <div className="flex items-center justify-between border-t border-stroke px-6 py-4 dark:border-[#3a2a20]">
+            <div className="text-sm text-neutral-500">
               Showing{' '}
               <span className="font-medium text-[#0F1535] dark:text-white">
                 1
@@ -514,7 +514,7 @@ const BeneficiaryContent: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <button
-                className="rounded-md border border-[#f4ece7] px-3 py-1 text-sm text-[#9c6949] hover:bg-[#f8f7f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]"
+                className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]"
                 disabled
               >
                 Previous
@@ -522,14 +522,14 @@ const BeneficiaryContent: React.FC = () => {
               <button className="rounded-md bg-primary px-3 py-1 text-sm text-white shadow-sm hover:bg-[#d96d2b]">
                 1
               </button>
-              <button className="rounded-md border border-[#f4ece7] px-3 py-1 text-sm text-[#9c6949] hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
+              <button className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
                 2
               </button>
-              <button className="rounded-md border border-[#f4ece7] px-3 py-1 text-sm text-[#9c6949] hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
+              <button className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
                 3
               </button>
-              <span className="text-[#9c6949]">...</span>
-              <button className="rounded-md border border-[#f4ece7] px-3 py-1 text-sm text-[#9c6949] hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
+              <span className="text-neutral-500">...</span>
+              <button className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
                 Next
               </button>
             </div>
