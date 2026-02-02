@@ -60,6 +60,12 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             icon: <MdDashboard size={22} />,
           },
           {
+            label: 'Beneficiary Management',
+            path: '/client/beneficiary',
+            icon: <MdDashboard size={22} />,
+          },
+
+          {
             label: 'Client Profile',
             path: '/client/profile',
             icon: <MdDashboard size={22} />,
