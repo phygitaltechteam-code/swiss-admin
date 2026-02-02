@@ -1,3 +1,4 @@
+// TopUpDetail component
 import React, {useState} from 'react';
 import {
   Shield,
@@ -12,20 +13,36 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import {TransactionTopup} from '@/types/transactionhistory';
 import GenericButton from '../Forms/Buttons/GenericButton';
+import {useApproveTopup, useRejectTopup} from '@/lib/react-query/Topup';
+import toast from 'react-hot-toast';
 
 interface TopUpDetailProps {
   transaction: TransactionTopup;
   onBack: () => void;
+  onStatusUpdate: (
+    transactionId: string,
+    newStatus: 'Approved' | 'Rejected',
+    rejectReason?: string,
+  ) => void;
 }
 
 export const TopUpDetail: React.FC<TopUpDetailProps> = ({
   transaction,
   onBack,
+  onStatusUpdate,
 }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [isApproveConfirming, setIsApproveConfirming] = useState(false);
+
+  // Use the mutation hooks
+  const {mutate: approveTopup, isPending: isApproving} = useApproveTopup();
+  const {mutate: rejectTopup, isPending: isRejecting} = useRejectTopup();
 
   const handleZoomIn = () => {
     setZoomLevel((prev) => Math.min(prev + 0.1, 2));
@@ -39,6 +56,113 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
     setZoomLevel(1);
   };
 
+  const handleApprove = () => {
+    if (!isApproveConfirming) {
+      // First click - ask for confirmation
+      setIsApproveConfirming(true);
+      // Reset confirmation after 3 seconds if not clicked again
+      setTimeout(() => setIsApproveConfirming(false), 3000);
+      return;
+    }
+
+    // Second click - execute approval
+    setIsApproveConfirming(false);
+
+    // Show loading toast
+    const loadingToast = toast.loading('Approving top-up request...');
+
+    // Call the approve mutation
+    approveTopup(transaction.id, {
+      onSuccess: (data) => {
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+
+        // Show success message
+        toast.success(data.message || 'Top-up approved successfully!', {
+          duration: 3000,
+        });
+
+        // Update parent component with new status
+        onStatusUpdate(transaction.id, 'Approved');
+
+        // Navigate back to list after successful approval
+        setTimeout(() => {
+          onBack();
+        }, 1500);
+      },
+      onError: (error) => {
+        // Dismiss loading toast
+        toast.dismiss(loadingToast);
+
+        // Show error message
+        toast.error('Failed to approve top-up. Please try again.', {
+          duration: 4000,
+        });
+
+        // Reset confirmation state
+        setIsApproveConfirming(false);
+      },
+    });
+  };
+
+  const handleOpenRejectDialog = () => {
+    setShowRejectDialog(true);
+  };
+
+  const handleCloseRejectDialog = () => {
+    setShowRejectDialog(false);
+    setRejectReason('');
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectReason.trim()) {
+      toast.error('Please provide a reason for rejection');
+      return;
+    }
+
+    // Show loading toast
+    const loadingToast = toast.loading('Rejecting top-up request...');
+
+    // Call the reject mutation with proper payload
+    rejectTopup(
+      {
+        id: transaction.id,
+        note: rejectReason,
+      },
+      {
+        onSuccess: (data) => {
+          // Dismiss loading toast
+          toast.dismiss(loadingToast);
+
+          // Show success message
+          toast.success(data.message || 'Top-up rejected successfully!', {
+            duration: 3000,
+          });
+
+          // Update parent component with new status and rejection reason
+          onStatusUpdate(transaction.id, 'Rejected', rejectReason);
+
+          // Navigate back to list after successful rejection
+          setTimeout(() => {
+            onBack();
+          }, 1500);
+        },
+        onError: (error) => {
+          // Dismiss loading toast
+          toast.dismiss(loadingToast);
+
+          // Show error message
+          toast.error('Failed to reject top-up. Please try again.', {
+            duration: 4000,
+          });
+        },
+      },
+    );
+  };
+
+  // Check if any action is in progress
+  const isActionInProgress = isApproving || isRejecting;
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-[#F9FAFB]">
       {/* Background Pattern */}
@@ -49,6 +173,90 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
           backgroundSize: '24px 24px',
         }}
       ></div>
+
+      {/* Rejection Dialog Modal */}
+      {showRejectDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-gray-900 text-lg font-bold">
+                    Reject Top-Up Request
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    ID: {transaction.transactionId}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseRejectDialog}
+                className="text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-lg p-1"
+                disabled={isRejecting}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <label className="text-gray-700 mb-2 block text-sm font-medium">
+                Reason for Rejection <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Please provide a detailed reason for rejecting this request..."
+                className="border-gray-300 w-full rounded-lg border p-3 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                rows={4}
+                disabled={isRejecting}
+                autoFocus
+              />
+              <p className="text-gray-500 mt-2 text-xs">
+                This reason will be shared with the customer.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCloseRejectDialog}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 flex-1 rounded-lg border bg-white px-4 py-3 font-medium disabled:opacity-50"
+                disabled={isRejecting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={isRejecting || !rejectReason.trim()}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-3 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {isRejecting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Rejecting...
+                  </span>
+                ) : (
+                  'Confirm Rejection'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="relative z-10 flex h-full flex-col overflow-hidden">
@@ -97,7 +305,10 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
                 {transaction.status} Review
               </span>
               <div className="bg-gray-200 mx-1 h-6 w-px"></div>
-              <button className="text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg p-2 transition-colors">
+              <button
+                className="text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg p-2 transition-colors"
+                disabled={isActionInProgress}
+              >
                 <MoreVertical size={20} />
               </button>
             </div>
@@ -117,23 +328,29 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
                   <button
                     onClick={handleZoomOut}
                     className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                    disabled={isActionInProgress}
                   >
                     <ZoomOut size={18} />
                   </button>
                   <button
                     onClick={handleZoomIn}
                     className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                    disabled={isActionInProgress}
                   >
                     <ZoomIn size={18} />
                   </button>
                   <button
                     onClick={handleResetZoom}
                     className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                    disabled={isActionInProgress}
                   >
                     <RotateCw size={18} />
                   </button>
                   <div className="bg-gray-200 my-1 w-px"></div>
-                  <button className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary">
+                  <button
+                    className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                    disabled={isActionInProgress}
+                  >
                     <ExternalLink size={18} />
                   </button>
                 </div>
@@ -262,16 +479,31 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
               <div className="mt-auto flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-4">
                   <GenericButton
-                    onClick={() => alert('Rejection logic here')}
-                    className="border-gray-300 text-gray-700 flex h-12 items-center justify-center rounded-lg border bg-white font-bold shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                    onClick={handleOpenRejectDialog}
+                    disabled={isActionInProgress}
+                    className="border-gray-300 text-gray-700 flex h-12 items-center justify-center rounded-lg border bg-white font-bold shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                   >
                     Reject Request
                   </GenericButton>
                   <GenericButton
-                    onClick={() => alert('Approval logic here')}
-                    className="flex h-12 items-center justify-center rounded-lg bg-orange-600 font-bold text-white shadow-md shadow-orange-500/10 transition-all hover:bg-orange-700"
+                    onClick={handleApprove}
+                    disabled={isActionInProgress}
+                    className={`flex h-12 items-center justify-center rounded-lg font-bold text-white shadow-md shadow-orange-500/10 transition-all ${
+                      isApproveConfirming
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : 'bg-orange-600 hover:bg-orange-700'
+                    } disabled:opacity-50`}
                   >
-                    Approve Top-Up
+                    {isApproving ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        Approving...
+                      </>
+                    ) : isApproveConfirming ? (
+                      'Click again to confirm'
+                    ) : (
+                      'Approve Top-Up'
+                    )}
                   </GenericButton>
                 </div>
                 <p className="text-gray-500/70 text-center text-xs">
