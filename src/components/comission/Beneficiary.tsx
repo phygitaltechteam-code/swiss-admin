@@ -1,5 +1,6 @@
-import {ArrowUp} from 'lucide-react';
-import React, {useState} from 'react';
+// export default BeneficiaryContent;
+import {useGetBeneficiary} from '@/lib/react-query/Beneficiary';
+import React, {useState, useMemo, useEffect} from 'react';
 import {
   MdSearch,
   MdFilterList,
@@ -10,8 +11,9 @@ import {
   MdBlock,
   MdArrowUpward,
   MdReport,
-  MdGavel,
 } from 'react-icons/md';
+import {getRequestStatus} from '../approval/methods';
+import {useNavigate} from '@tanstack/react-router';
 
 // --- Mock Data ---
 export interface Beneficiary {
@@ -40,152 +42,50 @@ export interface Client {
   };
   beneficiaries: Beneficiary[];
 }
-const MOCK_BENEFICIARIES = [
-  {
-    id: 'b1',
-    name: 'John Reese',
-    accountNo: '987654123',
-    address: '123 Po. Box',
-    city: 'New York',
-    state: 'NY',
-    country: 'USA',
-    currency: 'USD',
-  },
-  {
-    id: 'b2',
-    name: 'Harold Finch',
-    accountNo: '876543210',
-    address: 'Library Ave, Apt 4B',
-    city: 'New York',
-    state: 'NY',
-    country: 'USA',
-    currency: 'USD',
-  },
-  {
-    id: 'b3',
-    name: 'Sameen Shaw',
-    accountNo: '102938475',
-    address: '404 Unknown Ln.',
-    city: 'New York',
-    state: 'NY',
-    country: 'USA',
-    currency: 'USD',
-  },
-];
 
-const MOCK_CLIENTS: Client[] = [
-  {
-    id: 'c1',
-    name: 'Sarah J. Connor',
-    accountNumber: '**** 8829',
-    transactionValue: 45200.0,
-    totalBeneficiaries: 3,
-    status: 'Approved',
-    beneficiaries: MOCK_BENEFICIARIES,
-  },
-  {
-    id: 'c2',
-    name: 'Kyle Reese',
-    accountNumber: '**** 1984',
-    transactionValue: 12050.0,
-    totalBeneficiaries: 1,
-    status: 'Pending',
-    beneficiaries: [MOCK_BENEFICIARIES[0]],
-  },
-  {
-    id: 'c3',
-    name: 'James Cameron',
-    accountNumber: '**** 4421',
-    transactionValue: 8900.0,
-    totalBeneficiaries: 5,
-    status: 'Rejected',
-    statusDetails: {
-      reason: 'High Risk Score',
-      icon: 'alert',
-    },
-    beneficiaries: [],
-  },
-  {
-    id: 'c4',
-    name: 'Ellen Ripley',
-    accountNumber: '**** 0023',
-    transactionValue: 150000.0,
-    totalBeneficiaries: 2,
-    status: 'Rejected',
-    statusDetails: {
-      reason: 'Sanctions Match',
-      icon: 'gavel',
-    },
-    beneficiaries: [MOCK_BENEFICIARIES[1], MOCK_BENEFICIARIES[2]],
-  },
-];
-
-// --- Utility Components ---
-
-const StatusBadge = ({status}: {status: ClientStatus}) => {
-  const styles = {
-    Approved: 'bg-green-100 text-green-800 border border-green-200',
-    Pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    Rejected: 'bg-red-100 text-red-800 border border-red-200',
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}
-    >
-      {status}
-    </span>
-  );
-};
-
-const StatCard = ({
-  title,
-  value,
-  icon: Icon,
-  colorClass,
-  subtext,
-  trend,
-}: {
-  title: string;
-  value: string;
-  icon: React.ElementType;
-  colorClass: string;
-  subtext?: string;
-  trend?: string;
-}) => (
-  <div className="border-gray-200 flex h-full flex-col justify-between rounded-xl border bg-white p-6 shadow-sm transition-transform hover:scale-[1.01]">
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-gray-500 text-sm font-medium">{title}</p>
-        <h3 className="text-gray-900 mt-2 text-3xl font-bold">{value}</h3>
-      </div>
-      <div className={`rounded-lg p-2 ${colorClass} bg-opacity-20`}>
-        <Icon className={`h-6 w-6 ${colorClass.replace('bg-', 'text-')}`} />
-      </div>
-    </div>
-    {(subtext || trend) && (
-      <div className="mt-4 flex items-center text-sm">
-        {trend && (
-          <span className="mr-2 flex items-center font-medium text-green-600">
-            <ArrowUp className="mr-1 h-4 w-4" />
-            {trend}
-          </span>
-        )}
-        {subtext && (
-          <span className="text-gray-500 flex items-center">
-            {/* If it's the pending card, we might want an icon here, but text is fine */}
-            {subtext}
-          </span>
-        )}
-      </div>
-    )}
-  </div>
-);
+const ITEMS_PER_PAGE = 10;
 
 const BeneficiaryContent: React.FC = () => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(
     new Set(['c1']),
   );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const {data: beneficiaries} = useGetBeneficiary();
+  const navigate = useNavigate();
+  const filteredBeneficiaries = useMemo(() => {
+    if (!beneficiaries) return [];
+
+    return beneficiaries.filter((client) => {
+      const matchesSearch =
+        searchQuery === '' ||
+        (client?.user?.fullname?.toLowerCase() || '').includes(
+          searchQuery.toLowerCase(),
+        ) ||
+        (client.accountNumber?.toLowerCase() || '').includes(
+          searchQuery.toLowerCase(),
+        );
+
+      const matchesFromDate = fromDate === '' || true;
+      const matchesToDate = toDate === '' || true;
+
+      return matchesSearch && matchesFromDate && matchesToDate;
+    });
+  }, [beneficiaries, searchQuery, fromDate, toDate]);
+
+  const totalPages = Math.ceil(filteredBeneficiaries.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedBeneficiaries = filteredBeneficiaries.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, fromDate, toDate]);
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -204,6 +104,34 @@ const BeneficiaryContent: React.FC = () => {
     }).format(val);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFromDate(e.target.value);
+  };
+
+  const handleToDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setToDate(e.target.value);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="flex-1 overflow-y-auto bg-white/50 p-4 dark:bg-[#221710] md:p-8">
       <div className="mx-auto">
@@ -217,6 +145,8 @@ const BeneficiaryContent: React.FC = () => {
               className="w-full rounded-lg border border-stroke bg-white py-2.5 pl-10 pr-4 text-sm text-[#0F1535] shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
               placeholder="Search by client name..."
               type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
             />
           </div>
 
@@ -228,6 +158,8 @@ const BeneficiaryContent: React.FC = () => {
               <input
                 className="w-full rounded-lg border border-stroke bg-white px-3 py-2 text-sm text-[#0F1535] shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
                 type="date"
+                value={fromDate}
+                onChange={handleFromDateChange}
               />
             </div>
 
@@ -238,6 +170,8 @@ const BeneficiaryContent: React.FC = () => {
               <input
                 className="w-full rounded-lg border border-stroke bg-white px-3 py-2 text-sm text-[#0F1535] shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-[#3a2a20] dark:bg-[#2c2019] dark:text-white"
                 type="date"
+                value={toDate}
+                onChange={handleToDateChange}
               />
             </div>
           </div>
@@ -339,12 +273,12 @@ const BeneficiaryContent: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stroke dark:divide-[#3a2a20]">
-                {MOCK_CLIENTS.map((client) => {
+                {paginatedBeneficiaries?.map((client) => {
                   const isExpanded = expandedRows.has(client.id);
                   const rotationClass = isExpanded
                     ? ''
                     : 'transform -rotate-90';
-
+                  const status = getRequestStatus(client);
                   return (
                     <React.Fragment key={client.id}>
                       {/* Main Row */}
@@ -360,7 +294,7 @@ const BeneficiaryContent: React.FC = () => {
                           </button>
                         </td>
                         <td className="px-6 py-4 font-medium text-[#0F1535] dark:text-white">
-                          {client.name}
+                          {client?.user?.fullname}
                         </td>
                         <td className="font-mono px-6 py-4 text-sm text-neutral-500">
                           {client.accountNumber}
@@ -369,39 +303,42 @@ const BeneficiaryContent: React.FC = () => {
                           {formatCurrency(client.transactionValue)}
                         </td>
                         <td className="px-6 py-4 text-[#0F1535] dark:text-white">
-                          {client.totalBeneficiaries}
+                          {client?.foreignBeneficiaries?.length}
                         </td>
                         <td className="px-6 py-4">
-                          {client.status === 'Approved' && (
+                          {status === 'APPROVED' && (
                             <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
                               Approved
                             </span>
                           )}
-                          {client.status === 'Pending' && (
+                          {status === 'PENDING' && (
                             <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
                               Pending
                             </span>
                           )}
-                          {client.status === 'Rejected' && (
+                          {status === 'REJECTED' && (
                             <div className="flex flex-col items-start">
                               <span className="mb-1 inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
                                 Rejected
                               </span>
-                              {client.statusDetails && (
-                                <span className="mt-1 flex items-center text-xs font-medium text-red-600 dark:text-red-400">
-                                  {client.statusDetails.icon === 'gavel' ? (
-                                    <MdGavel className="mr-1 text-[14px]" />
-                                  ) : (
-                                    <MdReport className="mr-1 text-[14px]" />
-                                  )}
-                                  {client.statusDetails.reason}
-                                </span>
-                              )}
+
+                              <span className="mt-1 flex items-center text-xs font-medium text-red-600 dark:text-red-400">
+                                <MdReport className="mr-1 text-[14px]" />
+
+                                {client?.rejectedReason}
+                              </span>
                             </div>
                           )}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="rounded bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-[#d96d2b]">
+                          <button
+                            className="rounded bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-[#d96d2b]"
+                            onClick={() =>
+                              navigate({
+                                to: `/client/beneficiaryverification/${client?.id}`,
+                              })
+                            }
+                          >
                             Review
                           </button>
                         </td>
@@ -444,34 +381,36 @@ const BeneficiaryContent: React.FC = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#f4ece7] dark:divide-[#3a2a20]">
-                                  {client.beneficiaries.length > 0 ? (
-                                    client.beneficiaries.map((beneficiary) => (
-                                      <tr key={beneficiary.id}>
-                                        <td className="px-4 py-3 font-medium text-[#0F1535] dark:text-white">
-                                          {beneficiary.name}
-                                        </td>
-                                        <td className="font-mono px-4 py-3 text-xs text-[#0F1535] dark:text-white">
-                                          {beneficiary.accountNo}
-                                        </td>
-                                        <td className="max-w-[150px] truncate px-4 py-3 text-neutral-500">
-                                          {beneficiary.address}
-                                        </td>
-                                        <td className="px-4 py-3 text-neutral-500">
-                                          {beneficiary.city}
-                                        </td>
-                                        <td className="px-4 py-3 text-neutral-500">
-                                          {beneficiary.state}
-                                        </td>
-                                        <td className="px-4 py-3 text-neutral-500">
-                                          {beneficiary.country}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                                            {beneficiary.currency}
-                                          </span>
-                                        </td>
-                                      </tr>
-                                    ))
+                                  {client?.foreignBeneficiaries?.length > 0 ? (
+                                    client.foreignBeneficiaries.map(
+                                      (beneficiary) => (
+                                        <tr key={beneficiary.id}>
+                                          <td className="px-4 py-3 font-medium text-[#0F1535] dark:text-white">
+                                            {beneficiary.fullName}
+                                          </td>
+                                          <td className="font-mono px-4 py-3 text-xs text-[#0F1535] dark:text-white">
+                                            {beneficiary.accountNumber}
+                                          </td>
+                                          <td className="max-w-[150px] truncate px-4 py-3 text-neutral-500">
+                                            {beneficiary.address}
+                                          </td>
+                                          <td className="px-4 py-3 text-neutral-500">
+                                            {beneficiary.city}
+                                          </td>
+                                          <td className="px-4 py-3 text-neutral-500">
+                                            {beneficiary.state}
+                                          </td>
+                                          <td className="px-4 py-3 text-neutral-500">
+                                            {beneficiary.country}
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                              {beneficiary.currency}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      ),
+                                    )
                                   ) : (
                                     <tr>
                                       <td
@@ -500,36 +439,77 @@ const BeneficiaryContent: React.FC = () => {
             <div className="text-sm text-neutral-500">
               Showing{' '}
               <span className="font-medium text-[#0F1535] dark:text-white">
-                1
+                {filteredBeneficiaries.length > 0 ? startIndex + 1 : 0}
               </span>{' '}
               to{' '}
               <span className="font-medium text-[#0F1535] dark:text-white">
-                4
+                {Math.min(
+                  startIndex + ITEMS_PER_PAGE,
+                  filteredBeneficiaries.length,
+                )}
               </span>{' '}
               of{' '}
               <span className="font-medium text-[#0F1535] dark:text-white">
-                24
+                {filteredBeneficiaries.length}
               </span>{' '}
               clients
             </div>
             <div className="flex items-center space-x-2">
               <button
                 className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]"
-                disabled
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
               >
                 Previous
               </button>
-              <button className="rounded-md bg-primary px-3 py-1 text-sm text-white shadow-sm hover:bg-[#d96d2b]">
-                1
-              </button>
-              <button className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
-                2
-              </button>
-              <button className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
-                3
-              </button>
-              <span className="text-neutral-500">...</span>
-              <button className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]">
+
+              {/* Page Numbers */}
+              {Array.from({length: Math.min(3, totalPages)}, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 3) {
+                  pageNumber = i + 1;
+                } else if (currentPage === 1) {
+                  pageNumber = i + 1;
+                } else if (currentPage === totalPages) {
+                  pageNumber = totalPages - 2 + i;
+                } else {
+                  pageNumber = currentPage - 1 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNumber}
+                    className={`rounded-md px-3 py-1 text-sm ${
+                      currentPage === pageNumber
+                        ? 'bg-primary text-white shadow-sm hover:bg-[#d96d2b]'
+                        : 'border border-stroke text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]'
+                    }`}
+                    onClick={() => handlePageClick(pageNumber)}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+
+              {totalPages > 3 && currentPage < totalPages - 1 && (
+                <>
+                  <span className="text-neutral-500">...</span>
+                  <button
+                    className={`rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20] ${
+                      currentPage === totalPages ? 'bg-primary text-white' : ''
+                    }`}
+                    onClick={() => handlePageClick(totalPages)}
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+
+              <button
+                className="rounded-md border border-stroke px-3 py-1 text-sm text-neutral-500 hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:hover:bg-[#3a2a20]"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
                 Next
               </button>
             </div>

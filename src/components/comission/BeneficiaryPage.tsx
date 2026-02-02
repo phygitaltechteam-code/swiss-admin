@@ -1,7 +1,5 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  Search,
-  Bell,
   CheckCircle,
   AlertTriangle,
   Clock,
@@ -10,11 +8,20 @@ import {
   MapPin,
   Building2,
   Copy,
-  CreditCard,
   User,
   ShieldAlert,
-  ChevronLeft,
 } from 'lucide-react';
+import {
+  useAcceptBeneficiary,
+  useGetBeneficiaryByCustomer,
+  useRejectBeneficiary,
+} from '@/lib/react-query/Beneficiary';
+import {Route} from '@/routes/_app/client/beneficiaryverification.$id';
+import {getRequestStatus} from '../approval/methods';
+
+import {MdArrowBack} from 'react-icons/md';
+import {useNavigate} from '@tanstack/react-router';
+import toast from 'react-hot-toast';
 
 // --- Types ---
 
@@ -26,127 +33,88 @@ interface Beneficiary {
   status: 'verified' | 'pending' | 'rejected';
 }
 
-// --- Component ---
-
 const BeneficiaryPage: React.FC = () => {
+  const {id} = Route.useParams();
+  const navigate = useNavigate();
   const [adminNote, setAdminNote] = useState('');
+  const {data: beneficiaries} = useGetBeneficiaryByCustomer(id);
+  const status = getRequestStatus(beneficiaries?.user);
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState<any | null>(
+    null,
+  );
+  const {mutateAsync: acceptBeneficiary} = useAcceptBeneficiary();
+  const {mutateAsync: rejectBeneficiary} = useRejectBeneficiary();
 
-  // Mock Data
-  const recentBeneficiaries: Beneficiary[] = [
-    {
-      id: 'GT',
-      name: 'Global Travels Ltd',
-      bank: 'Wells Fargo',
-      accountLast4: '9921',
-      status: 'verified',
-    },
-    {
-      id: 'AC',
-      name: 'Acme Corp Logistics',
-      bank: 'Chase Bank',
-      accountLast4: '4589',
-      status: 'pending',
-    },
-    {
-      id: 'JD',
-      name: 'John Doe',
-      bank: 'Barclays',
-      accountLast4: '1234',
-      status: 'rejected',
-    },
-  ];
+  const reject = () => {
+    if (!selectedBeneficiary?.id) {
+      toast.error('Please select a beneficiary');
+      return;
+    }
+
+    if (!adminNote?.trim()) {
+      toast.error('Please enter a rejection note');
+      return;
+    }
+
+    rejectBeneficiary({
+      id: selectedBeneficiary.id,
+      note: adminNote,
+    });
+  };
+
+  useEffect(() => {
+    setSelectedBeneficiary(beneficiaries?.foreignBeneficiaries[0]);
+  }, [beneficiaries]);
+  console.log('beneficiary', beneficiaries);
 
   return (
     <div className="bg-background-light font-sans flex h-screen flex-col overflow-hidden text-slate-800">
       {/* --- Header --- */}
-      <header className="border-gray-200 z-20 flex h-16 shrink-0 items-center justify-between border-b bg-white px-6 shadow-sm">
+      <header className="z-20 flex h-16 shrink-0 items-center justify-between bg-white px-6">
         <div className="flex items-center gap-4">
           <div className="mr-4 flex items-center gap-2">
-            <div className="rounded-lg bg-primary/10 p-1.5">
-              <ShieldAlert className="h-6 w-6 text-primary" />
+            <div
+              className="rounded-lg bg-primary/10 p-1.5"
+              onClick={() => navigate({to: '/client/beneficiary'})}
+            >
+              <MdArrowBack className="text-gray-500 text-lg" />
             </div>
+
             <h1 className="text-header-text text-lg font-bold tracking-tight">
               Verification Hub
             </h1>
           </div>
-
-          <div className="bg-gray-200 mx-2 hidden h-6 w-px sm:block"></div>
-
-          <nav className="text-label-text flex items-center text-sm">
-            <span className="cursor-pointer transition-colors hover:text-primary">
-              Verifications
-            </span>
-            <span className="text-gray-300 mx-2">/</span>
-            <span className="text-header-text font-semibold">
-              Beneficiary Review
-            </span>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-6">
-          <div className="group relative hidden md:flex">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="text-gray-400 h-4 w-4 transition-colors group-focus-within:text-primary" />
-            </span>
-            <input
-              type="text"
-              className="bg-gray-50 border-gray-200 text-gray-900 w-64 rounded-full border py-2 pl-10 pr-4 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Search Client ID or Name"
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button className="text-gray-500 hover:bg-gray-50 relative rounded-full p-1.5 transition-colors hover:text-primary">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full border-2 border-white bg-red-500"></span>
-            </button>
-            <div className="h-8 w-8 cursor-pointer overflow-hidden rounded-full border border-indigo-200 bg-indigo-100 ring-2 ring-transparent transition-all hover:ring-indigo-100">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6H4HbZY6bap1nYguIuQIQNQ4SAIr8UxQ22DQhaLWuM8GgXOxJKGFOJ-E5UYufTmNjUUn4ZNlGBC1hUgOKeT7m1Izb3erAFGx4RtAKHV-08jMr6hr_3SciXlKoG2JEQpe_bS6ByDOrx2fakSFk6zj5xYOfnbnJiMkER9LEK6eiq-BYriyoTBBQMODC-_msI3fnQZQao_WpNgWK3wLDc9cgNZEdj1sF16Up_U5h9RMuRFFGuclQHK51qfqnhQROZXDCVcvqZZVQP3V"
-                alt="Admin"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          </div>
         </div>
       </header>
 
-      {/* --- Main Content Layout --- */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar: Context & Recents */}
-        <aside className="border-gray-200 z-10 flex hidden w-72 shrink-0 flex-col overflow-hidden border-r bg-white lg:flex">
-          {/* Client Profile Summary */}
-          <div className="border-gray-200 border-b p-5">
+        <aside className="z-10 flex hidden w-72 shrink-0 flex-col overflow-hidden border-r border-stroke bg-white lg:flex">
+          <div className="border-b border-stroke p-5">
             <div className="mb-4 flex items-center gap-3">
               <div className="ring-gray-100 h-12 w-12 overflow-hidden rounded-full ring-2">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxLv8nMzfKhzXXamrzyV5FM6u5MYQHa8cOMQuzTfbQz8C4nzLwlCkiH2E1cUKDbls2T_oqnBS5wXQZn3zdgTjGC9dJetGjjVqGM_0w5m1D5Vfd9AQl4mqAkp02jI4L3pO5ewHQgCGMVySc1URaWL2l5AvnhDrDAPIhqnqzk_YnysZInDv4fxuvFKR7rJmST4KNycJV2AjnImIC8aDFSwHJjPQFC4bxLjszMh0vY3fAZg15ZQ56S30cwsgShZ8SPhjGvgWvadKR3-e4"
+                  src={beneficiaries?.photo}
                   alt="Client"
                   className="h-full w-full object-cover"
                 />
               </div>
               <div>
                 <h2 className="text-header-text text-sm font-bold">
-                  Sarah Jenkins
+                  {beneficiaries?.user?.fullname}
                 </h2>
-                <p className="text-label-text text-xs">Client #77210</p>
               </div>
             </div>
 
             <div className="mb-4 inline-flex items-center rounded border border-green-100 bg-green-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700">
-              Active
+              {status}
             </div>
 
-            <div className="bg-gray-50 border-gray-100 grid grid-cols-2 gap-3 rounded-lg border p-3 text-xs">
+            <div className="bg-gray-50 grid grid-cols-2 gap-3 rounded-lg border border-stroke p-3 text-xs">
               <div>
                 <p className="text-label-text mb-0.5 text-[10px]">
                   Total Assets
                 </p>
                 <p className="text-header-text font-semibold">$142,500.00</p>
-              </div>
-              <div>
-                <p className="text-label-text mb-0.5 text-[10px]">Risk Level</p>
-                <p className="font-semibold text-yellow-600">Low</p>
               </div>
             </div>
           </div>
@@ -157,70 +125,79 @@ const BeneficiaryPage: React.FC = () => {
               Recent Beneficiaries
             </h3>
             <div className="space-y-1">
-              {recentBeneficiaries.map((b) => (
-                <div
-                  key={b.id}
-                  className={`flex cursor-pointer items-center rounded-lg border p-2.5 transition-all ${
-                    b.status === 'pending'
-                      ? 'relative overflow-hidden border-orange-100 bg-orange-50'
-                      : 'hover:bg-gray-50 border-transparent'
-                  } ${b.status === 'rejected' ? 'opacity-60' : ''}`}
-                >
-                  {b.status === 'pending' && (
-                    <div className="absolute bottom-0 left-0 top-0 w-1 bg-primary"></div>
-                  )}
+              {beneficiaries?.foreignBeneficiaries.map((b) => {
+                const benestatus = getRequestStatus(b);
 
+                return (
                   <div
-                    className={`mr-3 flex h-8 w-8 items-center justify-center rounded-md text-[10px] font-bold shadow-sm ${
-                      b.status === 'pending'
-                        ? 'bg-primary text-white'
-                        : 'border-gray-200 text-gray-600 border bg-white'
-                    }`}
+                    key={b.id}
+                    className={`flex cursor-pointer items-center rounded-lg border p-2.5 transition-all ${
+                      benestatus === 'PENDING'
+                        ? 'relative overflow-hidden border-primary/10 bg-orange-50'
+                        : 'hover:bg-gray-50 border-transparent'
+                    } ${
+                      selectedBeneficiary?.id === b.id
+                        ? 'bg-gray-100 border-2 border-black'
+                        : ''
+                    } ${benestatus === 'REJECTED' ? 'opacity-60' : ''} `}
+                    onClick={() => setSelectedBeneficiary(b)}
                   >
-                    {b.id}
-                  </div>
+                    {/* {benestatus === 'PENDING' && (
+                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-primary"></div>
+                    )} */}
 
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={`truncate text-xs font-semibold ${b.status === 'pending' ? 'text-gray-900' : 'text-header-text'}`}
+                    <div
+                      className={`mr-3 flex h-8 w-8 items-center justify-center rounded-md text-[10px] font-bold shadow-sm ${
+                        benestatus === 'PENDING'
+                          ? 'bg-primary text-white'
+                          : benestatus === 'REJECTED'
+                            ? 'bg-red-100 text-red-600'
+                            : benestatus === 'APPROVED'
+                              ? 'bg-green-100 text-green-600'
+                              : 'text-gray-600 border border-stroke bg-white'
+                      }`}
                     >
-                      {b.name}
-                    </p>
-                    <p
-                      className={`truncate text-[10px] ${b.status === 'pending' ? 'text-gray-600' : 'text-label-text'}`}
-                    >
-                      {b.bank} •••• {b.accountLast4}
-                    </p>
-                  </div>
+                      {b.fullName?.charAt(0).toUpperCase()}
+                    </div>
 
-                  <div className="ml-2">
-                    {b.status === 'verified' && (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    )}
-                    {b.status === 'pending' && (
-                      <Clock className="h-4 w-4 animate-pulse text-primary" />
-                    )}
-                    {b.status === 'rejected' && (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`truncate text-xs font-semibold ${benestatus === 'PENDING' ? 'text-gray-900' : 'text-header-text'}`}
+                      >
+                        {b.fullName}
+                      </p>
+                      <p
+                        className={`truncate text-[10px] ${benestatus === 'PENDING' ? 'text-gray-600' : 'text-label-text'}`}
+                      >
+                        {b.accountNumber}
+                      </p>
+                    </div>
+
+                    <div className="ml-2">
+                      {benestatus === 'APPROVED' && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                      {benestatus === 'PENDING' && (
+                        <Clock className="h-4 w-4 animate-pulse text-primary" />
+                      )}
+                      {benestatus === 'REJECTED' && (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </aside>
 
-        {/* Center: Main Detail View */}
         <section className="bg-gray-50/50 relative flex min-w-0 flex-1 flex-col overflow-hidden">
           {/* Detail Header */}
-          <div className="border-gray-200 shrink-0 border-b bg-white px-8 py-5">
+          <div className="shrink-0 border-b border-stroke bg-white px-8 py-5">
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-label-text flex items-center text-xs font-medium">
-                <span>Request #89201</span>
-              </div>
               <div className="flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary"></span>
-                Pending Review
+                {getRequestStatus(selectedBeneficiary)}
               </div>
             </div>
 
@@ -230,9 +207,21 @@ const BeneficiaryPage: React.FC = () => {
                   New Beneficiary Request
                 </h1>
                 <p className="text-label-text flex items-center gap-1 text-xs">
-                  Submitted on Oct 24, 2023 at 10:42 AM by{' '}
+                  Submitted on{' '}
+                  {new Date(selectedBeneficiary?.createdAt).toLocaleString(
+                    'en-US',
+                    {
+                      month: 'short',
+                      day: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    },
+                  )}{' '}
+                  by
                   <span className="text-gray-700 font-medium">
-                    Sarah Jenkins
+                    {selectedBeneficiary?.fullName}
                   </span>
                 </p>
               </div>
@@ -256,14 +245,14 @@ const BeneficiaryPage: React.FC = () => {
           {/* Scrollable Content */}
           <div className="custom-scrollbar flex-1 overflow-y-auto p-4 lg:p-8">
             <div className="mx-auto h-full max-w-5xl">
-              <div className="border-gray-200 flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm">
+              <div className="flex h-full flex-col overflow-hidden rounded-xl border border-stroke bg-white shadow-sm">
                 {/* Card Header */}
-                <div className="border-gray-200 bg-gray-50 flex shrink-0 items-center justify-between border-b px-6 py-4">
+                <div className="bg-gray-50 flex shrink-0 items-center justify-between border-b border-stroke px-6 py-4">
                   <h3 className="text-header-text flex items-center gap-2 text-sm font-bold uppercase tracking-wider">
                     <User className="text-label-text h-4 w-4" />
                     Beneficiary Information
                   </h3>
-                  <span className="text-gray-600 border-gray-200 rounded border bg-white px-2 py-1 text-[10px] font-medium shadow-sm">
+                  <span className="text-gray-600 rounded border border-stroke bg-white px-2 py-1 text-[10px] font-medium shadow-sm">
                     International Transfer
                   </span>
                 </div>
@@ -273,13 +262,13 @@ const BeneficiaryPage: React.FC = () => {
                   <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                     {/* Section 1: Identity */}
                     <div className="col-span-1 md:col-span-3 lg:col-span-3">
-                      <h4 className="text-label-text border-gray-100 mb-4 flex items-center gap-2 border-b pb-2 text-xs font-bold uppercase tracking-wider">
+                      <h4 className="text-label-text mb-4 flex items-center gap-2 border-b border-stroke pb-2 text-xs font-bold uppercase tracking-wider">
                         <BadgeCheck className="h-4 w-4" /> Identity Details
                       </h4>
                       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
                         <div>
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
-                            Full Legal Name
+                            {selectedBeneficiary?.fullName}
                           </label>
                           <div className="text-header-text text-sm font-semibold">
                             Sarah Miller
@@ -290,7 +279,7 @@ const BeneficiaryPage: React.FC = () => {
                             Relationship
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            Family Member (Sister)
+                            {selectedBeneficiary?.relationship}
                           </div>
                         </div>
                         <div>
@@ -298,7 +287,7 @@ const BeneficiaryPage: React.FC = () => {
                             Email
                           </label>
                           <div className="text-header-text cursor-pointer truncate text-sm font-medium text-primary hover:underline">
-                            sarah.miller@example.co.uk
+                            {selectedBeneficiary?.email}
                           </div>
                         </div>
                         <div>
@@ -306,7 +295,7 @@ const BeneficiaryPage: React.FC = () => {
                             Mobile Number
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            +44 7700 900077
+                            {selectedBeneficiary?.phoneNumber}
                           </div>
                         </div>
                       </div>
@@ -314,7 +303,7 @@ const BeneficiaryPage: React.FC = () => {
 
                     {/* Section 2: Address */}
                     <div className="col-span-1 md:col-span-3 lg:col-span-3">
-                      <h4 className="text-label-text border-gray-100 mb-4 flex items-center gap-2 border-b pb-2 text-xs font-bold uppercase tracking-wider">
+                      <h4 className="text-label-text mb-4 flex items-center gap-2 border-b border-stroke pb-2 text-xs font-bold uppercase tracking-wider">
                         <MapPin className="h-4 w-4" /> Address Details
                       </h4>
                       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
@@ -323,7 +312,7 @@ const BeneficiaryPage: React.FC = () => {
                             Address Line 1
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            45 Oxford Street
+                            {selectedBeneficiary?.address}
                           </div>
                         </div>
                         <div>
@@ -331,7 +320,7 @@ const BeneficiaryPage: React.FC = () => {
                             City
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            London
+                            {selectedBeneficiary?.city}
                           </div>
                         </div>
                         <div>
@@ -339,7 +328,7 @@ const BeneficiaryPage: React.FC = () => {
                             State / Province
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            Westminster
+                            {selectedBeneficiary?.state}
                           </div>
                         </div>
                         <div>
@@ -347,7 +336,7 @@ const BeneficiaryPage: React.FC = () => {
                             ZIP / Postal Code
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            W1D 2DZ
+                            {selectedBeneficiary?.pincode}
                           </div>
                         </div>
                         <div className="md:col-span-3">
@@ -355,11 +344,11 @@ const BeneficiaryPage: React.FC = () => {
                             Country
                           </label>
                           <div className="flex items-center gap-2">
-                            <span className="overflow-hidden rounded-sm text-xl shadow-sm">
+                            {/* <span className="overflow-hidden rounded-sm text-xl shadow-sm">
                               🇬🇧
-                            </span>
+                            </span> */}
                             <span className="text-header-text text-sm font-medium">
-                              United Kingdom
+                              {selectedBeneficiary?.country}
                             </span>
                           </div>
                         </div>
@@ -368,7 +357,7 @@ const BeneficiaryPage: React.FC = () => {
 
                     {/* Section 3: Bank Details */}
                     <div className="col-span-1 md:col-span-3 lg:col-span-3">
-                      <h4 className="text-label-text border-gray-100 mb-4 flex items-center gap-2 border-b pb-2 text-xs font-bold uppercase tracking-wider">
+                      <h4 className="text-label-text mb-4 flex items-center gap-2 border-b border-stroke pb-2 text-xs font-bold uppercase tracking-wider">
                         <Building2 className="h-4 w-4" /> Bank Details
                       </h4>
                       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
@@ -377,11 +366,11 @@ const BeneficiaryPage: React.FC = () => {
                             Bank Country
                           </label>
                           <div className="flex items-center gap-2">
-                            <span className="overflow-hidden rounded-sm text-xl shadow-sm">
+                            {/* <span className="overflow-hidden rounded-sm text-xl shadow-sm">
                               🇬🇧
-                            </span>
+                            </span> */}
                             <span className="text-header-text text-sm font-medium">
-                              United Kingdom
+                              {selectedBeneficiary?.bankCountry}
                             </span>
                           </div>
                         </div>
@@ -390,18 +379,18 @@ const BeneficiaryPage: React.FC = () => {
                             Currency
                           </label>
                           <div className="text-header-text flex items-center gap-2 text-sm font-medium">
-                            <span className="bg-gray-100 text-gray-600 border-gray-200 rounded border px-1.5 py-0.5 text-[10px] font-bold">
+                            {/* <span className="bg-gray-100 text-gray-600 border-stroke rounded border px-1.5 py-0.5 text-[10px] font-bold">
                               GBP
-                            </span>
-                            British Pound
+                            </span> */}
+                            {selectedBeneficiary?.currency}
                           </div>
                         </div>
                         <div className="md:col-span-2">
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
                             Account / IBAN
                           </label>
-                          <div className="text-header-text font-mono bg-gray-50 border-gray-200 hover:border-gray-300 group flex cursor-pointer items-center justify-between rounded border p-2 text-sm font-medium tracking-wide transition-colors">
-                            GB00 0000 0000 0000 0000
+                          <div className="text-header-text font-mono bg-gray-50 hover:border-gray-300 group flex cursor-pointer items-center justify-between rounded border border-stroke p-2 text-sm font-medium tracking-wide transition-colors">
+                            {selectedBeneficiary?.accountNumber}
                             <Copy className="text-gray-400 h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
                           </div>
                         </div>
@@ -410,7 +399,7 @@ const BeneficiaryPage: React.FC = () => {
                             Account Type
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            Personal Checking
+                            {selectedBeneficiary?.accountType}
                           </div>
                         </div>
                         <div>
@@ -418,7 +407,7 @@ const BeneficiaryPage: React.FC = () => {
                             SWIFT / BIC
                           </label>
                           <div className="text-header-text font-mono text-sm font-medium">
-                            HDFCGB2L
+                            {selectedBeneficiary?.SWIFTBIC}
                           </div>
                         </div>
                         <div>
@@ -426,7 +415,7 @@ const BeneficiaryPage: React.FC = () => {
                             Routing / IFSC
                           </label>
                           <div className="text-header-text font-mono text-sm font-medium">
-                            20-00-00
+                            {selectedBeneficiary?.IFSC}
                           </div>
                         </div>
                         <div>
@@ -434,17 +423,17 @@ const BeneficiaryPage: React.FC = () => {
                             Bank Name
                           </label>
                           <div className="text-header-text text-sm font-medium">
-                            HDFC Bank UK
+                            {selectedBeneficiary?.bankName}
                           </div>
                         </div>
-                        <div className="md:col-span-4">
+                        {/* <div className="md:col-span-4">
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
                             Branch Name
                           </label>
                           <div className="text-header-text text-sm font-medium">
                             London Main Branch (Old Broad St)
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   </div>
@@ -455,8 +444,8 @@ const BeneficiaryPage: React.FC = () => {
         </section>
 
         {/* Right Sidebar: Action Center */}
-        <aside className="border-gray-200 z-20 flex w-80 shrink-0 flex-col border-l bg-white shadow-xl">
-          <div className="border-gray-200 border-b bg-white p-6">
+        <aside className="z-20 flex w-80 shrink-0 flex-col border-l border-stroke bg-white shadow-xl">
+          <div className="border-b border-stroke bg-white p-6">
             <h2 className="text-header-text text-lg font-bold">
               Action Center
             </h2>
@@ -486,11 +475,17 @@ const BeneficiaryPage: React.FC = () => {
             </div>
 
             <div className="mt-auto shrink-0 space-y-3">
-              <button className="flex w-full transform items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 font-semibold text-white shadow-md transition-all hover:bg-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98]">
+              <button
+                className="flex w-full transform items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 font-semibold text-white shadow-md transition-all hover:bg-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98]"
+                onClick={() => acceptBeneficiary(selectedBeneficiary?.id)}
+              >
                 <CheckCircle className="h-5 w-5" />
                 Approve Beneficiary
               </button>
-              <button className="border-gray-200 flex w-full transform items-center justify-center gap-2 rounded-lg border bg-white px-4 py-3.5 font-medium text-red-600 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98]">
+              <button
+                className="flex w-full transform items-center justify-center gap-2 rounded-lg border border-stroke bg-white px-4 py-3.5 font-medium text-red-600 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98]"
+                onClick={() => reject()}
+              >
                 <XCircle className="h-5 w-5" />
                 Reject Request
               </button>
