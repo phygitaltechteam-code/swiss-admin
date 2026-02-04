@@ -19,9 +19,8 @@ const GenericButton: React.FC<GenericButtonProps> = ({
     <button
       type={type}
       onClick={onClick}
-      className={`hover:bg-primary-dark mx-1 rounded px-4 py-1 text-white transition duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      style={{background: '#0284C7'}}
       disabled={disabled}
+      className={`mx-1 rounded px-4 py-1 transition duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {children}
     </button>

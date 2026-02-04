@@ -345,7 +345,7 @@ export const TransferDashboard = () => {
               <MdFilterList className="text-[20px] text-primary" />
               Clear Filters
             </GenericButton>
-            <GenericButton className="flex items-center gap-2 bg-primary px-4 py-2 font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-700">
+            <GenericButton className="flex items-center gap-2 bg-orange-500 px-4 py-2 font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-700">
               <MdDownload className="text-[20px]" />
               Export Report
             </GenericButton>
