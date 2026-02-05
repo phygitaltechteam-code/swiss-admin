@@ -1,11 +1,10 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   MdPictureAsPdf,
   MdPrint,
   MdCalendarToday,
   MdSearch,
   MdExpandMore,
-  MdArrowDownward,
 } from 'react-icons/md';
 import {FaFileCsv} from 'react-icons/fa';
 
@@ -14,60 +13,72 @@ import {
   StatData,
   Transaction,
 } from '@/components/cashflowreport/types';
-import Header from '@/components/cashflowreport/Header';
 import StatCard from '@/components/cashflowreport/StatCard';
 import ChartSection from '@/components/cashflowreport/ChartSection';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
+import {useGetFlowRange} from '@/lib/react-query/cashflow';
 
-// Mock Data
-const stats: StatData[] = [
-  {
-    label: 'Total Inflow',
-    value: 1250000.0,
-    change: 12.5,
-    changeLabel: 'vs last month',
-    isPositive: true,
-    type: 'inflow',
-  },
-  {
-    label: 'Total Outflow',
-    value: 980500.0,
-    change: 5.2,
-    changeLabel: 'vs last month',
-    isPositive: false,
-    type: 'outflow',
-  },
-  {
-    label: 'Net Cash Flow',
-    value: 269500.0,
-    change: 0.0,
-    changeLabel: 'Target reached',
-    isPositive: true,
-    type: 'net',
-  },
-  {
-    label: 'Closing Balance',
-    value: 4100230.5,
-    change: 8.4,
-    changeLabel: 'vs last year',
-    isPositive: true,
-    type: 'closing',
-  },
-];
+// Types for API response
+interface FlowData {
+  month: string;
+  inflow: number;
+  outFlow: number;
+}
 
-const chartData: ChartData[] = [
-  {month: 'Jan', inflow: 600000, outflow: 500000},
-  {month: 'Feb', inflow: 800000, outflow: 650000},
-  {month: 'Mar', inflow: 950000, outflow: 450000},
-  {month: 'Apr', inflow: 650000, outflow: 750000},
-  {month: 'May', inflow: 1100000, outflow: 900000},
-  {month: 'Jun', inflow: 1200000, outflow: 800000},
-];
+interface ApiResponse {
+  statusCode: number;
+  status: boolean;
+  message: string;
+  data: {
+    sixMonth: FlowData[];
+    oneYear: FlowData[];
+    ytd: FlowData[];
+  };
+  errors: null;
+}
 
+// Fallback data matching your API response structure
+const fallbackData: ApiResponse = {
+  statusCode: 200,
+  status: true,
+  message: 'Monthly Cash Flow Graphs retrieved successfully',
+  data: {
+    sixMonth: [
+      {month: 'Sept 2025', inflow: 0, outFlow: 0},
+      {month: 'Oct 2025', inflow: 0, outFlow: 0},
+      {month: 'Nov 2025', inflow: 0, outFlow: 0},
+      {month: 'Dec 2025', inflow: 0, outFlow: 0},
+      {month: 'Jan 2026', inflow: 0, outFlow: 0},
+      {month: 'Feb 2026', inflow: 104515, outFlow: 15366},
+    ],
+    oneYear: [
+      {month: 'Feb 2025', inflow: 0, outFlow: 0},
+      {month: 'Mar 2025', inflow: 0, outFlow: 0},
+      {month: 'Apr 2025', inflow: 0, outFlow: 0},
+      {month: 'May 2025', inflow: 0, outFlow: 0},
+      {month: 'Jun 2025', inflow: 0, outFlow: 0},
+      {month: 'Jul 2025', inflow: 0, outFlow: 0},
+      {month: 'Aug 2025', inflow: 0, outFlow: 0},
+      {month: 'Sept 2025', inflow: 0, outFlow: 0},
+      {month: 'Oct 2025', inflow: 0, outFlow: 0},
+      {month: 'Nov 2025', inflow: 0, outFlow: 0},
+      {month: 'Dec 2025', inflow: 0, outFlow: 0},
+      {month: 'Jan 2026', inflow: 0, outFlow: 0},
+      {month: 'Feb 2026', inflow: 104515, outFlow: 15366},
+    ],
+    ytd: [
+      {month: 'Jan 2026', inflow: 0, outFlow: 0},
+      {month: 'Feb 2026', inflow: 104515, outFlow: 15366},
+    ],
+  },
+  errors: null,
+};
+
+// Mock transactions (replace with actual API data when available)
 const transactions: Transaction[] = [
   {
     id: '1',
-    date: 'Oct 24, 2023',
+    date: 'Feb 24, 2026',
     category: 'Top-up',
     description: 'Wire Transfer from JP Morgan',
     inflow: 50000.0,
@@ -75,7 +86,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '2',
-    date: 'Oct 23, 2023',
+    date: 'Feb 23, 2026',
     category: 'Fee',
     description: 'Monthly Maintenance',
     outflow: 50.0,
@@ -83,7 +94,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '3',
-    date: 'Oct 22, 2023',
+    date: 'Feb 22, 2026',
     category: 'Transfer',
     description: 'Payroll Disbursement',
     outflow: 120000.0,
@@ -91,7 +102,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '4',
-    date: 'Oct 21, 2023',
+    date: 'Feb 21, 2026',
     category: 'Top-up',
     description: 'ACH Deposit: Stripe Inc.',
     inflow: 24500.0,
@@ -99,7 +110,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '5',
-    date: 'Oct 20, 2023',
+    date: 'Feb 20, 2026',
     category: 'Transfer',
     description: 'Vendor Payment: AWS Services',
     outflow: 4200.0,
@@ -107,7 +118,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '6',
-    date: 'Oct 19, 2023',
+    date: 'Feb 19, 2026',
     category: 'Interest',
     description: 'Monthly Interest Payment',
     inflow: 1250.0,
@@ -115,7 +126,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '7',
-    date: 'Oct 18, 2023',
+    date: 'Feb 18, 2026',
     category: 'Fee',
     description: 'Wire Transfer Fee',
     outflow: 25.0,
@@ -123,7 +134,7 @@ const transactions: Transaction[] = [
   },
   {
     id: '8',
-    date: 'Oct 17, 2023',
+    date: 'Feb 17, 2026',
     category: 'Top-up',
     description: 'Client Payment: ABC Corp',
     inflow: 35000.0,
@@ -134,7 +145,18 @@ const transactions: Transaction[] = [
 const CashflowReport: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [dateRange, setDateRange] = useState('Oct 1 - Oct 31, 2023');
+  const [dateRange, setDateRange] = useState('Feb 1 - Feb 28, 2026');
+  const [timeRange, setTimeRange] = useState<'sixMonth' | 'oneYear' | 'ytd'>(
+    'sixMonth',
+  );
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [stats, setStats] = useState<StatData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+
+  // Try to get data from the hook, but have fallback in case it fails
+  const hookResult = useGetFlowRange();
+  const flowData = hookResult?.data || fallbackData;
 
   // Format currency for display
   const formatCurrency = (amount: number) => {
@@ -144,6 +166,126 @@ const CashflowReport: React.FC = () => {
       minimumFractionDigits: 2,
     }).format(amount);
   };
+
+  // Process data for chart and stats
+  useEffect(() => {
+    try {
+      setIsLoading(true);
+
+      // Use the data from hook or fallback
+      const selectedData = flowData.data[timeRange];
+
+      // Transform data for chart - only show non-zero months for better visualization
+      const filteredData = selectedData.filter(
+        (item) => item.inflow > 0 || item.outFlow > 0,
+      );
+
+      const transformedChartData: ChartData[] = filteredData.map((item) => ({
+        month: item.month.split(' ')[0], // Get short month name
+        inflow: item.inflow,
+        outflow: item.outFlow,
+      }));
+
+      setChartData(transformedChartData);
+
+      // Calculate stats from the selected data
+      const totalInflow = selectedData.reduce(
+        (sum, item) => sum + item.inflow,
+        0,
+      );
+      const totalOutflow = selectedData.reduce(
+        (sum, item) => sum + item.outFlow,
+        0,
+      );
+      const netCashFlow = totalInflow - totalOutflow;
+
+      // Calculate average inflow/outflow for non-zero months
+      const nonZeroMonths = selectedData.filter(
+        (item) => item.inflow > 0 || item.outFlow > 0,
+      );
+      const avgInflow =
+        nonZeroMonths.length > 0
+          ? nonZeroMonths.reduce((sum, item) => sum + item.inflow, 0) /
+            nonZeroMonths.length
+          : 0;
+      const avgOutflow =
+        nonZeroMonths.length > 0
+          ? nonZeroMonths.reduce((sum, item) => sum + item.outFlow, 0) /
+            nonZeroMonths.length
+          : 0;
+
+      // For change calculations, compare with previous non-zero period if available
+      let inflowChange = 0;
+      let outflowChange = 0;
+
+      if (nonZeroMonths.length > 1) {
+        const previousMonth = nonZeroMonths[nonZeroMonths.length - 2];
+        const currentMonth = nonZeroMonths[nonZeroMonths.length - 1];
+
+        inflowChange =
+          previousMonth.inflow > 0
+            ? ((currentMonth.inflow - previousMonth.inflow) /
+                previousMonth.inflow) *
+              100
+            : currentMonth.inflow > 0
+              ? 100
+              : 0;
+
+        outflowChange =
+          previousMonth.outFlow > 0
+            ? ((currentMonth.outFlow - previousMonth.outFlow) /
+                previousMonth.outFlow) *
+              100
+            : currentMonth.outFlow > 0
+              ? 100
+              : 0;
+      }
+
+      // Update stats
+      const updatedStats: StatData[] = [
+        {
+          label: 'Total Inflow',
+          value: totalInflow,
+          change: inflowChange,
+          changeLabel: 'vs previous period',
+          isPositive: inflowChange >= 0,
+          type: 'inflow',
+        },
+        {
+          label: 'Total Outflow',
+          value: totalOutflow,
+          change: outflowChange,
+          changeLabel: 'vs previous period',
+          isPositive: outflowChange <= 0, // Lower outflow is positive
+          type: 'outflow',
+        },
+        {
+          label: 'Net Cash Flow',
+          value: netCashFlow,
+          change: 0,
+          changeLabel:
+            netCashFlow >= 0 ? 'Positive cash flow' : 'Negative cash flow',
+          isPositive: netCashFlow >= 0,
+          type: 'net',
+        },
+        {
+          label: 'Average Monthly',
+          value: avgInflow - avgOutflow,
+          change: 0,
+          changeLabel: 'per active month',
+          isPositive: avgInflow - avgOutflow >= 0,
+          type: 'closing',
+        },
+      ];
+
+      setStats(updatedStats);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error processing cash flow data:', error);
+      setIsError(true);
+      setIsLoading(false);
+    }
+  }, [flowData, timeRange]);
 
   // Filter transactions based on search and filters
   const filteredTransactions = transactions.filter((transaction) => {
@@ -250,21 +392,6 @@ const CashflowReport: React.FC = () => {
     },
   ];
 
-  const handleView = (transaction: Transaction) => {
-    console.log('View transaction:', transaction);
-    // Open transaction details modal or navigate
-  };
-
-  const handleEdit = (transaction: Transaction) => {
-    console.log('Edit transaction:', transaction);
-    // Open edit modal
-  };
-
-  const handleDelete = (transaction: Transaction) => {
-    console.log('Delete transaction:', transaction);
-    // Show confirmation dialog
-  };
-
   const handleExportPDF = () => {
     console.log('Exporting PDF...');
     // PDF export logic
@@ -280,6 +407,43 @@ const CashflowReport: React.FC = () => {
     window.print();
   };
 
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-primary motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">
+            Loading cash flow data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-5xl text-red-500">⚠️</div>
+          <h3 className="text-gray-900 text-xl font-bold dark:text-white">
+            Error Loading Data
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Using fallback data. Please check your API connection.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex min-h-screen w-full flex-row">
       <main className="flex min-h-screen flex-1 flex-col">
@@ -292,31 +456,66 @@ const CashflowReport: React.FC = () => {
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-base">
                 Detailed overview of inflows, outflows, and net cash movement
-                for FY 2023.
               </p>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleExportPDF}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-bold transition-colors dark:text-white"
-              >
-                <MdPictureAsPdf size={20} />
-                <span>Export PDF</span>
-              </button>
-              <button
-                onClick={handleExportCSV}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-bold transition-colors dark:text-white"
-              >
-                <FaFileCsv size={18} />
-                <span>Export CSV</span>
-              </button>
-              <button
-                onClick={handlePrint}
-                className="hover:bg-primary-dark flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors"
-              >
-                <MdPrint size={20} />
-                <span>Print</span>
-              </button>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              {/* Time Range Selector */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setTimeRange('sixMonth')}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    timeRange === 'sixMonth'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  6 Months
+                </button>
+                <button
+                  onClick={() => setTimeRange('oneYear')}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    timeRange === 'oneYear'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  1 Year
+                </button>
+                <button
+                  onClick={() => setTimeRange('ytd')}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    timeRange === 'ytd'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  YTD
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleExportPDF}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-bold transition-colors dark:text-white"
+                >
+                  <MdPictureAsPdf size={20} />
+                  <span>Export PDF</span>
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-bold transition-colors dark:text-white"
+                >
+                  <FaFileCsv size={18} />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="hover:bg-primary-dark flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors"
+                >
+                  <MdPrint size={20} />
+                  <span>Print</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -328,7 +527,26 @@ const CashflowReport: React.FC = () => {
           </div>
 
           {/* Chart Section */}
-          <ChartSection data={chartData} />
+          <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg border bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-gray-900 text-lg font-bold dark:text-white">
+                Cash Flow Trend
+              </h3>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">
+                {timeRange === 'sixMonth' && 'Last 6 Months'}
+                {timeRange === 'oneYear' && 'Last 12 Months'}
+                {timeRange === 'ytd' && 'Year to Date'}
+              </div>
+            </div>
+            <ChartSection data={chartData} />
+            {chartData.length === 0 && (
+              <div className="flex h-64 items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No cash flow data available for the selected period
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Transaction Table */}
           <div className="flex flex-col gap-4">
