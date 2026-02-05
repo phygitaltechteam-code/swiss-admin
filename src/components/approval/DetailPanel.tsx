@@ -44,7 +44,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
   );
   useEffect(() => {
     const firstImage = docList.find((doc) => doc.image)?.image || null;
-    setActiveImage(firstImage);
+    app(firstImage);
   }, [request, docList]);
 
   if (!request) return null;

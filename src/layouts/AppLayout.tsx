@@ -35,13 +35,9 @@ const AppLayout = () => {
           <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         )}
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-          <div className="hidden md:block">
-            {' '}
-            <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-          </div>
-
+          <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
           <main>
-            <div className="mx-auto max-w-screen-2xl p-1 pb-20 md:pb-0">
+            <div className="mx-auto max-w-screen-2xl p-1">
               <Outlet />
             </div>
           </main>
