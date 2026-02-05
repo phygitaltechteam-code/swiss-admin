@@ -23,20 +23,6 @@ const CustomerRegisterApprove: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-white/50 md:flex-row">
       {/* Mobile Header */}
-      <header className="border-gray-200 z-20 flex items-center justify-between border-b bg-white p-4 md:hidden">
-        <div className="flex items-center gap-2">
-          <MdSecurity className="text-2xl text-primary" />
-          <span className="text-sidebar-text text-lg font-bold">
-            BankSecure
-          </span>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="text-gray-600 hover:text-gray-900"
-        >
-          <MdMenu size={28} />
-        </button>
-      </header>
 
       {/* Main Layout */}
       <div className="relative flex flex-1 overflow-hidden">
