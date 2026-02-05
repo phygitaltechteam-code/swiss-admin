@@ -6,7 +6,6 @@ import {FiMenu, FiX} from 'react-icons/fi';
 import {LuSearch} from 'react-icons/lu';
 import {useNotification} from '@/lib/api/adminApi';
 import DropdownNotification from './DropdownNotification';
-import AddCommonTask from '../common/AddCommonTask';
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
@@ -21,7 +20,7 @@ const Header = (props: {
         <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
           {/* <!-- Hamburger Toggle BTN --> */}
 
-          {/* <button
+          <button
             aria-controls="sidebar"
             onClick={(e) => {
               e.stopPropagation();
@@ -36,7 +35,7 @@ const Header = (props: {
                 <FiMenu className="h-full w-full text-black dark:text-white" />
               )}
             </span>
-          </button> */}
+          </button>
 
           {/* <!-- Hamburger Toggle BTN --> */}
 
@@ -47,18 +46,28 @@ const Header = (props: {
 
         <div className="hidden sm:block">
           <form action="https://formbold.com/s/unique_form_id" method="POST">
-            <div className="relative"></div>
+            <div className="relative">
+              <button className="absolute left-0 top-1/2 -translate-y-1/2">
+                <LuSearch
+                  className="hover:fill-primary dark:hover:fill-primary"
+                  size={22}
+                />
+              </button>
+              <input
+                type="text"
+                placeholder="Type to search..."
+                className="w-full bg-transparent pl-9 pr-4 text-black focus:outline-none dark:text-white xl:w-125"
+              />
+            </div>
           </form>
         </div>
         <div className="flex items-center gap-3 2xsm:gap-7">
-          {/* <ul className=" items-center gap-2 2xsm:gap-4 md:flex">
-          
+          <ul className="flex items-center gap-2 2xsm:gap-4">
+            <DropdownNotification />
             <DarkModeSwitcher />
           </ul>
-           */}
-          <div className="md:block">
-            <DropdownUser />
-          </div>
+
+          <DropdownUser />
         </div>
       </div>
     </header>
