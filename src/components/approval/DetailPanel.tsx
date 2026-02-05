@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   MdZoomIn,
   MdVisibility,
@@ -39,6 +39,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
       number: request?.aadharCardNumber,
     },
   ];
+  const [activeImage, setActiveImage] = useState<string | null>(
+    docList.find((doc) => doc.image)?.image || null,
+  );
+  useEffect(() => {
+    const firstImage = docList.find((doc) => doc.image)?.image || null;
+    setActiveImage(firstImage);
+  }, [request, docList]);
+
   if (!request) return null;
 
   return (
@@ -79,6 +87,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
             <span className="text-gray-500 text-xs">1 of 3</span>
           </div>
           <div className="bg-gray-900 group relative flex h-48 items-center justify-center overflow-hidden rounded-lg p-4">
+            {/* Background gradient */}
             <div
               className="absolute inset-0 opacity-20"
               style={{
@@ -88,23 +97,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
               }}
             ></div>
 
-            {/* <img
-              alt={request.docName}
-              className="relative z-10 h-40 rounded object-contain shadow-lg transition-transform group-hover:scale-105"
-              src={request.docImageUrl}
-            /> */}
-
-            <div className="absolute right-2 top-2 z-20 flex flex-col gap-2">
-              <button className="rounded bg-black/50 p-1 text-white backdrop-blur-sm hover:bg-black/70">
-                <MdZoomIn className="text-lg" />
-              </button>
-            </div>
+            {activeImage && (
+              <img
+                src={activeImage}
+                alt="Selected document"
+                className="relative z-10 h-full w-full rounded-lg object-contain"
+              />
+            )}
           </div>
-          {/* <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
-            <div className="h-16 w-16 flex-shrink-0 cursor-pointer rounded-lg border-2 border-primary bg-orange-200"></div>
-            <div className="bg-gray-700 hover:border-gray-400 h-16 w-16 flex-shrink-0 cursor-pointer rounded-lg border-2 border-transparent"></div>
-            <div className="bg-gray-300 hover:border-gray-400 h-16 w-16 flex-shrink-0 cursor-pointer rounded-lg border-2 border-transparent"></div>
-          </div> */}
 
           <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
             {docList
@@ -112,7 +112,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
               .map((doc) => (
                 <div
                   key={doc.key}
-                  className="hover:border-gray-400 h-16 w-16 flex-shrink-0 cursor-pointer rounded-lg border-2 border-transparent"
+                  onClick={() => setActiveImage(doc.image!)}
+                  className={`h-16 w-16 flex-shrink-0 cursor-pointer rounded-lg border-2 ${activeImage === doc.image ? 'border-blue-500' : 'border-transparent'} hover:border-gray-400`}
                 >
                   <img
                     src={doc.image}
