@@ -36,7 +36,7 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto mt-10 max-w-md">
+    <div className="mx-auto max-w-md">
       <h2 className="mb-9 text-center text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
         Sign In
       </h2>
@@ -54,7 +54,7 @@ const SignIn: React.FC = () => {
               onChange={(e) =>
                 setCredentials({...credentials, username: e.target.value})
               }
-              className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+              className="w-full rounded-lg border border-stroke bg-transparent bg-white py-4 pl-6 pr-10 text-black outline-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
             />
             <span className="absolute right-4 top-4">
               <FiMail size={22} />
@@ -87,7 +87,7 @@ const SignIn: React.FC = () => {
         <div className="mb-5">
           <button
             type="submit"
-            className="w-full rounded-lg bg-[#0284C7] p-4 text-white transition hover:bg-opacity-90 disabled:opacity-50"
+            className="w-full rounded-lg bg-primary p-4 text-white transition hover:bg-opacity-90 disabled:opacity-50"
             disabled={isPending}
           >
             {isPending ? 'Signing in...' : 'Sign In'}
@@ -98,7 +98,7 @@ const SignIn: React.FC = () => {
         <div className="mt-6 text-center">
           <p className="text-sm">
             Don’t have an account?{' '}
-            <Link className="text-[#0284C7]" to="/signup">
+            <Link className="text-primary" to="/signup">
               Sign Up
             </Link>
           </p>
