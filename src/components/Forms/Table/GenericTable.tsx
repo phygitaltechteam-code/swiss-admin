@@ -208,33 +208,33 @@ const GenericTable = <T,>({
                 })}
                 {action && (
                   <td className="border-b border-[#eee] px-3 py-2 dark:border-strokedark">
-                    <div className="flex items-center space-x-2 py-1.5 sm:block sm:space-x-0 sm:space-y-2">
+                    <div className="flex items-center justify-center gap-0.5">
                       {handleView && (
                         <button
-                          className="rounded p-1.5 hover:text-primary dark:hover:text-secondary"
+                          className="inline-flex items-center justify-center rounded p-1 hover:text-primary dark:hover:text-secondary"
                           onClick={() => handleView(item)}
                           title={viewTooltip || 'View'}
                           aria-label={viewTooltip || 'View'}
                         >
-                          <FiEye className="h-4 w-4" />
+                          <FiEye className="h-3.5 w-3.5" />
                         </button>
                       )}
                       {handleEdit && (
                         <button
-                          className="rounded p-1.5 hover:text-primary dark:hover:text-secondary"
+                          className="inline-flex items-center justify-center rounded p-1 hover:text-primary dark:hover:text-secondary"
                           onClick={() => handleEdit(item)}
                           title={editTooltip || 'Edit'}
                         >
-                          <FiEdit className="h-4 w-4" />
+                          <FiEdit className="h-3.5 w-3.5" />
                         </button>
                       )}
                       {handleDelete && (
                         <button
-                          className="rounded p-1.5 hover:text-primary dark:hover:text-secondary"
+                          className="inline-flex items-center justify-center rounded p-1 hover:text-primary dark:hover:text-secondary"
                           onClick={() => handleDelete(item)}
                           title={deleteTooltip || 'Delete'}
                         >
-                          <MdDelete className="h-4 w-4" />
+                          <MdDelete className="h-3.5 w-3.5" />
                         </button>
                       )}
                     </div>
