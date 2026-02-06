@@ -19,43 +19,27 @@ import {Route as AuthImport} from './routes/_auth';
 import {Route as AppImport} from './routes/_app';
 import {Route as AuthSignupImport} from './routes/_auth/signup';
 import {Route as AuthSigninImport} from './routes/_auth/signin';
-import {Route as AppWorkDailyWorkImport} from './routes/_app/work/DailyWork';
-import {Route as AppWorkCreateWorkImport} from './routes/_app/work/CreateWork';
-import {Route as AppSuperadminIndustryImport} from './routes/_app/superadmin/industry';
-import {Route as AppSuperadminDepartmentImport} from './routes/_app/superadmin/department';
-import {Route as AppSuperadminAdminImport} from './routes/_app/superadmin/admin';
-import {Route as AppProjectDepartmentworkImport} from './routes/_app/project/departmentwork';
-import {Route as AppProjectCreateprojectImport} from './routes/_app/project/createproject';
-import {Route as AppManagerProfileImport} from './routes/_app/manager/profile';
-import {Route as AppEmployeeTasktoreviewImport} from './routes/_app/employee/tasktoreview';
-import {Route as AppEmployeeProjectworkImport} from './routes/_app/employee/projectwork';
-import {Route as AppEmployeeEmpprojectworkImport} from './routes/_app/employee/empprojectwork';
-import {Route as AppEmployeeEmpprojectImport} from './routes/_app/employee/empproject';
-import {Route as AppEmployeeEmpdashboardImport} from './routes/_app/employee/empdashboard';
-import {Route as AppEmployeeEmpdailyworkImport} from './routes/_app/employee/empdailywork';
-import {Route as AppEmployeeDepartmentworkImport} from './routes/_app/employee/departmentwork';
-import {Route as AppEmployeeCreateEmpImport} from './routes/_app/employee/CreateEmp';
-import {Route as AppCompanyReviewImport} from './routes/_app/company/review';
-import {Route as AppCompanyPositionImport} from './routes/_app/company/position';
-import {Route as AppCompanyDummyImport} from './routes/_app/company/dummy';
-import {Route as AppCompanyCreatepositionImport} from './routes/_app/company/createposition';
-import {Route as AppCompanyAttendanceImport} from './routes/_app/company/Attendance';
+import {Route as AppWallettopupreportImport} from './routes/_app/wallettopupreport';
+import {Route as AppTransfersReportImport} from './routes/_app/transfersReport';
+import {Route as AppTransactionReportImport} from './routes/_app/transactionReport';
+import {Route as AppReportCenterImport} from './routes/_app/reportCenter';
+import {Route as AppClientlistreportImport} from './routes/_app/clientlistreport';
+import {Route as AppCashflowreportImport} from './routes/_app/cashflowreport';
+import {Route as AppBeneficiaryreportImport} from './routes/_app/beneficiaryreport';
+import {Route as AppAlltransactionImport} from './routes/_app/alltransaction';
+import {Route as AppClientTransferviewImport} from './routes/_app/client/transferview';
+import {Route as AppClientTransferApprovalsImport} from './routes/_app/client/transfer-approvals';
+import {Route as AppClientTransactionhistoryImport} from './routes/_app/client/transactionhistory';
+import {Route as AppClientTopupApprovalsImport} from './routes/_app/client/topup-approvals';
+import {Route as AppClientProfileImport} from './routes/_app/client/profile';
+import {Route as AppClientDisplayclientImport} from './routes/_app/client/displayclient';
+import {Route as AppClientComissionImport} from './routes/_app/client/comission';
+import {Route as AppClientBeneficiaryImport} from './routes/_app/client/beneficiary';
+import {Route as AppClientAddcommisionImport} from './routes/_app/client/addcommision';
+import {Route as AppApprovalCustomerregisterapproveImport} from './routes/_app/Approval/customerregisterapprove';
 import {Route as NativeTokenUserPassImport} from './routes/_native/token.$user.$pass';
-import {Route as AppProjectProjectdetailsIdImport} from './routes/_app/project/projectdetails.$id';
-import {Route as AppManagerReportsBookingreportImport} from './routes/_app/manager/reports/bookingreport';
-import {Route as AppManagerOccassionIdImport} from './routes/_app/manager/occassion.$id';
-import {Route as AppEmployeeWorkdetailIdImport} from './routes/_app/employee/workdetail.$id';
-import {Route as AppEmployeeProjectworkreviewIdImport} from './routes/_app/employee/projectworkreview.$id';
-import {Route as AppEmployeeProjectworkdetailspageIdImport} from './routes/_app/employee/projectworkdetailspage.$id';
-import {Route as AppEmployeeEmptaskIdImport} from './routes/_app/employee/emptask.$id';
-import {Route as AppEmployeeEmpprojectdetailsIdImport} from './routes/_app/employee/empprojectdetails.$id';
-import {Route as AppEmployeeEmpdailyworkreviewIdImport} from './routes/_app/employee/empdailyworkreview.$id';
-import {Route as AppCompanyProworkdetailsIdImport} from './routes/_app/company/proworkdetails.$id';
-import {Route as AppCompanyProjectreviewIdImport} from './routes/_app/company/projectreview.$id';
-import {Route as AppCompanyEmpattendanceIdImport} from './routes/_app/company/empattendance.$id';
-import {Route as AppCompanyDepartmentCreatedepartmentImport} from './routes/_app/company/department/createdepartment';
-import {Route as AppCompanyDailyworkdetailsIdImport} from './routes/_app/company/dailyworkdetails.$id';
-import {Route as AppCompanyDailyreviewIdImport} from './routes/_app/company/dailyreview.$id';
+import {Route as AppClientBeneficiaryverificationIdImport} from './routes/_app/client/beneficiaryverification.$id';
+import {Route as AppApprovalRegistrationDetailsIdImport} from './routes/_app/Approval/registrationDetails.$id';
 
 // Create Virtual Routes
 
@@ -110,131 +94,117 @@ const AuthSigninRoute = AuthSigninImport.update({
   getParentRoute: () => AuthRoute,
 } as any);
 
-const AppWorkDailyWorkRoute = AppWorkDailyWorkImport.update({
-  id: '/work/DailyWork',
-  path: '/work/DailyWork',
+const AppWallettopupreportRoute = AppWallettopupreportImport.update({
+  id: '/wallettopupreport',
+  path: '/wallettopupreport',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppWorkCreateWorkRoute = AppWorkCreateWorkImport.update({
-  id: '/work/CreateWork',
-  path: '/work/CreateWork',
+const AppTransfersReportRoute = AppTransfersReportImport.update({
+  id: '/transfersReport',
+  path: '/transfersReport',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppSuperadminIndustryRoute = AppSuperadminIndustryImport.update({
-  id: '/superadmin/industry',
-  path: '/superadmin/industry',
+const AppTransactionReportRoute = AppTransactionReportImport.update({
+  id: '/transactionReport',
+  path: '/transactionReport',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppSuperadminDepartmentRoute = AppSuperadminDepartmentImport.update({
-  id: '/superadmin/department',
-  path: '/superadmin/department',
+const AppReportCenterRoute = AppReportCenterImport.update({
+  id: '/reportCenter',
+  path: '/reportCenter',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppSuperadminAdminRoute = AppSuperadminAdminImport.update({
-  id: '/superadmin/admin',
-  path: '/superadmin/admin',
+const AppClientlistreportRoute = AppClientlistreportImport.update({
+  id: '/clientlistreport',
+  path: '/clientlistreport',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppProjectDepartmentworkRoute = AppProjectDepartmentworkImport.update({
-  id: '/project/departmentwork',
-  path: '/project/departmentwork',
+const AppCashflowreportRoute = AppCashflowreportImport.update({
+  id: '/cashflowreport',
+  path: '/cashflowreport',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppProjectCreateprojectRoute = AppProjectCreateprojectImport.update({
-  id: '/project/createproject',
-  path: '/project/createproject',
+const AppBeneficiaryreportRoute = AppBeneficiaryreportImport.update({
+  id: '/beneficiaryreport',
+  path: '/beneficiaryreport',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppManagerProfileRoute = AppManagerProfileImport.update({
-  id: '/manager/profile',
-  path: '/manager/profile',
+const AppAlltransactionRoute = AppAlltransactionImport.update({
+  id: '/alltransaction',
+  path: '/alltransaction',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeTasktoreviewRoute = AppEmployeeTasktoreviewImport.update({
-  id: '/employee/tasktoreview',
-  path: '/employee/tasktoreview',
+const AppClientTransferviewRoute = AppClientTransferviewImport.update({
+  id: '/client/transferview',
+  path: '/client/transferview',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeProjectworkRoute = AppEmployeeProjectworkImport.update({
-  id: '/employee/projectwork',
-  path: '/employee/projectwork',
+const AppClientTransferApprovalsRoute = AppClientTransferApprovalsImport.update(
+  {
+    id: '/client/transfer-approvals',
+    path: '/client/transfer-approvals',
+    getParentRoute: () => AppRoute,
+  } as any,
+);
+
+const AppClientTransactionhistoryRoute =
+  AppClientTransactionhistoryImport.update({
+    id: '/client/transactionhistory',
+    path: '/client/transactionhistory',
+    getParentRoute: () => AppRoute,
+  } as any);
+
+const AppClientTopupApprovalsRoute = AppClientTopupApprovalsImport.update({
+  id: '/client/topup-approvals',
+  path: '/client/topup-approvals',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeEmpprojectworkRoute = AppEmployeeEmpprojectworkImport.update({
-  id: '/employee/empprojectwork',
-  path: '/employee/empprojectwork',
+const AppClientProfileRoute = AppClientProfileImport.update({
+  id: '/client/profile',
+  path: '/client/profile',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeEmpprojectRoute = AppEmployeeEmpprojectImport.update({
-  id: '/employee/empproject',
-  path: '/employee/empproject',
+const AppClientDisplayclientRoute = AppClientDisplayclientImport.update({
+  id: '/client/displayclient',
+  path: '/client/displayclient',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeEmpdashboardRoute = AppEmployeeEmpdashboardImport.update({
-  id: '/employee/empdashboard',
-  path: '/employee/empdashboard',
+const AppClientComissionRoute = AppClientComissionImport.update({
+  id: '/client/comission',
+  path: '/client/comission',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeEmpdailyworkRoute = AppEmployeeEmpdailyworkImport.update({
-  id: '/employee/empdailywork',
-  path: '/employee/empdailywork',
+const AppClientBeneficiaryRoute = AppClientBeneficiaryImport.update({
+  id: '/client/beneficiary',
+  path: '/client/beneficiary',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeDepartmentworkRoute = AppEmployeeDepartmentworkImport.update({
-  id: '/employee/departmentwork',
-  path: '/employee/departmentwork',
+const AppClientAddcommisionRoute = AppClientAddcommisionImport.update({
+  id: '/client/addcommision',
+  path: '/client/addcommision',
   getParentRoute: () => AppRoute,
 } as any);
 
-const AppEmployeeCreateEmpRoute = AppEmployeeCreateEmpImport.update({
-  id: '/employee/CreateEmp',
-  path: '/employee/CreateEmp',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyReviewRoute = AppCompanyReviewImport.update({
-  id: '/company/review',
-  path: '/company/review',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyPositionRoute = AppCompanyPositionImport.update({
-  id: '/company/position',
-  path: '/company/position',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyDummyRoute = AppCompanyDummyImport.update({
-  id: '/company/dummy',
-  path: '/company/dummy',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyCreatepositionRoute = AppCompanyCreatepositionImport.update({
-  id: '/company/createposition',
-  path: '/company/createposition',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyAttendanceRoute = AppCompanyAttendanceImport.update({
-  id: '/company/Attendance',
-  path: '/company/Attendance',
-  getParentRoute: () => AppRoute,
-} as any);
+const AppApprovalCustomerregisterapproveRoute =
+  AppApprovalCustomerregisterapproveImport.update({
+    id: '/Approval/customerregisterapprove',
+    path: '/Approval/customerregisterapprove',
+    getParentRoute: () => AppRoute,
+  } as any);
 
 const NativeTokenUserPassRoute = NativeTokenUserPassImport.update({
   id: '/token/$user/$pass',
@@ -242,106 +212,19 @@ const NativeTokenUserPassRoute = NativeTokenUserPassImport.update({
   getParentRoute: () => NativeRoute,
 } as any);
 
-const AppProjectProjectdetailsIdRoute = AppProjectProjectdetailsIdImport.update(
-  {
-    id: '/project/projectdetails/$id',
-    path: '/project/projectdetails/$id',
-    getParentRoute: () => AppRoute,
-  } as any,
-);
-
-const AppManagerReportsBookingreportRoute =
-  AppManagerReportsBookingreportImport.update({
-    id: '/manager/reports/bookingreport',
-    path: '/manager/reports/bookingreport',
+const AppClientBeneficiaryverificationIdRoute =
+  AppClientBeneficiaryverificationIdImport.update({
+    id: '/client/beneficiaryverification/$id',
+    path: '/client/beneficiaryverification/$id',
     getParentRoute: () => AppRoute,
   } as any);
 
-const AppManagerOccassionIdRoute = AppManagerOccassionIdImport.update({
-  id: '/manager/occassion/$id',
-  path: '/manager/occassion/$id',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppEmployeeWorkdetailIdRoute = AppEmployeeWorkdetailIdImport.update({
-  id: '/employee/workdetail/$id',
-  path: '/employee/workdetail/$id',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppEmployeeProjectworkreviewIdRoute =
-  AppEmployeeProjectworkreviewIdImport.update({
-    id: '/employee/projectworkreview/$id',
-    path: '/employee/projectworkreview/$id',
+const AppApprovalRegistrationDetailsIdRoute =
+  AppApprovalRegistrationDetailsIdImport.update({
+    id: '/Approval/registrationDetails/$id',
+    path: '/Approval/registrationDetails/$id',
     getParentRoute: () => AppRoute,
   } as any);
-
-const AppEmployeeProjectworkdetailspageIdRoute =
-  AppEmployeeProjectworkdetailspageIdImport.update({
-    id: '/employee/projectworkdetailspage/$id',
-    path: '/employee/projectworkdetailspage/$id',
-    getParentRoute: () => AppRoute,
-  } as any);
-
-const AppEmployeeEmptaskIdRoute = AppEmployeeEmptaskIdImport.update({
-  id: '/employee/emptask/$id',
-  path: '/employee/emptask/$id',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppEmployeeEmpprojectdetailsIdRoute =
-  AppEmployeeEmpprojectdetailsIdImport.update({
-    id: '/employee/empprojectdetails/$id',
-    path: '/employee/empprojectdetails/$id',
-    getParentRoute: () => AppRoute,
-  } as any);
-
-const AppEmployeeEmpdailyworkreviewIdRoute =
-  AppEmployeeEmpdailyworkreviewIdImport.update({
-    id: '/employee/empdailyworkreview/$id',
-    path: '/employee/empdailyworkreview/$id',
-    getParentRoute: () => AppRoute,
-  } as any);
-
-const AppCompanyProworkdetailsIdRoute = AppCompanyProworkdetailsIdImport.update(
-  {
-    id: '/company/proworkdetails/$id',
-    path: '/company/proworkdetails/$id',
-    getParentRoute: () => AppRoute,
-  } as any,
-);
-
-const AppCompanyProjectreviewIdRoute = AppCompanyProjectreviewIdImport.update({
-  id: '/company/projectreview/$id',
-  path: '/company/projectreview/$id',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyEmpattendanceIdRoute = AppCompanyEmpattendanceIdImport.update({
-  id: '/company/empattendance/$id',
-  path: '/company/empattendance/$id',
-  getParentRoute: () => AppRoute,
-} as any);
-
-const AppCompanyDepartmentCreatedepartmentRoute =
-  AppCompanyDepartmentCreatedepartmentImport.update({
-    id: '/company/department/createdepartment',
-    path: '/company/department/createdepartment',
-    getParentRoute: () => AppRoute,
-  } as any);
-
-const AppCompanyDailyworkdetailsIdRoute =
-  AppCompanyDailyworkdetailsIdImport.update({
-    id: '/company/dailyworkdetails/$id',
-    path: '/company/dailyworkdetails/$id',
-    getParentRoute: () => AppRoute,
-  } as any);
-
-const AppCompanyDailyreviewIdRoute = AppCompanyDailyreviewIdImport.update({
-  id: '/company/dailyreview/$id',
-  path: '/company/dailyreview/$id',
-  getParentRoute: () => AppRoute,
-} as any);
 
 // Populate the FileRoutesByPath interface
 
@@ -375,6 +258,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NativeImport;
       parentRoute: typeof rootRoute;
     };
+    '/_app/alltransaction': {
+      id: '/_app/alltransaction';
+      path: '/alltransaction';
+      fullPath: '/alltransaction';
+      preLoaderRoute: typeof AppAlltransactionImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/beneficiaryreport': {
+      id: '/_app/beneficiaryreport';
+      path: '/beneficiaryreport';
+      fullPath: '/beneficiaryreport';
+      preLoaderRoute: typeof AppBeneficiaryreportImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/cashflowreport': {
+      id: '/_app/cashflowreport';
+      path: '/cashflowreport';
+      fullPath: '/cashflowreport';
+      preLoaderRoute: typeof AppCashflowreportImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/clientlistreport': {
+      id: '/_app/clientlistreport';
+      path: '/clientlistreport';
+      fullPath: '/clientlistreport';
+      preLoaderRoute: typeof AppClientlistreportImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/reportCenter': {
+      id: '/_app/reportCenter';
+      path: '/reportCenter';
+      fullPath: '/reportCenter';
+      preLoaderRoute: typeof AppReportCenterImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/transactionReport': {
+      id: '/_app/transactionReport';
+      path: '/transactionReport';
+      fullPath: '/transactionReport';
+      preLoaderRoute: typeof AppTransactionReportImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/transfersReport': {
+      id: '/_app/transfersReport';
+      path: '/transfersReport';
+      fullPath: '/transfersReport';
+      preLoaderRoute: typeof AppTransfersReportImport;
+      parentRoute: typeof AppImport;
+    };
+    '/_app/wallettopupreport': {
+      id: '/_app/wallettopupreport';
+      path: '/wallettopupreport';
+      fullPath: '/wallettopupreport';
+      preLoaderRoute: typeof AppWallettopupreportImport;
+      parentRoute: typeof AppImport;
+    };
     '/_auth/signin': {
       id: '/_auth/signin';
       path: '/signin';
@@ -403,256 +342,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexLazyImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/company/Attendance': {
-      id: '/_app/company/Attendance';
-      path: '/company/Attendance';
-      fullPath: '/company/Attendance';
-      preLoaderRoute: typeof AppCompanyAttendanceImport;
+    '/_app/Approval/customerregisterapprove': {
+      id: '/_app/Approval/customerregisterapprove';
+      path: '/Approval/customerregisterapprove';
+      fullPath: '/Approval/customerregisterapprove';
+      preLoaderRoute: typeof AppApprovalCustomerregisterapproveImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/company/createposition': {
-      id: '/_app/company/createposition';
-      path: '/company/createposition';
-      fullPath: '/company/createposition';
-      preLoaderRoute: typeof AppCompanyCreatepositionImport;
+    '/_app/client/addcommision': {
+      id: '/_app/client/addcommision';
+      path: '/client/addcommision';
+      fullPath: '/client/addcommision';
+      preLoaderRoute: typeof AppClientAddcommisionImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/company/dummy': {
-      id: '/_app/company/dummy';
-      path: '/company/dummy';
-      fullPath: '/company/dummy';
-      preLoaderRoute: typeof AppCompanyDummyImport;
+    '/_app/client/beneficiary': {
+      id: '/_app/client/beneficiary';
+      path: '/client/beneficiary';
+      fullPath: '/client/beneficiary';
+      preLoaderRoute: typeof AppClientBeneficiaryImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/company/position': {
-      id: '/_app/company/position';
-      path: '/company/position';
-      fullPath: '/company/position';
-      preLoaderRoute: typeof AppCompanyPositionImport;
+    '/_app/client/comission': {
+      id: '/_app/client/comission';
+      path: '/client/comission';
+      fullPath: '/client/comission';
+      preLoaderRoute: typeof AppClientComissionImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/company/review': {
-      id: '/_app/company/review';
-      path: '/company/review';
-      fullPath: '/company/review';
-      preLoaderRoute: typeof AppCompanyReviewImport;
+    '/_app/client/displayclient': {
+      id: '/_app/client/displayclient';
+      path: '/client/displayclient';
+      fullPath: '/client/displayclient';
+      preLoaderRoute: typeof AppClientDisplayclientImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/CreateEmp': {
-      id: '/_app/employee/CreateEmp';
-      path: '/employee/CreateEmp';
-      fullPath: '/employee/CreateEmp';
-      preLoaderRoute: typeof AppEmployeeCreateEmpImport;
+    '/_app/client/profile': {
+      id: '/_app/client/profile';
+      path: '/client/profile';
+      fullPath: '/client/profile';
+      preLoaderRoute: typeof AppClientProfileImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/departmentwork': {
-      id: '/_app/employee/departmentwork';
-      path: '/employee/departmentwork';
-      fullPath: '/employee/departmentwork';
-      preLoaderRoute: typeof AppEmployeeDepartmentworkImport;
+    '/_app/client/topup-approvals': {
+      id: '/_app/client/topup-approvals';
+      path: '/client/topup-approvals';
+      fullPath: '/client/topup-approvals';
+      preLoaderRoute: typeof AppClientTopupApprovalsImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/empdailywork': {
-      id: '/_app/employee/empdailywork';
-      path: '/employee/empdailywork';
-      fullPath: '/employee/empdailywork';
-      preLoaderRoute: typeof AppEmployeeEmpdailyworkImport;
+    '/_app/client/transactionhistory': {
+      id: '/_app/client/transactionhistory';
+      path: '/client/transactionhistory';
+      fullPath: '/client/transactionhistory';
+      preLoaderRoute: typeof AppClientTransactionhistoryImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/empdashboard': {
-      id: '/_app/employee/empdashboard';
-      path: '/employee/empdashboard';
-      fullPath: '/employee/empdashboard';
-      preLoaderRoute: typeof AppEmployeeEmpdashboardImport;
+    '/_app/client/transfer-approvals': {
+      id: '/_app/client/transfer-approvals';
+      path: '/client/transfer-approvals';
+      fullPath: '/client/transfer-approvals';
+      preLoaderRoute: typeof AppClientTransferApprovalsImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/empproject': {
-      id: '/_app/employee/empproject';
-      path: '/employee/empproject';
-      fullPath: '/employee/empproject';
-      preLoaderRoute: typeof AppEmployeeEmpprojectImport;
+    '/_app/client/transferview': {
+      id: '/_app/client/transferview';
+      path: '/client/transferview';
+      fullPath: '/client/transferview';
+      preLoaderRoute: typeof AppClientTransferviewImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/empprojectwork': {
-      id: '/_app/employee/empprojectwork';
-      path: '/employee/empprojectwork';
-      fullPath: '/employee/empprojectwork';
-      preLoaderRoute: typeof AppEmployeeEmpprojectworkImport;
+    '/_app/Approval/registrationDetails/$id': {
+      id: '/_app/Approval/registrationDetails/$id';
+      path: '/Approval/registrationDetails/$id';
+      fullPath: '/Approval/registrationDetails/$id';
+      preLoaderRoute: typeof AppApprovalRegistrationDetailsIdImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/employee/projectwork': {
-      id: '/_app/employee/projectwork';
-      path: '/employee/projectwork';
-      fullPath: '/employee/projectwork';
-      preLoaderRoute: typeof AppEmployeeProjectworkImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/tasktoreview': {
-      id: '/_app/employee/tasktoreview';
-      path: '/employee/tasktoreview';
-      fullPath: '/employee/tasktoreview';
-      preLoaderRoute: typeof AppEmployeeTasktoreviewImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/manager/profile': {
-      id: '/_app/manager/profile';
-      path: '/manager/profile';
-      fullPath: '/manager/profile';
-      preLoaderRoute: typeof AppManagerProfileImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/project/createproject': {
-      id: '/_app/project/createproject';
-      path: '/project/createproject';
-      fullPath: '/project/createproject';
-      preLoaderRoute: typeof AppProjectCreateprojectImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/project/departmentwork': {
-      id: '/_app/project/departmentwork';
-      path: '/project/departmentwork';
-      fullPath: '/project/departmentwork';
-      preLoaderRoute: typeof AppProjectDepartmentworkImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/superadmin/admin': {
-      id: '/_app/superadmin/admin';
-      path: '/superadmin/admin';
-      fullPath: '/superadmin/admin';
-      preLoaderRoute: typeof AppSuperadminAdminImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/superadmin/department': {
-      id: '/_app/superadmin/department';
-      path: '/superadmin/department';
-      fullPath: '/superadmin/department';
-      preLoaderRoute: typeof AppSuperadminDepartmentImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/superadmin/industry': {
-      id: '/_app/superadmin/industry';
-      path: '/superadmin/industry';
-      fullPath: '/superadmin/industry';
-      preLoaderRoute: typeof AppSuperadminIndustryImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/work/CreateWork': {
-      id: '/_app/work/CreateWork';
-      path: '/work/CreateWork';
-      fullPath: '/work/CreateWork';
-      preLoaderRoute: typeof AppWorkCreateWorkImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/work/DailyWork': {
-      id: '/_app/work/DailyWork';
-      path: '/work/DailyWork';
-      fullPath: '/work/DailyWork';
-      preLoaderRoute: typeof AppWorkDailyWorkImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/company/dailyreview/$id': {
-      id: '/_app/company/dailyreview/$id';
-      path: '/company/dailyreview/$id';
-      fullPath: '/company/dailyreview/$id';
-      preLoaderRoute: typeof AppCompanyDailyreviewIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/company/dailyworkdetails/$id': {
-      id: '/_app/company/dailyworkdetails/$id';
-      path: '/company/dailyworkdetails/$id';
-      fullPath: '/company/dailyworkdetails/$id';
-      preLoaderRoute: typeof AppCompanyDailyworkdetailsIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/company/department/createdepartment': {
-      id: '/_app/company/department/createdepartment';
-      path: '/company/department/createdepartment';
-      fullPath: '/company/department/createdepartment';
-      preLoaderRoute: typeof AppCompanyDepartmentCreatedepartmentImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/company/empattendance/$id': {
-      id: '/_app/company/empattendance/$id';
-      path: '/company/empattendance/$id';
-      fullPath: '/company/empattendance/$id';
-      preLoaderRoute: typeof AppCompanyEmpattendanceIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/company/projectreview/$id': {
-      id: '/_app/company/projectreview/$id';
-      path: '/company/projectreview/$id';
-      fullPath: '/company/projectreview/$id';
-      preLoaderRoute: typeof AppCompanyProjectreviewIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/company/proworkdetails/$id': {
-      id: '/_app/company/proworkdetails/$id';
-      path: '/company/proworkdetails/$id';
-      fullPath: '/company/proworkdetails/$id';
-      preLoaderRoute: typeof AppCompanyProworkdetailsIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/empdailyworkreview/$id': {
-      id: '/_app/employee/empdailyworkreview/$id';
-      path: '/employee/empdailyworkreview/$id';
-      fullPath: '/employee/empdailyworkreview/$id';
-      preLoaderRoute: typeof AppEmployeeEmpdailyworkreviewIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/empprojectdetails/$id': {
-      id: '/_app/employee/empprojectdetails/$id';
-      path: '/employee/empprojectdetails/$id';
-      fullPath: '/employee/empprojectdetails/$id';
-      preLoaderRoute: typeof AppEmployeeEmpprojectdetailsIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/emptask/$id': {
-      id: '/_app/employee/emptask/$id';
-      path: '/employee/emptask/$id';
-      fullPath: '/employee/emptask/$id';
-      preLoaderRoute: typeof AppEmployeeEmptaskIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/projectworkdetailspage/$id': {
-      id: '/_app/employee/projectworkdetailspage/$id';
-      path: '/employee/projectworkdetailspage/$id';
-      fullPath: '/employee/projectworkdetailspage/$id';
-      preLoaderRoute: typeof AppEmployeeProjectworkdetailspageIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/projectworkreview/$id': {
-      id: '/_app/employee/projectworkreview/$id';
-      path: '/employee/projectworkreview/$id';
-      fullPath: '/employee/projectworkreview/$id';
-      preLoaderRoute: typeof AppEmployeeProjectworkreviewIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/employee/workdetail/$id': {
-      id: '/_app/employee/workdetail/$id';
-      path: '/employee/workdetail/$id';
-      fullPath: '/employee/workdetail/$id';
-      preLoaderRoute: typeof AppEmployeeWorkdetailIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/manager/occassion/$id': {
-      id: '/_app/manager/occassion/$id';
-      path: '/manager/occassion/$id';
-      fullPath: '/manager/occassion/$id';
-      preLoaderRoute: typeof AppManagerOccassionIdImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/manager/reports/bookingreport': {
-      id: '/_app/manager/reports/bookingreport';
-      path: '/manager/reports/bookingreport';
-      fullPath: '/manager/reports/bookingreport';
-      preLoaderRoute: typeof AppManagerReportsBookingreportImport;
-      parentRoute: typeof AppImport;
-    };
-    '/_app/project/projectdetails/$id': {
-      id: '/_app/project/projectdetails/$id';
-      path: '/project/projectdetails/$id';
-      fullPath: '/project/projectdetails/$id';
-      preLoaderRoute: typeof AppProjectProjectdetailsIdImport;
+    '/_app/client/beneficiaryverification/$id': {
+      id: '/_app/client/beneficiaryverification/$id';
+      path: '/client/beneficiaryverification/$id';
+      fullPath: '/client/beneficiaryverification/$id';
+      preLoaderRoute: typeof AppClientBeneficiaryverificationIdImport;
       parentRoute: typeof AppImport;
     };
     '/_native/token/$user/$pass': {
@@ -668,87 +439,55 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AppRouteChildren {
+  AppAlltransactionRoute: typeof AppAlltransactionRoute;
+  AppBeneficiaryreportRoute: typeof AppBeneficiaryreportRoute;
+  AppCashflowreportRoute: typeof AppCashflowreportRoute;
+  AppClientlistreportRoute: typeof AppClientlistreportRoute;
+  AppReportCenterRoute: typeof AppReportCenterRoute;
+  AppTransactionReportRoute: typeof AppTransactionReportRoute;
+  AppTransfersReportRoute: typeof AppTransfersReportRoute;
+  AppWallettopupreportRoute: typeof AppWallettopupreportRoute;
   AppDashboardLazyRoute: typeof AppDashboardLazyRoute;
   AppIndexLazyRoute: typeof AppIndexLazyRoute;
-  AppCompanyAttendanceRoute: typeof AppCompanyAttendanceRoute;
-  AppCompanyCreatepositionRoute: typeof AppCompanyCreatepositionRoute;
-  AppCompanyDummyRoute: typeof AppCompanyDummyRoute;
-  AppCompanyPositionRoute: typeof AppCompanyPositionRoute;
-  AppCompanyReviewRoute: typeof AppCompanyReviewRoute;
-  AppEmployeeCreateEmpRoute: typeof AppEmployeeCreateEmpRoute;
-  AppEmployeeDepartmentworkRoute: typeof AppEmployeeDepartmentworkRoute;
-  AppEmployeeEmpdailyworkRoute: typeof AppEmployeeEmpdailyworkRoute;
-  AppEmployeeEmpdashboardRoute: typeof AppEmployeeEmpdashboardRoute;
-  AppEmployeeEmpprojectRoute: typeof AppEmployeeEmpprojectRoute;
-  AppEmployeeEmpprojectworkRoute: typeof AppEmployeeEmpprojectworkRoute;
-  AppEmployeeProjectworkRoute: typeof AppEmployeeProjectworkRoute;
-  AppEmployeeTasktoreviewRoute: typeof AppEmployeeTasktoreviewRoute;
-  AppManagerProfileRoute: typeof AppManagerProfileRoute;
-  AppProjectCreateprojectRoute: typeof AppProjectCreateprojectRoute;
-  AppProjectDepartmentworkRoute: typeof AppProjectDepartmentworkRoute;
-  AppSuperadminAdminRoute: typeof AppSuperadminAdminRoute;
-  AppSuperadminDepartmentRoute: typeof AppSuperadminDepartmentRoute;
-  AppSuperadminIndustryRoute: typeof AppSuperadminIndustryRoute;
-  AppWorkCreateWorkRoute: typeof AppWorkCreateWorkRoute;
-  AppWorkDailyWorkRoute: typeof AppWorkDailyWorkRoute;
-  AppCompanyDailyreviewIdRoute: typeof AppCompanyDailyreviewIdRoute;
-  AppCompanyDailyworkdetailsIdRoute: typeof AppCompanyDailyworkdetailsIdRoute;
-  AppCompanyDepartmentCreatedepartmentRoute: typeof AppCompanyDepartmentCreatedepartmentRoute;
-  AppCompanyEmpattendanceIdRoute: typeof AppCompanyEmpattendanceIdRoute;
-  AppCompanyProjectreviewIdRoute: typeof AppCompanyProjectreviewIdRoute;
-  AppCompanyProworkdetailsIdRoute: typeof AppCompanyProworkdetailsIdRoute;
-  AppEmployeeEmpdailyworkreviewIdRoute: typeof AppEmployeeEmpdailyworkreviewIdRoute;
-  AppEmployeeEmpprojectdetailsIdRoute: typeof AppEmployeeEmpprojectdetailsIdRoute;
-  AppEmployeeEmptaskIdRoute: typeof AppEmployeeEmptaskIdRoute;
-  AppEmployeeProjectworkdetailspageIdRoute: typeof AppEmployeeProjectworkdetailspageIdRoute;
-  AppEmployeeProjectworkreviewIdRoute: typeof AppEmployeeProjectworkreviewIdRoute;
-  AppEmployeeWorkdetailIdRoute: typeof AppEmployeeWorkdetailIdRoute;
-  AppManagerOccassionIdRoute: typeof AppManagerOccassionIdRoute;
-  AppManagerReportsBookingreportRoute: typeof AppManagerReportsBookingreportRoute;
-  AppProjectProjectdetailsIdRoute: typeof AppProjectProjectdetailsIdRoute;
+  AppApprovalCustomerregisterapproveRoute: typeof AppApprovalCustomerregisterapproveRoute;
+  AppClientAddcommisionRoute: typeof AppClientAddcommisionRoute;
+  AppClientBeneficiaryRoute: typeof AppClientBeneficiaryRoute;
+  AppClientComissionRoute: typeof AppClientComissionRoute;
+  AppClientDisplayclientRoute: typeof AppClientDisplayclientRoute;
+  AppClientProfileRoute: typeof AppClientProfileRoute;
+  AppClientTopupApprovalsRoute: typeof AppClientTopupApprovalsRoute;
+  AppClientTransactionhistoryRoute: typeof AppClientTransactionhistoryRoute;
+  AppClientTransferApprovalsRoute: typeof AppClientTransferApprovalsRoute;
+  AppClientTransferviewRoute: typeof AppClientTransferviewRoute;
+  AppApprovalRegistrationDetailsIdRoute: typeof AppApprovalRegistrationDetailsIdRoute;
+  AppClientBeneficiaryverificationIdRoute: typeof AppClientBeneficiaryverificationIdRoute;
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAlltransactionRoute: AppAlltransactionRoute,
+  AppBeneficiaryreportRoute: AppBeneficiaryreportRoute,
+  AppCashflowreportRoute: AppCashflowreportRoute,
+  AppClientlistreportRoute: AppClientlistreportRoute,
+  AppReportCenterRoute: AppReportCenterRoute,
+  AppTransactionReportRoute: AppTransactionReportRoute,
+  AppTransfersReportRoute: AppTransfersReportRoute,
+  AppWallettopupreportRoute: AppWallettopupreportRoute,
   AppDashboardLazyRoute: AppDashboardLazyRoute,
   AppIndexLazyRoute: AppIndexLazyRoute,
-  AppCompanyAttendanceRoute: AppCompanyAttendanceRoute,
-  AppCompanyCreatepositionRoute: AppCompanyCreatepositionRoute,
-  AppCompanyDummyRoute: AppCompanyDummyRoute,
-  AppCompanyPositionRoute: AppCompanyPositionRoute,
-  AppCompanyReviewRoute: AppCompanyReviewRoute,
-  AppEmployeeCreateEmpRoute: AppEmployeeCreateEmpRoute,
-  AppEmployeeDepartmentworkRoute: AppEmployeeDepartmentworkRoute,
-  AppEmployeeEmpdailyworkRoute: AppEmployeeEmpdailyworkRoute,
-  AppEmployeeEmpdashboardRoute: AppEmployeeEmpdashboardRoute,
-  AppEmployeeEmpprojectRoute: AppEmployeeEmpprojectRoute,
-  AppEmployeeEmpprojectworkRoute: AppEmployeeEmpprojectworkRoute,
-  AppEmployeeProjectworkRoute: AppEmployeeProjectworkRoute,
-  AppEmployeeTasktoreviewRoute: AppEmployeeTasktoreviewRoute,
-  AppManagerProfileRoute: AppManagerProfileRoute,
-  AppProjectCreateprojectRoute: AppProjectCreateprojectRoute,
-  AppProjectDepartmentworkRoute: AppProjectDepartmentworkRoute,
-  AppSuperadminAdminRoute: AppSuperadminAdminRoute,
-  AppSuperadminDepartmentRoute: AppSuperadminDepartmentRoute,
-  AppSuperadminIndustryRoute: AppSuperadminIndustryRoute,
-  AppWorkCreateWorkRoute: AppWorkCreateWorkRoute,
-  AppWorkDailyWorkRoute: AppWorkDailyWorkRoute,
-  AppCompanyDailyreviewIdRoute: AppCompanyDailyreviewIdRoute,
-  AppCompanyDailyworkdetailsIdRoute: AppCompanyDailyworkdetailsIdRoute,
-  AppCompanyDepartmentCreatedepartmentRoute:
-    AppCompanyDepartmentCreatedepartmentRoute,
-  AppCompanyEmpattendanceIdRoute: AppCompanyEmpattendanceIdRoute,
-  AppCompanyProjectreviewIdRoute: AppCompanyProjectreviewIdRoute,
-  AppCompanyProworkdetailsIdRoute: AppCompanyProworkdetailsIdRoute,
-  AppEmployeeEmpdailyworkreviewIdRoute: AppEmployeeEmpdailyworkreviewIdRoute,
-  AppEmployeeEmpprojectdetailsIdRoute: AppEmployeeEmpprojectdetailsIdRoute,
-  AppEmployeeEmptaskIdRoute: AppEmployeeEmptaskIdRoute,
-  AppEmployeeProjectworkdetailspageIdRoute:
-    AppEmployeeProjectworkdetailspageIdRoute,
-  AppEmployeeProjectworkreviewIdRoute: AppEmployeeProjectworkreviewIdRoute,
-  AppEmployeeWorkdetailIdRoute: AppEmployeeWorkdetailIdRoute,
-  AppManagerOccassionIdRoute: AppManagerOccassionIdRoute,
-  AppManagerReportsBookingreportRoute: AppManagerReportsBookingreportRoute,
-  AppProjectProjectdetailsIdRoute: AppProjectProjectdetailsIdRoute,
+  AppApprovalCustomerregisterapproveRoute:
+    AppApprovalCustomerregisterapproveRoute,
+  AppClientAddcommisionRoute: AppClientAddcommisionRoute,
+  AppClientBeneficiaryRoute: AppClientBeneficiaryRoute,
+  AppClientComissionRoute: AppClientComissionRoute,
+  AppClientDisplayclientRoute: AppClientDisplayclientRoute,
+  AppClientProfileRoute: AppClientProfileRoute,
+  AppClientTopupApprovalsRoute: AppClientTopupApprovalsRoute,
+  AppClientTransactionhistoryRoute: AppClientTransactionhistoryRoute,
+  AppClientTransferApprovalsRoute: AppClientTransferApprovalsRoute,
+  AppClientTransferviewRoute: AppClientTransferviewRoute,
+  AppApprovalRegistrationDetailsIdRoute: AppApprovalRegistrationDetailsIdRoute,
+  AppClientBeneficiaryverificationIdRoute:
+    AppClientBeneficiaryverificationIdRoute,
 };
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren);
@@ -778,91 +517,59 @@ const NativeRouteWithChildren =
 
 export interface FileRoutesByFullPath {
   '': typeof NativeRouteWithChildren;
+  '/alltransaction': typeof AppAlltransactionRoute;
+  '/beneficiaryreport': typeof AppBeneficiaryreportRoute;
+  '/cashflowreport': typeof AppCashflowreportRoute;
+  '/clientlistreport': typeof AppClientlistreportRoute;
+  '/reportCenter': typeof AppReportCenterRoute;
+  '/transactionReport': typeof AppTransactionReportRoute;
+  '/transfersReport': typeof AppTransfersReportRoute;
+  '/wallettopupreport': typeof AppWallettopupreportRoute;
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/dashboard': typeof AppDashboardLazyRoute;
   '/': typeof AppIndexLazyRoute;
-  '/company/Attendance': typeof AppCompanyAttendanceRoute;
-  '/company/createposition': typeof AppCompanyCreatepositionRoute;
-  '/company/dummy': typeof AppCompanyDummyRoute;
-  '/company/position': typeof AppCompanyPositionRoute;
-  '/company/review': typeof AppCompanyReviewRoute;
-  '/employee/CreateEmp': typeof AppEmployeeCreateEmpRoute;
-  '/employee/departmentwork': typeof AppEmployeeDepartmentworkRoute;
-  '/employee/empdailywork': typeof AppEmployeeEmpdailyworkRoute;
-  '/employee/empdashboard': typeof AppEmployeeEmpdashboardRoute;
-  '/employee/empproject': typeof AppEmployeeEmpprojectRoute;
-  '/employee/empprojectwork': typeof AppEmployeeEmpprojectworkRoute;
-  '/employee/projectwork': typeof AppEmployeeProjectworkRoute;
-  '/employee/tasktoreview': typeof AppEmployeeTasktoreviewRoute;
-  '/manager/profile': typeof AppManagerProfileRoute;
-  '/project/createproject': typeof AppProjectCreateprojectRoute;
-  '/project/departmentwork': typeof AppProjectDepartmentworkRoute;
-  '/superadmin/admin': typeof AppSuperadminAdminRoute;
-  '/superadmin/department': typeof AppSuperadminDepartmentRoute;
-  '/superadmin/industry': typeof AppSuperadminIndustryRoute;
-  '/work/CreateWork': typeof AppWorkCreateWorkRoute;
-  '/work/DailyWork': typeof AppWorkDailyWorkRoute;
-  '/company/dailyreview/$id': typeof AppCompanyDailyreviewIdRoute;
-  '/company/dailyworkdetails/$id': typeof AppCompanyDailyworkdetailsIdRoute;
-  '/company/department/createdepartment': typeof AppCompanyDepartmentCreatedepartmentRoute;
-  '/company/empattendance/$id': typeof AppCompanyEmpattendanceIdRoute;
-  '/company/projectreview/$id': typeof AppCompanyProjectreviewIdRoute;
-  '/company/proworkdetails/$id': typeof AppCompanyProworkdetailsIdRoute;
-  '/employee/empdailyworkreview/$id': typeof AppEmployeeEmpdailyworkreviewIdRoute;
-  '/employee/empprojectdetails/$id': typeof AppEmployeeEmpprojectdetailsIdRoute;
-  '/employee/emptask/$id': typeof AppEmployeeEmptaskIdRoute;
-  '/employee/projectworkdetailspage/$id': typeof AppEmployeeProjectworkdetailspageIdRoute;
-  '/employee/projectworkreview/$id': typeof AppEmployeeProjectworkreviewIdRoute;
-  '/employee/workdetail/$id': typeof AppEmployeeWorkdetailIdRoute;
-  '/manager/occassion/$id': typeof AppManagerOccassionIdRoute;
-  '/manager/reports/bookingreport': typeof AppManagerReportsBookingreportRoute;
-  '/project/projectdetails/$id': typeof AppProjectProjectdetailsIdRoute;
+  '/Approval/customerregisterapprove': typeof AppApprovalCustomerregisterapproveRoute;
+  '/client/addcommision': typeof AppClientAddcommisionRoute;
+  '/client/beneficiary': typeof AppClientBeneficiaryRoute;
+  '/client/comission': typeof AppClientComissionRoute;
+  '/client/displayclient': typeof AppClientDisplayclientRoute;
+  '/client/profile': typeof AppClientProfileRoute;
+  '/client/topup-approvals': typeof AppClientTopupApprovalsRoute;
+  '/client/transactionhistory': typeof AppClientTransactionhistoryRoute;
+  '/client/transfer-approvals': typeof AppClientTransferApprovalsRoute;
+  '/client/transferview': typeof AppClientTransferviewRoute;
+  '/Approval/registrationDetails/$id': typeof AppApprovalRegistrationDetailsIdRoute;
+  '/client/beneficiaryverification/$id': typeof AppClientBeneficiaryverificationIdRoute;
   '/token/$user/$pass': typeof NativeTokenUserPassRoute;
 }
 
 export interface FileRoutesByTo {
   '': typeof NativeRouteWithChildren;
+  '/alltransaction': typeof AppAlltransactionRoute;
+  '/beneficiaryreport': typeof AppBeneficiaryreportRoute;
+  '/cashflowreport': typeof AppCashflowreportRoute;
+  '/clientlistreport': typeof AppClientlistreportRoute;
+  '/reportCenter': typeof AppReportCenterRoute;
+  '/transactionReport': typeof AppTransactionReportRoute;
+  '/transfersReport': typeof AppTransfersReportRoute;
+  '/wallettopupreport': typeof AppWallettopupreportRoute;
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/dashboard': typeof AppDashboardLazyRoute;
   '/': typeof AppIndexLazyRoute;
-  '/company/Attendance': typeof AppCompanyAttendanceRoute;
-  '/company/createposition': typeof AppCompanyCreatepositionRoute;
-  '/company/dummy': typeof AppCompanyDummyRoute;
-  '/company/position': typeof AppCompanyPositionRoute;
-  '/company/review': typeof AppCompanyReviewRoute;
-  '/employee/CreateEmp': typeof AppEmployeeCreateEmpRoute;
-  '/employee/departmentwork': typeof AppEmployeeDepartmentworkRoute;
-  '/employee/empdailywork': typeof AppEmployeeEmpdailyworkRoute;
-  '/employee/empdashboard': typeof AppEmployeeEmpdashboardRoute;
-  '/employee/empproject': typeof AppEmployeeEmpprojectRoute;
-  '/employee/empprojectwork': typeof AppEmployeeEmpprojectworkRoute;
-  '/employee/projectwork': typeof AppEmployeeProjectworkRoute;
-  '/employee/tasktoreview': typeof AppEmployeeTasktoreviewRoute;
-  '/manager/profile': typeof AppManagerProfileRoute;
-  '/project/createproject': typeof AppProjectCreateprojectRoute;
-  '/project/departmentwork': typeof AppProjectDepartmentworkRoute;
-  '/superadmin/admin': typeof AppSuperadminAdminRoute;
-  '/superadmin/department': typeof AppSuperadminDepartmentRoute;
-  '/superadmin/industry': typeof AppSuperadminIndustryRoute;
-  '/work/CreateWork': typeof AppWorkCreateWorkRoute;
-  '/work/DailyWork': typeof AppWorkDailyWorkRoute;
-  '/company/dailyreview/$id': typeof AppCompanyDailyreviewIdRoute;
-  '/company/dailyworkdetails/$id': typeof AppCompanyDailyworkdetailsIdRoute;
-  '/company/department/createdepartment': typeof AppCompanyDepartmentCreatedepartmentRoute;
-  '/company/empattendance/$id': typeof AppCompanyEmpattendanceIdRoute;
-  '/company/projectreview/$id': typeof AppCompanyProjectreviewIdRoute;
-  '/company/proworkdetails/$id': typeof AppCompanyProworkdetailsIdRoute;
-  '/employee/empdailyworkreview/$id': typeof AppEmployeeEmpdailyworkreviewIdRoute;
-  '/employee/empprojectdetails/$id': typeof AppEmployeeEmpprojectdetailsIdRoute;
-  '/employee/emptask/$id': typeof AppEmployeeEmptaskIdRoute;
-  '/employee/projectworkdetailspage/$id': typeof AppEmployeeProjectworkdetailspageIdRoute;
-  '/employee/projectworkreview/$id': typeof AppEmployeeProjectworkreviewIdRoute;
-  '/employee/workdetail/$id': typeof AppEmployeeWorkdetailIdRoute;
-  '/manager/occassion/$id': typeof AppManagerOccassionIdRoute;
-  '/manager/reports/bookingreport': typeof AppManagerReportsBookingreportRoute;
-  '/project/projectdetails/$id': typeof AppProjectProjectdetailsIdRoute;
+  '/Approval/customerregisterapprove': typeof AppApprovalCustomerregisterapproveRoute;
+  '/client/addcommision': typeof AppClientAddcommisionRoute;
+  '/client/beneficiary': typeof AppClientBeneficiaryRoute;
+  '/client/comission': typeof AppClientComissionRoute;
+  '/client/displayclient': typeof AppClientDisplayclientRoute;
+  '/client/profile': typeof AppClientProfileRoute;
+  '/client/topup-approvals': typeof AppClientTopupApprovalsRoute;
+  '/client/transactionhistory': typeof AppClientTransactionhistoryRoute;
+  '/client/transfer-approvals': typeof AppClientTransferApprovalsRoute;
+  '/client/transferview': typeof AppClientTransferviewRoute;
+  '/Approval/registrationDetails/$id': typeof AppApprovalRegistrationDetailsIdRoute;
+  '/client/beneficiaryverification/$id': typeof AppClientBeneficiaryverificationIdRoute;
   '/token/$user/$pass': typeof NativeTokenUserPassRoute;
 }
 
@@ -872,46 +579,30 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren;
   '/_customer': typeof CustomerRoute;
   '/_native': typeof NativeRouteWithChildren;
+  '/_app/alltransaction': typeof AppAlltransactionRoute;
+  '/_app/beneficiaryreport': typeof AppBeneficiaryreportRoute;
+  '/_app/cashflowreport': typeof AppCashflowreportRoute;
+  '/_app/clientlistreport': typeof AppClientlistreportRoute;
+  '/_app/reportCenter': typeof AppReportCenterRoute;
+  '/_app/transactionReport': typeof AppTransactionReportRoute;
+  '/_app/transfersReport': typeof AppTransfersReportRoute;
+  '/_app/wallettopupreport': typeof AppWallettopupreportRoute;
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_app/dashboard': typeof AppDashboardLazyRoute;
   '/_app/': typeof AppIndexLazyRoute;
-  '/_app/company/Attendance': typeof AppCompanyAttendanceRoute;
-  '/_app/company/createposition': typeof AppCompanyCreatepositionRoute;
-  '/_app/company/dummy': typeof AppCompanyDummyRoute;
-  '/_app/company/position': typeof AppCompanyPositionRoute;
-  '/_app/company/review': typeof AppCompanyReviewRoute;
-  '/_app/employee/CreateEmp': typeof AppEmployeeCreateEmpRoute;
-  '/_app/employee/departmentwork': typeof AppEmployeeDepartmentworkRoute;
-  '/_app/employee/empdailywork': typeof AppEmployeeEmpdailyworkRoute;
-  '/_app/employee/empdashboard': typeof AppEmployeeEmpdashboardRoute;
-  '/_app/employee/empproject': typeof AppEmployeeEmpprojectRoute;
-  '/_app/employee/empprojectwork': typeof AppEmployeeEmpprojectworkRoute;
-  '/_app/employee/projectwork': typeof AppEmployeeProjectworkRoute;
-  '/_app/employee/tasktoreview': typeof AppEmployeeTasktoreviewRoute;
-  '/_app/manager/profile': typeof AppManagerProfileRoute;
-  '/_app/project/createproject': typeof AppProjectCreateprojectRoute;
-  '/_app/project/departmentwork': typeof AppProjectDepartmentworkRoute;
-  '/_app/superadmin/admin': typeof AppSuperadminAdminRoute;
-  '/_app/superadmin/department': typeof AppSuperadminDepartmentRoute;
-  '/_app/superadmin/industry': typeof AppSuperadminIndustryRoute;
-  '/_app/work/CreateWork': typeof AppWorkCreateWorkRoute;
-  '/_app/work/DailyWork': typeof AppWorkDailyWorkRoute;
-  '/_app/company/dailyreview/$id': typeof AppCompanyDailyreviewIdRoute;
-  '/_app/company/dailyworkdetails/$id': typeof AppCompanyDailyworkdetailsIdRoute;
-  '/_app/company/department/createdepartment': typeof AppCompanyDepartmentCreatedepartmentRoute;
-  '/_app/company/empattendance/$id': typeof AppCompanyEmpattendanceIdRoute;
-  '/_app/company/projectreview/$id': typeof AppCompanyProjectreviewIdRoute;
-  '/_app/company/proworkdetails/$id': typeof AppCompanyProworkdetailsIdRoute;
-  '/_app/employee/empdailyworkreview/$id': typeof AppEmployeeEmpdailyworkreviewIdRoute;
-  '/_app/employee/empprojectdetails/$id': typeof AppEmployeeEmpprojectdetailsIdRoute;
-  '/_app/employee/emptask/$id': typeof AppEmployeeEmptaskIdRoute;
-  '/_app/employee/projectworkdetailspage/$id': typeof AppEmployeeProjectworkdetailspageIdRoute;
-  '/_app/employee/projectworkreview/$id': typeof AppEmployeeProjectworkreviewIdRoute;
-  '/_app/employee/workdetail/$id': typeof AppEmployeeWorkdetailIdRoute;
-  '/_app/manager/occassion/$id': typeof AppManagerOccassionIdRoute;
-  '/_app/manager/reports/bookingreport': typeof AppManagerReportsBookingreportRoute;
-  '/_app/project/projectdetails/$id': typeof AppProjectProjectdetailsIdRoute;
+  '/_app/Approval/customerregisterapprove': typeof AppApprovalCustomerregisterapproveRoute;
+  '/_app/client/addcommision': typeof AppClientAddcommisionRoute;
+  '/_app/client/beneficiary': typeof AppClientBeneficiaryRoute;
+  '/_app/client/comission': typeof AppClientComissionRoute;
+  '/_app/client/displayclient': typeof AppClientDisplayclientRoute;
+  '/_app/client/profile': typeof AppClientProfileRoute;
+  '/_app/client/topup-approvals': typeof AppClientTopupApprovalsRoute;
+  '/_app/client/transactionhistory': typeof AppClientTransactionhistoryRoute;
+  '/_app/client/transfer-approvals': typeof AppClientTransferApprovalsRoute;
+  '/_app/client/transferview': typeof AppClientTransferviewRoute;
+  '/_app/Approval/registrationDetails/$id': typeof AppApprovalRegistrationDetailsIdRoute;
+  '/_app/client/beneficiaryverification/$id': typeof AppClientBeneficiaryverificationIdRoute;
   '/_native/token/$user/$pass': typeof NativeTokenUserPassRoute;
 }
 
@@ -919,90 +610,58 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | ''
+    | '/alltransaction'
+    | '/beneficiaryreport'
+    | '/cashflowreport'
+    | '/clientlistreport'
+    | '/reportCenter'
+    | '/transactionReport'
+    | '/transfersReport'
+    | '/wallettopupreport'
     | '/signin'
     | '/signup'
     | '/dashboard'
     | '/'
-    | '/company/Attendance'
-    | '/company/createposition'
-    | '/company/dummy'
-    | '/company/position'
-    | '/company/review'
-    | '/employee/CreateEmp'
-    | '/employee/departmentwork'
-    | '/employee/empdailywork'
-    | '/employee/empdashboard'
-    | '/employee/empproject'
-    | '/employee/empprojectwork'
-    | '/employee/projectwork'
-    | '/employee/tasktoreview'
-    | '/manager/profile'
-    | '/project/createproject'
-    | '/project/departmentwork'
-    | '/superadmin/admin'
-    | '/superadmin/department'
-    | '/superadmin/industry'
-    | '/work/CreateWork'
-    | '/work/DailyWork'
-    | '/company/dailyreview/$id'
-    | '/company/dailyworkdetails/$id'
-    | '/company/department/createdepartment'
-    | '/company/empattendance/$id'
-    | '/company/projectreview/$id'
-    | '/company/proworkdetails/$id'
-    | '/employee/empdailyworkreview/$id'
-    | '/employee/empprojectdetails/$id'
-    | '/employee/emptask/$id'
-    | '/employee/projectworkdetailspage/$id'
-    | '/employee/projectworkreview/$id'
-    | '/employee/workdetail/$id'
-    | '/manager/occassion/$id'
-    | '/manager/reports/bookingreport'
-    | '/project/projectdetails/$id'
+    | '/Approval/customerregisterapprove'
+    | '/client/addcommision'
+    | '/client/beneficiary'
+    | '/client/comission'
+    | '/client/displayclient'
+    | '/client/profile'
+    | '/client/topup-approvals'
+    | '/client/transactionhistory'
+    | '/client/transfer-approvals'
+    | '/client/transferview'
+    | '/Approval/registrationDetails/$id'
+    | '/client/beneficiaryverification/$id'
     | '/token/$user/$pass';
   fileRoutesByTo: FileRoutesByTo;
   to:
     | ''
+    | '/alltransaction'
+    | '/beneficiaryreport'
+    | '/cashflowreport'
+    | '/clientlistreport'
+    | '/reportCenter'
+    | '/transactionReport'
+    | '/transfersReport'
+    | '/wallettopupreport'
     | '/signin'
     | '/signup'
     | '/dashboard'
     | '/'
-    | '/company/Attendance'
-    | '/company/createposition'
-    | '/company/dummy'
-    | '/company/position'
-    | '/company/review'
-    | '/employee/CreateEmp'
-    | '/employee/departmentwork'
-    | '/employee/empdailywork'
-    | '/employee/empdashboard'
-    | '/employee/empproject'
-    | '/employee/empprojectwork'
-    | '/employee/projectwork'
-    | '/employee/tasktoreview'
-    | '/manager/profile'
-    | '/project/createproject'
-    | '/project/departmentwork'
-    | '/superadmin/admin'
-    | '/superadmin/department'
-    | '/superadmin/industry'
-    | '/work/CreateWork'
-    | '/work/DailyWork'
-    | '/company/dailyreview/$id'
-    | '/company/dailyworkdetails/$id'
-    | '/company/department/createdepartment'
-    | '/company/empattendance/$id'
-    | '/company/projectreview/$id'
-    | '/company/proworkdetails/$id'
-    | '/employee/empdailyworkreview/$id'
-    | '/employee/empprojectdetails/$id'
-    | '/employee/emptask/$id'
-    | '/employee/projectworkdetailspage/$id'
-    | '/employee/projectworkreview/$id'
-    | '/employee/workdetail/$id'
-    | '/manager/occassion/$id'
-    | '/manager/reports/bookingreport'
-    | '/project/projectdetails/$id'
+    | '/Approval/customerregisterapprove'
+    | '/client/addcommision'
+    | '/client/beneficiary'
+    | '/client/comission'
+    | '/client/displayclient'
+    | '/client/profile'
+    | '/client/topup-approvals'
+    | '/client/transactionhistory'
+    | '/client/transfer-approvals'
+    | '/client/transferview'
+    | '/Approval/registrationDetails/$id'
+    | '/client/beneficiaryverification/$id'
     | '/token/$user/$pass';
   id:
     | '__root__'
@@ -1010,46 +669,30 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_customer'
     | '/_native'
+    | '/_app/alltransaction'
+    | '/_app/beneficiaryreport'
+    | '/_app/cashflowreport'
+    | '/_app/clientlistreport'
+    | '/_app/reportCenter'
+    | '/_app/transactionReport'
+    | '/_app/transfersReport'
+    | '/_app/wallettopupreport'
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_app/dashboard'
     | '/_app/'
-    | '/_app/company/Attendance'
-    | '/_app/company/createposition'
-    | '/_app/company/dummy'
-    | '/_app/company/position'
-    | '/_app/company/review'
-    | '/_app/employee/CreateEmp'
-    | '/_app/employee/departmentwork'
-    | '/_app/employee/empdailywork'
-    | '/_app/employee/empdashboard'
-    | '/_app/employee/empproject'
-    | '/_app/employee/empprojectwork'
-    | '/_app/employee/projectwork'
-    | '/_app/employee/tasktoreview'
-    | '/_app/manager/profile'
-    | '/_app/project/createproject'
-    | '/_app/project/departmentwork'
-    | '/_app/superadmin/admin'
-    | '/_app/superadmin/department'
-    | '/_app/superadmin/industry'
-    | '/_app/work/CreateWork'
-    | '/_app/work/DailyWork'
-    | '/_app/company/dailyreview/$id'
-    | '/_app/company/dailyworkdetails/$id'
-    | '/_app/company/department/createdepartment'
-    | '/_app/company/empattendance/$id'
-    | '/_app/company/projectreview/$id'
-    | '/_app/company/proworkdetails/$id'
-    | '/_app/employee/empdailyworkreview/$id'
-    | '/_app/employee/empprojectdetails/$id'
-    | '/_app/employee/emptask/$id'
-    | '/_app/employee/projectworkdetailspage/$id'
-    | '/_app/employee/projectworkreview/$id'
-    | '/_app/employee/workdetail/$id'
-    | '/_app/manager/occassion/$id'
-    | '/_app/manager/reports/bookingreport'
-    | '/_app/project/projectdetails/$id'
+    | '/_app/Approval/customerregisterapprove'
+    | '/_app/client/addcommision'
+    | '/_app/client/beneficiary'
+    | '/_app/client/comission'
+    | '/_app/client/displayclient'
+    | '/_app/client/profile'
+    | '/_app/client/topup-approvals'
+    | '/_app/client/transactionhistory'
+    | '/_app/client/transfer-approvals'
+    | '/_app/client/transferview'
+    | '/_app/Approval/registrationDetails/$id'
+    | '/_app/client/beneficiaryverification/$id'
     | '/_native/token/$user/$pass';
   fileRoutesById: FileRoutesById;
 }
@@ -1089,44 +732,28 @@ export const routeTree = rootRoute
     "/_app": {
       "filePath": "_app.tsx",
       "children": [
+        "/_app/alltransaction",
+        "/_app/beneficiaryreport",
+        "/_app/cashflowreport",
+        "/_app/clientlistreport",
+        "/_app/reportCenter",
+        "/_app/transactionReport",
+        "/_app/transfersReport",
+        "/_app/wallettopupreport",
         "/_app/dashboard",
         "/_app/",
-        "/_app/company/Attendance",
-        "/_app/company/createposition",
-        "/_app/company/dummy",
-        "/_app/company/position",
-        "/_app/company/review",
-        "/_app/employee/CreateEmp",
-        "/_app/employee/departmentwork",
-        "/_app/employee/empdailywork",
-        "/_app/employee/empdashboard",
-        "/_app/employee/empproject",
-        "/_app/employee/empprojectwork",
-        "/_app/employee/projectwork",
-        "/_app/employee/tasktoreview",
-        "/_app/manager/profile",
-        "/_app/project/createproject",
-        "/_app/project/departmentwork",
-        "/_app/superadmin/admin",
-        "/_app/superadmin/department",
-        "/_app/superadmin/industry",
-        "/_app/work/CreateWork",
-        "/_app/work/DailyWork",
-        "/_app/company/dailyreview/$id",
-        "/_app/company/dailyworkdetails/$id",
-        "/_app/company/department/createdepartment",
-        "/_app/company/empattendance/$id",
-        "/_app/company/projectreview/$id",
-        "/_app/company/proworkdetails/$id",
-        "/_app/employee/empdailyworkreview/$id",
-        "/_app/employee/empprojectdetails/$id",
-        "/_app/employee/emptask/$id",
-        "/_app/employee/projectworkdetailspage/$id",
-        "/_app/employee/projectworkreview/$id",
-        "/_app/employee/workdetail/$id",
-        "/_app/manager/occassion/$id",
-        "/_app/manager/reports/bookingreport",
-        "/_app/project/projectdetails/$id"
+        "/_app/Approval/customerregisterapprove",
+        "/_app/client/addcommision",
+        "/_app/client/beneficiary",
+        "/_app/client/comission",
+        "/_app/client/displayclient",
+        "/_app/client/profile",
+        "/_app/client/topup-approvals",
+        "/_app/client/transactionhistory",
+        "/_app/client/transfer-approvals",
+        "/_app/client/transferview",
+        "/_app/Approval/registrationDetails/$id",
+        "/_app/client/beneficiaryverification/$id"
       ]
     },
     "/_auth": {
@@ -1145,6 +772,38 @@ export const routeTree = rootRoute
         "/_native/token/$user/$pass"
       ]
     },
+    "/_app/alltransaction": {
+      "filePath": "_app/alltransaction.tsx",
+      "parent": "/_app"
+    },
+    "/_app/beneficiaryreport": {
+      "filePath": "_app/beneficiaryreport.tsx",
+      "parent": "/_app"
+    },
+    "/_app/cashflowreport": {
+      "filePath": "_app/cashflowreport.tsx",
+      "parent": "/_app"
+    },
+    "/_app/clientlistreport": {
+      "filePath": "_app/clientlistreport.tsx",
+      "parent": "/_app"
+    },
+    "/_app/reportCenter": {
+      "filePath": "_app/reportCenter.tsx",
+      "parent": "/_app"
+    },
+    "/_app/transactionReport": {
+      "filePath": "_app/transactionReport.tsx",
+      "parent": "/_app"
+    },
+    "/_app/transfersReport": {
+      "filePath": "_app/transfersReport.tsx",
+      "parent": "/_app"
+    },
+    "/_app/wallettopupreport": {
+      "filePath": "_app/wallettopupreport.tsx",
+      "parent": "/_app"
+    },
     "/_auth/signin": {
       "filePath": "_auth/signin.tsx",
       "parent": "/_auth"
@@ -1161,148 +820,52 @@ export const routeTree = rootRoute
       "filePath": "_app/index.lazy.tsx",
       "parent": "/_app"
     },
-    "/_app/company/Attendance": {
-      "filePath": "_app/company/Attendance.tsx",
+    "/_app/Approval/customerregisterapprove": {
+      "filePath": "_app/Approval/customerregisterapprove.tsx",
       "parent": "/_app"
     },
-    "/_app/company/createposition": {
-      "filePath": "_app/company/createposition.tsx",
+    "/_app/client/addcommision": {
+      "filePath": "_app/client/addcommision.tsx",
       "parent": "/_app"
     },
-    "/_app/company/dummy": {
-      "filePath": "_app/company/dummy.tsx",
+    "/_app/client/beneficiary": {
+      "filePath": "_app/client/beneficiary.tsx",
       "parent": "/_app"
     },
-    "/_app/company/position": {
-      "filePath": "_app/company/position.tsx",
+    "/_app/client/comission": {
+      "filePath": "_app/client/comission.tsx",
       "parent": "/_app"
     },
-    "/_app/company/review": {
-      "filePath": "_app/company/review.tsx",
+    "/_app/client/displayclient": {
+      "filePath": "_app/client/displayclient.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/CreateEmp": {
-      "filePath": "_app/employee/CreateEmp.tsx",
+    "/_app/client/profile": {
+      "filePath": "_app/client/profile.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/departmentwork": {
-      "filePath": "_app/employee/departmentwork.tsx",
+    "/_app/client/topup-approvals": {
+      "filePath": "_app/client/topup-approvals.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/empdailywork": {
-      "filePath": "_app/employee/empdailywork.tsx",
+    "/_app/client/transactionhistory": {
+      "filePath": "_app/client/transactionhistory.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/empdashboard": {
-      "filePath": "_app/employee/empdashboard.tsx",
+    "/_app/client/transfer-approvals": {
+      "filePath": "_app/client/transfer-approvals.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/empproject": {
-      "filePath": "_app/employee/empproject.tsx",
+    "/_app/client/transferview": {
+      "filePath": "_app/client/transferview.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/empprojectwork": {
-      "filePath": "_app/employee/empprojectwork.tsx",
+    "/_app/Approval/registrationDetails/$id": {
+      "filePath": "_app/Approval/registrationDetails.$id.tsx",
       "parent": "/_app"
     },
-    "/_app/employee/projectwork": {
-      "filePath": "_app/employee/projectwork.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/tasktoreview": {
-      "filePath": "_app/employee/tasktoreview.tsx",
-      "parent": "/_app"
-    },
-    "/_app/manager/profile": {
-      "filePath": "_app/manager/profile.tsx",
-      "parent": "/_app"
-    },
-    "/_app/project/createproject": {
-      "filePath": "_app/project/createproject.tsx",
-      "parent": "/_app"
-    },
-    "/_app/project/departmentwork": {
-      "filePath": "_app/project/departmentwork.tsx",
-      "parent": "/_app"
-    },
-    "/_app/superadmin/admin": {
-      "filePath": "_app/superadmin/admin.tsx",
-      "parent": "/_app"
-    },
-    "/_app/superadmin/department": {
-      "filePath": "_app/superadmin/department.tsx",
-      "parent": "/_app"
-    },
-    "/_app/superadmin/industry": {
-      "filePath": "_app/superadmin/industry.tsx",
-      "parent": "/_app"
-    },
-    "/_app/work/CreateWork": {
-      "filePath": "_app/work/CreateWork.tsx",
-      "parent": "/_app"
-    },
-    "/_app/work/DailyWork": {
-      "filePath": "_app/work/DailyWork.tsx",
-      "parent": "/_app"
-    },
-    "/_app/company/dailyreview/$id": {
-      "filePath": "_app/company/dailyreview.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/company/dailyworkdetails/$id": {
-      "filePath": "_app/company/dailyworkdetails.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/company/department/createdepartment": {
-      "filePath": "_app/company/department/createdepartment.tsx",
-      "parent": "/_app"
-    },
-    "/_app/company/empattendance/$id": {
-      "filePath": "_app/company/empattendance.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/company/projectreview/$id": {
-      "filePath": "_app/company/projectreview.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/company/proworkdetails/$id": {
-      "filePath": "_app/company/proworkdetails.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/empdailyworkreview/$id": {
-      "filePath": "_app/employee/empdailyworkreview.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/empprojectdetails/$id": {
-      "filePath": "_app/employee/empprojectdetails.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/emptask/$id": {
-      "filePath": "_app/employee/emptask.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/projectworkdetailspage/$id": {
-      "filePath": "_app/employee/projectworkdetailspage.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/projectworkreview/$id": {
-      "filePath": "_app/employee/projectworkreview.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/employee/workdetail/$id": {
-      "filePath": "_app/employee/workdetail.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/manager/occassion/$id": {
-      "filePath": "_app/manager/occassion.$id.tsx",
-      "parent": "/_app"
-    },
-    "/_app/manager/reports/bookingreport": {
-      "filePath": "_app/manager/reports/bookingreport.tsx",
-      "parent": "/_app"
-    },
-    "/_app/project/projectdetails/$id": {
-      "filePath": "_app/project/projectdetails.$id.tsx",
+    "/_app/client/beneficiaryverification/$id": {
+      "filePath": "_app/client/beneficiaryverification.$id.tsx",
       "parent": "/_app"
     },
     "/_native/token/$user/$pass": {
