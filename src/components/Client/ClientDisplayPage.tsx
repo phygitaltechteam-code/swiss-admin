@@ -192,9 +192,12 @@ const ClientDisplay: React.FC = () => {
           onClick={() => handleView(item)}
         >
           <span className="font-mono text-sm font-bold tracking-tight text-[#0F1535] dark:text-white">
-            {item.accountNumber}
+            {item.name}
           </span>
-          <span className="text-gray-900 mt-0.5 text-xs">{item.name}</span>
+          <span className="text-gray-900 mt-0.5 text-xs">
+            {' '}
+            {item.accountNumber}{' '}
+          </span>
           {/* Show verification status */}
           <div className="mt-1 flex gap-2">
             {item.isVerified && (
