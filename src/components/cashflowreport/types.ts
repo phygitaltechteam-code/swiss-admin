@@ -1,7 +1,7 @@
 export interface Transaction {
   id: string;
   date: string;
-  category: 'Top-up' | 'Fee' | 'Transfer' | 'Interest';
+  category: string;
   description: string;
   inflow?: number;
   outflow?: number;
