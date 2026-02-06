@@ -16,7 +16,7 @@ import {
 import StatCard from '@/components/cashflowreport/StatCard';
 import ChartSection from '@/components/cashflowreport/ChartSection';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
-import {useGetFlowRange} from '@/lib/react-query/cashflow';
+import {useGetFlowRange, useGettransaction} from '@/lib/react-query/cashflow';
 
 // Types for API response
 interface FlowData {
@@ -43,39 +43,15 @@ const fallbackData: ApiResponse = {
   status: true,
   message: 'Monthly Cash Flow Graphs retrieved successfully',
   data: {
-    sixMonth: [
-      {month: 'Sept 2025', inflow: 0, outFlow: 0},
-      {month: 'Oct 2025', inflow: 0, outFlow: 0},
-      {month: 'Nov 2025', inflow: 0, outFlow: 0},
-      {month: 'Dec 2025', inflow: 0, outFlow: 0},
-      {month: 'Jan 2026', inflow: 0, outFlow: 0},
-      {month: 'Feb 2026', inflow: 104515, outFlow: 15366},
-    ],
-    oneYear: [
-      {month: 'Feb 2025', inflow: 0, outFlow: 0},
-      {month: 'Mar 2025', inflow: 0, outFlow: 0},
-      {month: 'Apr 2025', inflow: 0, outFlow: 0},
-      {month: 'May 2025', inflow: 0, outFlow: 0},
-      {month: 'Jun 2025', inflow: 0, outFlow: 0},
-      {month: 'Jul 2025', inflow: 0, outFlow: 0},
-      {month: 'Aug 2025', inflow: 0, outFlow: 0},
-      {month: 'Sept 2025', inflow: 0, outFlow: 0},
-      {month: 'Oct 2025', inflow: 0, outFlow: 0},
-      {month: 'Nov 2025', inflow: 0, outFlow: 0},
-      {month: 'Dec 2025', inflow: 0, outFlow: 0},
-      {month: 'Jan 2026', inflow: 0, outFlow: 0},
-      {month: 'Feb 2026', inflow: 104515, outFlow: 15366},
-    ],
-    ytd: [
-      {month: 'Jan 2026', inflow: 0, outFlow: 0},
-      {month: 'Feb 2026', inflow: 104515, outFlow: 15366},
-    ],
+    sixMonth: [],
+    oneYear: [],
+    ytd: [],
   },
   errors: null,
 };
 
 // Mock transactions (replace with actual API data when available)
-const transactions: Transaction[] = [
+const transaction: Transaction[] = [
   {
     id: '1',
     date: 'Feb 24, 2026',
@@ -84,63 +60,43 @@ const transactions: Transaction[] = [
     inflow: 50000.0,
     runningBalance: 4100230.5,
   },
-  {
-    id: '2',
-    date: 'Feb 23, 2026',
-    category: 'Fee',
-    description: 'Monthly Maintenance',
-    outflow: 50.0,
-    runningBalance: 4050230.5,
-  },
-  {
-    id: '3',
-    date: 'Feb 22, 2026',
-    category: 'Transfer',
-    description: 'Payroll Disbursement',
-    outflow: 120000.0,
-    runningBalance: 4050280.5,
-  },
-  {
-    id: '4',
-    date: 'Feb 21, 2026',
-    category: 'Top-up',
-    description: 'ACH Deposit: Stripe Inc.',
-    inflow: 24500.0,
-    runningBalance: 4170280.5,
-  },
-  {
-    id: '5',
-    date: 'Feb 20, 2026',
-    category: 'Transfer',
-    description: 'Vendor Payment: AWS Services',
-    outflow: 4200.0,
-    runningBalance: 4145780.5,
-  },
-  {
-    id: '6',
-    date: 'Feb 19, 2026',
-    category: 'Interest',
-    description: 'Monthly Interest Payment',
-    inflow: 1250.0,
-    runningBalance: 4149980.5,
-  },
-  {
-    id: '7',
-    date: 'Feb 18, 2026',
-    category: 'Fee',
-    description: 'Wire Transfer Fee',
-    outflow: 25.0,
-    runningBalance: 4148730.5,
-  },
-  {
-    id: '8',
-    date: 'Feb 17, 2026',
-    category: 'Top-up',
-    description: 'Client Payment: ABC Corp',
-    inflow: 35000.0,
-    runningBalance: 4148755.5,
-  },
 ];
+
+export function transformTransactions(
+  data: any[],
+  openingBalance = 0,
+): Transaction[] {
+  let balance = openingBalance;
+  console.log('Transforming transactions with opening balance:', data);
+
+  return (
+    data
+      .map((item) => {
+        const isCredit = item.type === 'CREDIT';
+        const amount = Number(item.amount);
+
+        balance = isCredit ? balance + amount : balance - amount;
+
+        return {
+          id: item.id,
+          date: new Date(item.createdAt).toLocaleDateString('en-US', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }),
+          category: item.type === 'CREDIT' ? 'Top-up' : 'Transfer',
+          description:
+            item.particular ||
+            (isCredit ? 'Wallet Top-up' : 'Beneficiary Transfer'),
+          inflow: isCredit ? amount : undefined,
+          outflow: !isCredit ? amount : undefined,
+          runningBalance: balance,
+        };
+      })
+      // latest first for table display
+      .reverse()
+  );
+}
 
 const CashflowReport: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,10 +109,12 @@ const CashflowReport: React.FC = () => {
   const [stats, setStats] = useState<StatData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-
+  const [flowData, setFlowData] = useState<ApiResponse>(fallbackData);
+  // const [flowData, setFlowData] = useState<ApiResponse>(fallbackData);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   // Try to get data from the hook, but have fallback in case it fails
-  const hookResult = useGetFlowRange();
-  const flowData = hookResult?.data || fallbackData;
+  const {data: hookResult} = useGetFlowRange();
+  const {data: transactionResult} = useGettransaction();
 
   // Format currency for display
   const formatCurrency = (amount: number) => {
@@ -171,6 +129,10 @@ const CashflowReport: React.FC = () => {
   useEffect(() => {
     try {
       setIsLoading(true);
+      if (hookResult) {
+        console.log('Hook Result:', hookResult);
+        setFlowData(hookResult as unknown as ApiResponse);
+      }
 
       // Use the data from hook or fallback
       const selectedData = flowData.data[timeRange];
@@ -285,7 +247,12 @@ const CashflowReport: React.FC = () => {
       setIsError(true);
       setIsLoading(false);
     }
-  }, [flowData, timeRange]);
+  }, [flowData, timeRange, hookResult]);
+  useEffect(() => {
+    if (transactionResult) {
+      setTransactions(transformTransactions(transactionResult.data));
+    }
+  }, [transactionResult]);
 
   // Filter transactions based on search and filters
   const filteredTransactions = transactions.filter((transaction) => {
@@ -460,7 +427,7 @@ const CashflowReport: React.FC = () => {
             </div>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               {/* Time Range Selector */}
-              <div className="flex gap-2">
+              {/* <div className="flex gap-2">
                 <button
                   onClick={() => setTimeRange('sixMonth')}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
@@ -491,9 +458,9 @@ const CashflowReport: React.FC = () => {
                 >
                   YTD
                 </button>
-              </div>
+              </div> */}
 
-              <div className="flex gap-3">
+              {/* <div className="flex gap-3">
                 <button
                   onClick={handleExportPDF}
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-bold transition-colors dark:text-white"
@@ -515,16 +482,16 @@ const CashflowReport: React.FC = () => {
                   <MdPrint size={20} />
                   <span>Print</span>
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
 
           {/* Stat Cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {stats.map((stat, index) => (
               <StatCard key={index} data={stat} />
             ))}
-          </div>
+          </div> */}
 
           {/* Chart Section */}
           <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg border bg-white p-6 shadow-sm">
@@ -577,8 +544,6 @@ const CashflowReport: React.FC = () => {
                     <option value="">All Categories</option>
                     <option value="Top-up">Top-up</option>
                     <option value="Transfer">Transfer</option>
-                    <option value="Fee">Fee</option>
-                    <option value="Interest">Interest</option>
                   </select>
                   <div className="text-gray-500 pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <MdExpandMore size={20} />
