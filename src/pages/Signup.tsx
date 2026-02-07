@@ -4,7 +4,7 @@ import {FiMail, FiUser, FiLock, FiPhone} from 'react-icons/fi';
 
 const SignUp: React.FC = () => {
   return (
-    <>
+    <div className='max-w-md mx-auto'>
       <h2 className="mb-9 text-center text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
         Sign Up
       </h2>
@@ -105,7 +105,7 @@ const SignUp: React.FC = () => {
           </p>
         </div>
       </form>
-    </>
+    </div>
   );
 };
 

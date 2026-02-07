@@ -11,7 +11,7 @@ const AppLayout = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate({to: '/signin'});
+      navigate({to: '/'});
       return;
     }
 
