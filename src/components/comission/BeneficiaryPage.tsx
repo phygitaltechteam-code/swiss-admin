@@ -45,6 +45,10 @@ const BeneficiaryPage: React.FC = () => {
   const {mutateAsync: acceptBeneficiary} = useAcceptBeneficiary();
   const {mutateAsync: rejectBeneficiary} = useRejectBeneficiary();
 
+  // State for mobile sidebar
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+
   const reject = () => {
     if (!selectedBeneficiary?.id) {
       toast.error('Please select a beneficiary');
@@ -65,14 +69,13 @@ const BeneficiaryPage: React.FC = () => {
   useEffect(() => {
     setSelectedBeneficiary(beneficiaries?.foreignBeneficiaries[0]);
   }, [beneficiaries]);
-  console.log('beneficiary', beneficiaries);
 
   return (
     <div className="bg-background-light font-sans flex h-screen flex-col overflow-hidden text-slate-800">
       {/* --- Header --- */}
-      <header className="z-20 flex h-16 shrink-0 items-center justify-between bg-white px-6">
+      <header className="z-30 flex h-16 shrink-0 items-center justify-between bg-white px-4 lg:px-6">
         <div className="flex items-center gap-4">
-          <div className="mr-4 flex items-center gap-2">
+          <div className="mr-2 flex items-center gap-2 lg:mr-4">
             <div
               className="rounded-lg bg-primary/10 p-1.5"
               onClick={() => navigate({to: '/client/beneficiary'})}
@@ -80,18 +83,37 @@ const BeneficiaryPage: React.FC = () => {
               <MdArrowBack className="text-gray-500 text-lg" />
             </div>
 
-            <h1 className="text-header-text text-lg font-bold tracking-tight">
+            <h1 className="text-header-text text-sm font-bold tracking-tight lg:text-lg">
               Verification Hub
             </h1>
           </div>
         </div>
+
+        {/* Mobile Action Buttons */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <button
+            onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+            className="bg-gray-100 rounded-lg p-2"
+          >
+            <User className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setShowActionPanel(!showActionPanel)}
+            className="rounded-lg bg-primary/10 p-2"
+          >
+            <CheckCircle className="h-5 w-5 text-primary" />
+          </button>
+        </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="z-10 flex hidden w-72 shrink-0 flex-col overflow-hidden border-r border-stroke bg-white lg:flex">
-          <div className="border-b border-stroke p-5">
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Hidden on mobile, shown when toggled */}
+        <aside
+          className={`z-20 flex flex-col overflow-hidden border-r border-stroke bg-white lg:static lg:z-10 lg:flex lg:w-72 ${showMobileSidebar ? 'absolute left-0 top-0 h-full w-72 shadow-2xl' : 'hidden'}`}
+        >
+          <div className="border-b border-stroke p-4 lg:p-5">
             <div className="mb-4 flex items-center gap-3">
-              <div className="ring-gray-100 h-12 w-12 overflow-hidden rounded-full ring-2">
+              <div className="ring-gray-100 h-10 w-10 overflow-hidden rounded-full ring-2 lg:h-12 lg:w-12">
                 <img
                   src={beneficiaries?.photo}
                   alt="Client"
@@ -140,12 +162,13 @@ const BeneficiaryPage: React.FC = () => {
                         ? 'bg-gray-100 border-2 border-black'
                         : ''
                     } ${benestatus === 'REJECTED' ? 'opacity-60' : ''} `}
-                    onClick={() => setSelectedBeneficiary(b)}
+                    onClick={() => {
+                      setSelectedBeneficiary(b);
+                      if (window.innerWidth < 1024) {
+                        setShowMobileSidebar(false);
+                      }
+                    }}
                   >
-                    {/* {benestatus === 'PENDING' && (
-                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-primary"></div>
-                    )} */}
-
                     <div
                       className={`mr-3 flex h-8 w-8 items-center justify-center rounded-md text-[10px] font-bold shadow-sm ${
                         benestatus === 'PENDING'
@@ -189,36 +212,72 @@ const BeneficiaryPage: React.FC = () => {
               })}
             </div>
           </div>
+
+          {/* Close button for mobile */}
+          {showMobileSidebar && (
+            <div className="border-t border-stroke p-4 lg:hidden">
+              <button
+                onClick={() => setShowMobileSidebar(false)}
+                className="bg-gray-100 w-full rounded-lg py-2 text-sm font-medium"
+              >
+                Close
+              </button>
+            </div>
+          )}
         </aside>
 
+        {/* Main Content Area */}
         <section className="bg-gray-50/50 relative flex min-w-0 flex-1 flex-col overflow-hidden">
           {/* Detail Header */}
-          <div className="shrink-0 border-b border-stroke bg-white px-8 py-5">
+          <div className="shrink-0 border-b border-stroke bg-white px-4 py-4 lg:px-8 lg:py-5">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary"></span>
                 {getRequestStatus(selectedBeneficiary)}
               </div>
+
+              {/* Mobile beneficiary selector */}
+              <div className="lg:hidden">
+                <select
+                  value={selectedBeneficiary?.id || ''}
+                  onChange={(e) => {
+                    const beneficiary =
+                      beneficiaries?.foreignBeneficiaries.find(
+                        (b) => b.id === e.target.value,
+                      );
+                    if (beneficiary) setSelectedBeneficiary(beneficiary);
+                  }}
+                  className="rounded border border-stroke bg-white px-3 py-1.5 text-sm"
+                >
+                  {beneficiaries?.foreignBeneficiaries.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.fullName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div>
-                <h1 className="text-header-text mb-1 text-2xl font-bold">
+                <h1 className="text-header-text mb-1 text-lg font-bold lg:text-2xl">
                   New Beneficiary Request
                 </h1>
-                <p className="text-label-text flex items-center gap-1 text-xs">
+                <p className="text-label-text flex flex-wrap items-center gap-1 text-xs">
                   Submitted on{' '}
-                  {new Date(selectedBeneficiary?.createdAt).toLocaleString(
-                    'en-US',
-                    {
-                      month: 'short',
-                      day: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true,
-                    },
-                  )}{' '}
+                  {selectedBeneficiary?.createdAt
+                    ? new Date(selectedBeneficiary.createdAt).toLocaleString(
+                        'en-US',
+                        {
+                          month: 'short',
+                          day: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        },
+                      )
+                    : 'N/A'}{' '}
                   by
                   <span className="text-gray-700 font-medium">
                     {selectedBeneficiary?.fullName}
@@ -227,7 +286,7 @@ const BeneficiaryPage: React.FC = () => {
               </div>
 
               {/* Alert Box */}
-              <div className="flex max-w-md items-start gap-3 rounded-lg border border-red-100 bg-red-50 p-3 shadow-sm">
+              <div className="flex max-w-full items-start gap-3 rounded-lg border border-red-100 bg-red-50 p-3 shadow-sm">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                 <div>
                   <h3 className="mb-0.5 text-xs font-bold text-red-800">
@@ -247,7 +306,7 @@ const BeneficiaryPage: React.FC = () => {
             <div className="mx-auto h-full max-w-5xl">
               <div className="flex h-full flex-col overflow-hidden rounded-xl border border-stroke bg-white shadow-sm">
                 {/* Card Header */}
-                <div className="bg-gray-50 flex shrink-0 items-center justify-between border-b border-stroke px-6 py-4">
+                <div className="bg-gray-50 flex shrink-0 flex-col items-start justify-between gap-2 border-b border-stroke px-4 py-3 sm:flex-row sm:items-center sm:px-6 sm:py-4">
                   <h3 className="text-header-text flex items-center gap-2 text-sm font-bold uppercase tracking-wider">
                     <User className="text-label-text h-4 w-4" />
                     Beneficiary Information
@@ -258,14 +317,14 @@ const BeneficiaryPage: React.FC = () => {
                 </div>
 
                 {/* Card Body */}
-                <div className="flex-1 overflow-y-auto p-6 lg:p-8">
-                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {/* Section 1: Identity */}
                     <div className="col-span-1 md:col-span-3 lg:col-span-3">
                       <h4 className="text-label-text mb-4 flex items-center gap-2 border-b border-stroke pb-2 text-xs font-bold uppercase tracking-wider">
                         <BadgeCheck className="h-4 w-4" /> Identity Details
                       </h4>
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                         <div>
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
                             {selectedBeneficiary?.fullName}
@@ -306,7 +365,7 @@ const BeneficiaryPage: React.FC = () => {
                       <h4 className="text-label-text mb-4 flex items-center gap-2 border-b border-stroke pb-2 text-xs font-bold uppercase tracking-wider">
                         <MapPin className="h-4 w-4" /> Address Details
                       </h4>
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                         <div className="md:col-span-2">
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
                             Address Line 1
@@ -344,9 +403,6 @@ const BeneficiaryPage: React.FC = () => {
                             Country
                           </label>
                           <div className="flex items-center gap-2">
-                            {/* <span className="overflow-hidden rounded-sm text-xl shadow-sm">
-                              🇬🇧
-                            </span> */}
                             <span className="text-header-text text-sm font-medium">
                               {selectedBeneficiary?.country}
                             </span>
@@ -360,15 +416,12 @@ const BeneficiaryPage: React.FC = () => {
                       <h4 className="text-label-text mb-4 flex items-center gap-2 border-b border-stroke pb-2 text-xs font-bold uppercase tracking-wider">
                         <Building2 className="h-4 w-4" /> Bank Details
                       </h4>
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                         <div>
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
                             Bank Country
                           </label>
                           <div className="flex items-center gap-2">
-                            {/* <span className="overflow-hidden rounded-sm text-xl shadow-sm">
-                              🇬🇧
-                            </span> */}
                             <span className="text-header-text text-sm font-medium">
                               {selectedBeneficiary?.bankCountry}
                             </span>
@@ -379,9 +432,6 @@ const BeneficiaryPage: React.FC = () => {
                             Currency
                           </label>
                           <div className="text-header-text flex items-center gap-2 text-sm font-medium">
-                            {/* <span className="bg-gray-100 text-gray-600 border-stroke rounded border px-1.5 py-0.5 text-[10px] font-bold">
-                              GBP
-                            </span> */}
                             {selectedBeneficiary?.currency}
                           </div>
                         </div>
@@ -426,14 +476,6 @@ const BeneficiaryPage: React.FC = () => {
                             {selectedBeneficiary?.bankName}
                           </div>
                         </div>
-                        {/* <div className="md:col-span-4">
-                          <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
-                            Branch Name
-                          </label>
-                          <div className="text-header-text text-sm font-medium">
-                            London Main Branch (Old Broad St)
-                          </div>
-                        </div> */}
                       </div>
                     </div>
                   </div>
@@ -443,18 +485,30 @@ const BeneficiaryPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Right Sidebar: Action Center */}
-        <aside className="z-20 flex w-80 shrink-0 flex-col border-l border-stroke bg-white shadow-xl">
-          <div className="border-b border-stroke bg-white p-6">
-            <h2 className="text-header-text text-lg font-bold">
-              Action Center
-            </h2>
+        {/* Right Sidebar: Action Center - Hidden on mobile, shown when toggled */}
+        <aside
+          className={`z-20 flex flex-col border-l border-stroke bg-white shadow-xl lg:static lg:z-20 lg:flex lg:w-80 ${showActionPanel ? 'absolute right-0 top-0 h-full w-full lg:w-80' : 'hidden lg:flex'}`}
+        >
+          <div className="border-b border-stroke bg-white p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-header-text text-lg font-bold">
+                Action Center
+              </h2>
+              {showActionPanel && (
+                <button
+                  onClick={() => setShowActionPanel(false)}
+                  className="rounded-lg p-1 lg:hidden"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              )}
+            </div>
             <p className="text-label-text mt-1 text-xs">
               Review carefully before processing.
             </p>
           </div>
 
-          <div className="bg-gray-50/30 flex flex-1 flex-col overflow-hidden p-6">
+          <div className="bg-gray-50/30 flex flex-1 flex-col overflow-hidden p-4 lg:p-6">
             <div className="mb-6 flex flex-1 flex-col">
               <label
                 htmlFor="admin-note"
@@ -470,20 +524,20 @@ const BeneficiaryPage: React.FC = () => {
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 placeholder="Enter rejection reason or approval notes..."
-                className="border-gray-300 text-header-text w-full flex-1 resize-none rounded-lg p-4 text-sm shadow-sm transition-shadow duration-200 focus:border-primary focus:shadow-md focus:ring-primary"
+                className="border-gray-300 text-header-text w-full flex-1 resize-none rounded-lg p-3 text-sm shadow-sm transition-shadow duration-200 focus:border-primary focus:shadow-md focus:ring-primary lg:p-4"
               ></textarea>
             </div>
 
             <div className="mt-auto shrink-0 space-y-3">
               <button
-                className="flex w-full transform items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 font-semibold text-white shadow-md transition-all hover:bg-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98]"
+                className="flex w-full transform items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-semibold text-white shadow-md transition-all hover:bg-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] lg:py-3.5"
                 onClick={() => acceptBeneficiary(selectedBeneficiary?.id)}
               >
                 <CheckCircle className="h-5 w-5" />
                 Approve Beneficiary
               </button>
               <button
-                className="flex w-full transform items-center justify-center gap-2 rounded-lg border border-stroke bg-white px-4 py-3.5 font-medium text-red-600 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98]"
+                className="flex w-full transform items-center justify-center gap-2 rounded-lg border border-stroke bg-white px-4 py-3 font-medium text-red-600 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98] lg:py-3.5"
                 onClick={() => reject()}
               >
                 <XCircle className="h-5 w-5" />
