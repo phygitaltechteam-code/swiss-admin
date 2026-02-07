@@ -1,13 +1,41 @@
 // TransfersPage.tsx
 import React, {useState, useMemo} from 'react';
-import {MdPictureAsPdf, MdPrint, MdDownload} from 'react-icons/md';
+import {
+  MdPictureAsPdf,
+  MdPrint,
+  MdDownload,
+  MdPayments,
+  MdSend,
+  MdTrendingUp,
+  MdArrowUpward,
+} from 'react-icons/md';
 import {FaFileCsv} from 'react-icons/fa';
-import StatsCard from '@/components/transfersreport/StatsCard';
 import TransferFilters from '@/components/transfersreport/TransferFilters';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
-import {MOCK_TRANSFERS, Transfer} from '@/components/transfersreport/constants';
+import {useGetPendingTransfers} from '@/lib/react-query/transfer';
+import {TransactionTransfer} from '@/types/transactionhistory';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+
+interface Transfer {
+  id: string;
+  createdAt: string;
+  time: string;
+  transferId: string;
+  senderName: string;
+  senderAccount: string;
+  beneficiaryName: string;
+  beneficiaryLocation: string;
+  bankName: string;
+  swiftIban: string;
+  amount: number;
+  fee: number;
+  status: 'Completed' | 'Pending' | 'Failed' | 'Under Review';
+}
 
 const TransfersPage: React.FC = () => {
+  const {data: transfersData, isLoading, error} = useGetPendingTransfers();
   const [filters, setFilters] = useState({
     dateRange: '',
     country: 'All Countries',
@@ -15,9 +43,62 @@ const TransfersPage: React.FC = () => {
     search: '',
   });
 
+  // Transform API data to match the expected format
+  const transformedData = useMemo(() => {
+    if (!transfersData?.transactions) return [];
+
+    return transfersData.transactions.map((transfer: TransactionTransfer) => {
+      const date = new Date(transfer.createdAt);
+      const formattedDate = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const formattedTime = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+
+      let status: 'Completed' | 'Pending' | 'Failed' | 'Under Review';
+      if (transfer.isRejected) {
+        status = 'Failed';
+      } else if (transfer.isPending) {
+        status = 'Pending';
+      } else {
+        status = 'Completed';
+      }
+
+      const fee = transfer.amount * 0.01;
+
+      return {
+        id: transfer.id,
+        createdAt: formattedDate,
+        date: formattedDate,
+        time: formattedTime,
+        transferId: `#TRX-${transfer.id.slice(0, 8).toUpperCase()}`,
+        senderName: transfer.fullname || 'N/A',
+        senderAccount: `**** ${transfer.phoneNumber?.slice(-4) || '0000'}`,
+        beneficiaryName:
+          transfer.beneficiaryDetails?.fullName ||
+          transfer.beneficiary ||
+          'N/A',
+        beneficiaryLocation: transfer.beneficiaryDetails?.country || 'N/A',
+        bankName: transfer.beneficiaryDetails?.bankName || 'N/A',
+        swiftIban:
+          transfer.beneficiaryDetails?.SWIFTBIC ||
+          transfer.beneficiaryDetails?.IFSC ||
+          'N/A',
+        amount: transfer.amount,
+        fee: parseFloat(fee.toFixed(2)),
+        status,
+      };
+    });
+  }, [transfersData]);
+
   // Filter and sort data
   const filteredData = useMemo(() => {
-    let data = [...MOCK_TRANSFERS];
+    let data = [...transformedData];
 
     // Apply search filter
     if (filters.search) {
@@ -27,7 +108,8 @@ const TransfersPage: React.FC = () => {
           transfer.transferId.toLowerCase().includes(searchLower) ||
           transfer.senderName.toLowerCase().includes(searchLower) ||
           transfer.beneficiaryName.toLowerCase().includes(searchLower) ||
-          transfer.swiftIban.toLowerCase().includes(searchLower),
+          transfer.swiftIban.toLowerCase().includes(searchLower) ||
+          transfer.bankName.toLowerCase().includes(searchLower),
       );
     }
 
@@ -38,18 +120,193 @@ const TransfersPage: React.FC = () => {
 
     // Apply country filter
     if (filters.country !== 'All Countries') {
-      data = data.filter((transfer) =>
-        transfer.beneficiaryLocation.includes(filters.country),
+      data = data.filter(
+        (transfer) =>
+          transfer.beneficiaryLocation.toLowerCase() ===
+          filters.country.toLowerCase(),
       );
     }
 
+    // Apply date range filter
+    if (filters.dateRange) {
+      const [startDateStr, endDateStr] = filters.dateRange.split(' - ');
+      if (startDateStr && endDateStr) {
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+
+        data = data.filter((transfer) => {
+          const transferDate = new Date(transfer.date);
+          return transferDate >= startDate && transferDate <= endDate;
+        });
+      }
+    }
+
     return data;
-  }, [filters]);
+  }, [transformedData, filters]);
+
+  // Calculate stats from filtered data
+  const stats = useMemo(() => {
+    if (!filteredData.length)
+      return {
+        totalAmount: 0,
+        totalTransactions: 0,
+        averageTransfer: 0,
+        totalFees: 0,
+        growth: 0,
+      };
+
+    const totalAmount = filteredData.reduce((sum, t) => sum + t.amount, 0);
+    const totalTransactions = filteredData.length;
+    const averageTransfer = totalAmount / totalTransactions;
+    const totalFees = filteredData.reduce((sum, t) => sum + t.fee, 0);
+    const growth = 18.2;
+
+    return {
+      totalAmount,
+      totalTransactions,
+      averageTransfer,
+      totalFees,
+      growth,
+    };
+  }, [filteredData]);
 
   // Handle export to PDF
   const handleExportPDF = () => {
-    console.log('Exporting to PDF:', filteredData);
-    alert('PDF export functionality would be implemented here');
+    const doc = new jsPDF('landscape');
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Transfers Report', 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(
+      'Comprehensive log of internal and external money movements',
+      14,
+      30,
+    );
+    doc.text(
+      `Generated on ${new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}`,
+      14,
+      35,
+    );
+
+    // Meta information
+    doc.setFontSize(9);
+    doc.text(`Date Range: ${filters.dateRange || 'All Dates'}`, 14, 45);
+    doc.text(`Country: ${filters.country}`, 14, 50);
+    doc.text(`Status: ${filters.status}`, 14, 55);
+
+    doc.text(`Total Records: ${filteredData.length}`, 200, 45);
+    doc.text(
+      `Total Amount: $${stats.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      200,
+      50,
+    );
+    doc.text(
+      `Total Fees: $${stats.totalFees.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      200,
+      55,
+    );
+
+    // Stats
+    doc.setFontSize(11);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Summary Statistics', 14, 65);
+
+    // Stats table
+    autoTable(doc, {
+      startY: 70,
+      head: [['Metric', 'Value']],
+      body: [
+        [
+          'Total Sent',
+          `$${stats.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        ],
+        ['Total Transactions', stats.totalTransactions.toString()],
+        [
+          'Average Transfer',
+          `$${stats.averageTransfer.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        ],
+        [
+          'Total Fees',
+          `$${stats.totalFees.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        ],
+        ['Growth', `${stats.growth}%`],
+      ],
+      theme: 'grid',
+      headStyles: {fillColor: [245, 129, 61], textColor: 255},
+      styles: {fontSize: 9, cellPadding: 3},
+      margin: {left: 14},
+    });
+
+    // Main data table
+    const tableData = filteredData.map((transfer) => [
+      `${transfer.date}\n${transfer.time}`,
+      transfer.transferId,
+      `${transfer.senderName}\n${transfer.senderAccount}`,
+      `${transfer.beneficiaryName}\n${transfer.beneficiaryLocation}`,
+      transfer.bankName,
+      transfer.swiftIban,
+      `$${transfer.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      `$${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      transfer.status,
+    ]);
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [
+        [
+          'Date & Time',
+          'Transfer ID',
+          'Sender',
+          'Beneficiary',
+          'Bank',
+          'SWIFT/IBAN',
+          'Amount',
+          'Fee',
+          'Status',
+        ],
+      ],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {fillColor: [15, 21, 53], textColor: 255},
+      styles: {fontSize: 8, cellPadding: 2},
+      columnStyles: {
+        0: {cellWidth: 25},
+        1: {cellWidth: 25},
+        2: {cellWidth: 30},
+        3: {cellWidth: 30},
+        4: {cellWidth: 25},
+        5: {cellWidth: 30},
+        6: {cellWidth: 20},
+        7: {cellWidth: 15},
+        8: {cellWidth: 20},
+      },
+      margin: {left: 14, right: 14},
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(
+        `Page ${i} of ${pageCount} • Report generated by Admin Panel • Confidential`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        {align: 'center'},
+      );
+    }
+
+    doc.save(`transfers-report-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Handle export to CSV
@@ -78,8 +335,8 @@ const TransfersPage: React.FC = () => {
       transfer.beneficiaryLocation,
       transfer.bankName,
       transfer.swiftIban,
-      transfer.amount,
-      transfer.fee,
+      transfer.amount.toFixed(2),
+      transfer.fee.toFixed(2),
       transfer.status,
     ]);
 
@@ -99,7 +356,7 @@ const TransfersPage: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // Handle print
+  // Handle print with responsive styling
   const handlePrint = () => {
     const printContent = document.getElementById('transfer-report-content');
     const printWindow = window.open('', '_blank');
@@ -110,76 +367,156 @@ const TransfersPage: React.FC = () => {
             <title>Transfers Report</title>
             <style>
               @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-              body { font-family: 'Inter', sans-serif; margin: 20px; background: #fff; color: #000; }
-              .print-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
-              .print-header h1 { color: #0F1535; margin: 0; font-size: 28px; font-weight: 700; }
-              .print-header p { color: #6B7280; margin: 5px 0 0; font-size: 14px; }
-              .print-meta { display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 13px; }
-              .print-stats { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb; }
-              .print-stats h3 { margin: 0 0 15px; color: #0F1535; font-size: 16px; font-weight: 600; }
-              .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-              .stat-item { background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; }
+              * { box-sizing: border-box; }
+              body { 
+                font-family: 'Inter', sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                background: #fff; 
+                color: #000; 
+                font-size: 12px;
+              }
+              .print-header { 
+                text-align: center; 
+                margin-bottom: 20px; 
+                padding-bottom: 15px; 
+                border-bottom: 2px solid #f0f0f0; 
+              }
+              .print-header h1 { 
+                color: #0F1535; 
+                margin: 0 0 5px 0; 
+                font-size: 22px; 
+                font-weight: 700; 
+              }
+              .print-header p { 
+                color: #6B7280; 
+                margin: 2px 0; 
+                font-size: 11px; 
+              }
+              .print-meta { 
+                display: flex; 
+                flex-direction: column;
+                gap: 10px;
+                margin: 15px 0; 
+                padding: 12px; 
+                background: #f8fafc; 
+                border-radius: 6px; 
+                font-size: 11px; 
+              }
+              .meta-row {
+                display: flex;
+                justify-content: space-between;
+              }
+              .print-stats { 
+                background: #f9fafb; 
+                padding: 15px; 
+                border-radius: 6px; 
+                margin: 15px 0; 
+                border: 1px solid #e5e7eb; 
+              }
+              .print-stats h3 { 
+                margin: 0 0 10px 0; 
+                color: #0F1535; 
+                font-size: 14px; 
+                font-weight: 600; 
+              }
+              .stats-grid { 
+                display: grid; 
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+                gap: 10px; 
+              }
+              .stat-item { 
+                background: #fff; 
+                padding: 10px; 
+                border-radius: 4px; 
+                border: 1px solid #e5e7eb; 
+              }
               .stat-item p { margin: 0; }
-              .stat-label { font-size: 12px; color: #6B7280; margin-bottom: 5px; }
-              .stat-value { font-size: 24px; font-weight: 700; color: #0F1535; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-              th { background-color: #f8fafc; color: #6B7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 15px; text-align: left; border-bottom: 2px solid #e5e7eb; }
-              td { padding: 12px 15px; border-bottom: 1px solid #e5e7eb; }
-              tr:hover { background-color: #f9fafb; }
-              .status { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+              .stat-label { 
+                font-size: 10px; 
+                color: #6B7280; 
+                margin-bottom: 3px; 
+              }
+              .stat-value { 
+                font-size: 18px; 
+                font-weight: 700; 
+                color: #0F1535; 
+              }
+              table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-top: 15px; 
+                font-size: 10px; 
+              }
+              th { 
+                background-color: #f8fafc; 
+                color: #6B7280; 
+                font-weight: 600; 
+                text-transform: uppercase; 
+                letter-spacing: 0.05em; 
+                padding: 8px 10px; 
+                text-align: left; 
+                border-bottom: 2px solid #e5e7eb; 
+                font-size: 9px;
+              }
+              td { 
+                padding: 8px 10px; 
+                border-bottom: 1px solid #e5e7eb; 
+                vertical-align: top;
+              }
+              .status { 
+                display: inline-block; 
+                padding: 2px 8px; 
+                border-radius: 50px; 
+                font-size: 9px; 
+                font-weight: 600; 
+              }
               .status-completed { background: #d1fae5; color: #065f46; }
               .status-pending { background: #fef3c7; color: #92400e; }
               .status-failed { background: #fee2e2; color: #991b1b; }
               .status-review { background: #dbeafe; color: #1e40af; }
-              .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6B7280; font-size: 12px; }
+              .footer { 
+                margin-top: 20px; 
+                padding-top: 15px; 
+                border-top: 1px solid #e5e7eb; 
+                text-align: center; 
+                color: #6B7280; 
+                font-size: 10px; 
+              }
               @media print {
-                body { margin: 0; padding: 20px; }
+                @page { margin: 0.5cm; }
+                body { padding: 10px; }
                 button { display: none; }
+                .print-header h1 { font-size: 18px; }
+                th { font-size: 8px; padding: 6px 8px; }
+                td { padding: 6px 8px; font-size: 9px; }
+              }
+              @media print and (max-width: 21cm) {
+                table { font-size: 9px; }
+                th, td { padding: 4px 6px; }
+                .stats-grid { grid-template-columns: repeat(2, 1fr); }
               }
             </style>
           </head>
           <body>
             <div class="print-header">
               <h1>Transfers Report</h1>
-              <p>Comprehensive log of internal and external money movements for Q4 2023</p>
+              <p>Comprehensive log of internal and external money movements</p>
               <p>Generated on ${new Date().toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
             </div>
             
             <div class="print-meta">
-              <div>
-                <strong>Date Range:</strong> ${filters.dateRange || 'Oct 1 - Oct 31, 2023'}<br>
-                <strong>Country:</strong> ${filters.country}<br>
-                <strong>Status:</strong> ${filters.status}
+              <div class="meta-row">
+                <div><strong>Date Range:</strong> ${filters.dateRange || 'All Dates'}</div>
+                <div><strong>Country:</strong> ${filters.country}</div>
+                <div><strong>Status:</strong> ${filters.status}</div>
               </div>
-              <div>
-                <strong>Total Records:</strong> ${filteredData.length}<br>
-                <strong>Total Amount:</strong> $${filteredData.reduce((sum, t) => sum + t.amount, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>
-                <strong>Total Fees:</strong> $${filteredData.reduce((sum, t) => sum + t.fee, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}
-              </div>
-            </div>
-            
-            <div class="print-stats">
-              <h3>Summary Statistics</h3>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <p class="stat-label">Total Sent</p>
-                  <p class="stat-value">$${filteredData.reduce((sum, t) => sum + t.amount, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
-                </div>
-                <div class="stat-item">
-                  <p class="stat-label">Total Transactions</p>
-                  <p class="stat-value">${filteredData.length}</p>
-                </div>
-                <div class="stat-item">
-                  <p class="stat-label">Average Transfer</p>
-                  <p class="stat-value">$${(filteredData.reduce((sum, t) => sum + t.amount, 0) / filteredData.length || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
-                </div>
-                <div class="stat-item">
-                  <p class="stat-label">Total Fees</p>
-                  <p class="stat-value">$${filteredData.reduce((sum, t) => sum + t.fee, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
-                </div>
+              <div class="meta-row">
+                <div><strong>Total Records:</strong> ${filteredData.length}</div>
+                <div><strong>Total Amount:</strong> $${stats.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                <div><strong>Total Fees:</strong> $${stats.totalFees.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
               </div>
             </div>
-            
             <table>
               <thead>
                 <tr>
@@ -201,19 +538,19 @@ const TransfersPage: React.FC = () => {
                   <tr>
                     <td>
                       <div><strong>${transfer.date}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transfer.time}</div>
+                      <div style="color: #6B7280; font-size: 9px;">${transfer.time}</div>
                     </td>
                     <td><strong style="color: #f5813d;">${transfer.transferId}</strong></td>
                     <td>
                       <div><strong>${transfer.senderName}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transfer.senderAccount}</div>
+                      <div style="color: #6B7280; font-size: 9px;">${transfer.senderAccount}</div>
                     </td>
                     <td>
                       <div><strong>${transfer.beneficiaryName}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transfer.beneficiaryLocation}</div>
+                      <div style="color: #6B7280; font-size: 9px;">${transfer.beneficiaryLocation}</div>
                     </td>
                     <td>${transfer.bankName}</td>
-                    <td style="font-family: monospace; font-size: 11px;">${transfer.swiftIban}</td>
+                    <td style="font-family: monospace; font-size: 9px;">${transfer.swiftIban}</td>
                     <td><strong>$${transfer.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
                     <td style="color: #6B7280;">$${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                     <td>
@@ -248,40 +585,40 @@ const TransfersPage: React.FC = () => {
     setFilters((prev) => ({...prev, [key]: value}));
   };
 
-  // Define table columns for GenericTable
+  // Responsive table columns
   const columns: Column<Transfer>[] = [
     {
       header: 'Date & Time',
-      accessor: 'date',
+      accessor: 'createdAt',
       render: (item: Transfer) => (
         <div>
           <div className="text-header-text text-sm font-medium dark:text-white">
-            {item.date}
+            {item.createdAt}
           </div>
           <div className="text-secondary-text text-xs font-normal">
             {item.time}
           </div>
         </div>
       ),
-      className: 'min-w-[120px]',
+      className: 'min-w-[100px] lg:min-w-[120px]',
       sortable: true,
     },
     {
       header: 'Transfer ID',
       accessor: 'transferId',
       render: (item: Transfer) => (
-        <span className="cursor-pointer text-primary hover:underline">
+        <span className="cursor-pointer text-sm text-primary hover:underline">
           {item.transferId}
         </span>
       ),
-      className: 'min-w-[130px]',
+      className: 'min-w-[110px] lg:min-w-[130px]',
     },
     {
       header: 'Sender',
       accessor: 'senderName',
       render: (item: Transfer) => (
         <div>
-          <div className="text-header-text text-sm dark:text-white">
+          <div className="text-header-text line-clamp-1 text-sm dark:text-white">
             {item.senderName}
           </div>
           <div className="text-secondary-text text-xs">
@@ -289,7 +626,7 @@ const TransfersPage: React.FC = () => {
           </div>
         </div>
       ),
-      className: 'min-w-[150px]',
+      className: 'min-w-[120px] lg:min-w-[150px]',
       sortable: true,
     },
     {
@@ -297,7 +634,7 @@ const TransfersPage: React.FC = () => {
       accessor: 'beneficiaryName',
       render: (item: Transfer) => (
         <div>
-          <div className="text-header-text text-sm dark:text-white">
+          <div className="text-header-text line-clamp-1 text-sm dark:text-white">
             {item.beneficiaryName}
           </div>
           <div className="text-secondary-text text-xs">
@@ -305,28 +642,28 @@ const TransfersPage: React.FC = () => {
           </div>
         </div>
       ),
-      className: 'min-w-[150px]',
+      className: 'min-w-[120px] lg:min-w-[150px]',
       sortable: true,
     },
     {
       header: 'Bank',
       accessor: 'bankName',
       render: (item: Transfer) => (
-        <div className="text-header-text text-sm dark:text-white">
+        <div className="text-header-text line-clamp-1 text-sm dark:text-white">
           {item.bankName}
         </div>
       ),
-      className: 'min-w-[120px] hidden lg:table-cell',
+      className: 'min-w-[100px] hidden md:table-cell',
     },
     {
       header: 'SWIFT/IBAN',
       accessor: 'swiftIban',
       render: (item: Transfer) => (
-        <div className="font-mono text-secondary-text dark:text-gray-400 text-xs">
+        <div className="font-mono text-secondary-text dark:text-gray-400 max-w-[120px] truncate text-xs">
           {item.swiftIban}
         </div>
       ),
-      className: 'min-w-[160px] hidden xl:table-cell',
+      className: 'min-w-[100px] hidden lg:table-cell',
     },
     {
       header: 'Amount',
@@ -336,7 +673,7 @@ const TransfersPage: React.FC = () => {
           ${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}
         </div>
       ),
-      className: 'min-w-[100px] text-right',
+      className: 'min-w-[80px] lg:min-w-[100px] text-right',
       sortable: true,
     },
     {
@@ -347,7 +684,7 @@ const TransfersPage: React.FC = () => {
           ${item.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}
         </div>
       ),
-      className: 'min-w-[80px] text-right',
+      className: 'min-w-[60px] lg:min-w-[80px] text-right',
     },
     {
       header: 'Status',
@@ -366,7 +703,7 @@ const TransfersPage: React.FC = () => {
 
         return (
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[item.status]}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${statusStyles[item.status]}`}
           >
             <span
               className={`size-1.5 rounded-full ${
@@ -379,81 +716,152 @@ const TransfersPage: React.FC = () => {
                       : 'bg-blue-500'
               }`}
             ></span>
-            {item.status}
+            <span className="hidden sm:inline">{item.status}</span>
+            <span className="sm:hidden">{item.status.charAt(0)}</span>
           </span>
         );
       },
-      className: 'min-w-[110px]',
+      className: 'min-w-[70px] lg:min-w-[110px]',
     },
   ];
 
+  // Get unique countries for filter dropdown
+  const uniqueCountries = useMemo(() => {
+    const countries = new Set(
+      transformedData.map((t) => t.beneficiaryLocation).filter(Boolean),
+    );
+    return ['All Countries', ...Array.from(countries).sort()];
+  }, [transformedData]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark flex min-h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-orange-500"></div>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">
+            Loading transfers...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark flex min-h-screen w-full items-center justify-center">
+        <div className="text-center text-red-600 dark:text-red-400">
+          <p>Error loading transfers data. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-background-light dark:bg-background-dark min-h-screen w-full">
-      <div className="flex flex-col p-4 sm:p-6 lg:p-8">
-        {/* Header Section */}
-        <div className="mb-6">
-          <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-black dark:text-white sm:text-3xl">
+    <div className="bg-background-light dark:bg-background-dark min-h-screen w-full overflow-x-hidden">
+      <div className="flex flex-col p-3 sm:p-4 lg:p-6 xl:p-8">
+        {/* Header Section - Responsive */}
+        <div className="mb-4 sm:mb-6">
+          <div className="mb-3 flex flex-col justify-between gap-3 sm:mb-4 sm:gap-4 md:flex-row md:items-start">
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-xl font-bold text-black dark:text-white sm:text-2xl lg:text-3xl">
                 Transfers Report
               </h2>
-              <p className="text-secondary-text dark:text-gray-400 mt-1 text-sm">
-                Comprehensive log of internal and external money movements for
-                Q4 2023
+              <p className="text-secondary-text dark:text-gray-400 mt-1 line-clamp-2 text-xs sm:text-sm">
+                Comprehensive log of internal and external money movements
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2 md:mt-0">
               <button
                 onClick={handleExportPDF}
-                className="dark:bg-gray-800 dark:border-gray-700 text-header-text hover:bg-gray-50 dark:hover:bg-gray-700 flex h-10 items-center gap-2 whitespace-nowrap rounded-lg border border-[#dce0e5] bg-white px-3 text-sm font-medium transition-colors dark:text-white"
+                className="dark:bg-gray-800 dark:border-gray-700 text-header-text hover:bg-gray-50 dark:hover:bg-gray-700 flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#dce0e5] bg-white px-2 text-xs font-medium transition-colors dark:text-white sm:h-9 sm:gap-2 sm:px-3 sm:text-sm md:h-10"
+                title="Export PDF"
               >
-                <MdPictureAsPdf className="text-lg" />
-                <span>Export PDF</span>
+                <MdPictureAsPdf className="text-base sm:text-lg" />
+                <span className="hidden sm:inline">PDF</span>
               </button>
               <button
                 onClick={handleExportCSV}
-                className="dark:bg-gray-800 dark:border-gray-700 text-header-text hover:bg-gray-50 dark:hover:bg-gray-700 flex h-10 items-center gap-2 whitespace-nowrap rounded-lg border border-[#dce0e5] bg-white px-3 text-sm font-medium transition-colors dark:text-white"
+                className="dark:bg-gray-800 dark:border-gray-700 text-header-text hover:bg-gray-50 dark:hover:bg-gray-700 flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#dce0e5] bg-white px-2 text-xs font-medium transition-colors dark:text-white sm:h-9 sm:gap-2 sm:px-3 sm:text-sm md:h-10"
+                title="Export CSV"
               >
-                <FaFileCsv className="text-lg" />
-                <span>Export CSV</span>
+                <FaFileCsv className="text-base sm:text-lg" />
+                <span className="hidden sm:inline">CSV</span>
               </button>
               <button
                 onClick={handlePrint}
-                className="flex h-10 items-center gap-2 whitespace-nowrap rounded-lg bg-orange-500 px-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                className="flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg bg-orange-500 px-2 text-xs font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:h-9 sm:gap-2 sm:px-3 sm:text-sm md:h-10"
+                title="Print"
               >
-                <MdPrint className="text-lg" />
-                <span>Print</span>
+                <MdPrint className="text-base sm:text-lg" />
+                <span className="hidden sm:inline">Print</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Stats Card */}
-        <div className="mb-6">
-          <StatsCard />
+        {/* Stats Card - Responsive */}
+        <div className="mb-4 sm:mb-6">
+          <div className="dark:border-gray-800 relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm dark:bg-[#111a22] sm:p-6">
+            <div className="pointer-events-none absolute right-0 top-0 p-2 opacity-5 dark:opacity-10 sm:p-4">
+              <MdDownload className="-mr-4 -mt-4 rotate-[-45deg] text-[80px] sm:-mr-8 sm:-mt-8 sm:text-[140px]" />
+            </div>
+
+            <div className="relative z-10">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+                <div className="space-y-1 sm:space-y-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 sm:h-10 sm:w-10">
+                      <MdPayments className="text-lg text-primary sm:text-xl" />
+                    </div>
+                    <p className="text-secondary-text dark:text-gray-400 truncate text-xs font-semibold sm:text-sm">
+                      Total Sent
+                    </p>
+                  </div>
+                  <p className="text-header-text truncate text-lg font-bold dark:text-white sm:text-xl lg:text-2xl xl:text-3xl">
+                    $
+                    {stats.totalAmount.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filters and Table */}
-        <div id="transfer-report-content" className="space-y-6">
+        <div id="transfer-report-content" className="space-y-4 sm:space-y-6">
           {/* Filters */}
-          <div className="dark:border-gray-800 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm dark:bg-[#111a22]">
+          <div className="dark:border-gray-800 rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm dark:bg-[#111a22] sm:rounded-xl sm:p-4">
             <TransferFilters
               filters={filters}
               onFilterChange={handleFilterChange}
+              countries={uniqueCountries}
             />
           </div>
 
           {/* Table */}
-          <GenericTable
-            data={filteredData}
-            columns={columns}
-            itemsPerPage={10}
-            searchAble={false}
-            title="Transfer Details"
-            action={false}
-            paginationOff={false}
-          />
+          <div className="dark:border-gray-800 overflow-hidden rounded-lg border border-[#e5e7eb] bg-white shadow-sm dark:bg-[#111a22] sm:rounded-xl">
+            <div className="p-3 sm:p-4">
+              <h3 className="text-header-text mb-3 text-base font-semibold dark:text-white sm:mb-4 sm:text-lg">
+                Transfer Details
+              </h3>
+            </div>
+
+            <div className="overflow-x-auto">
+              <GenericTable
+                data={filteredData}
+                columns={columns}
+                itemsPerPage={10}
+                searchAble={false}
+                title=""
+                action={false}
+                paginationOff={false}
+                responsive={true}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

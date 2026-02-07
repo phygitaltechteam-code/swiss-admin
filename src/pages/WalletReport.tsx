@@ -1,4 +1,3 @@
-// WalletReport.tsx
 import React, {useState, useMemo} from 'react';
 import {
   MdPictureAsPdf,
@@ -6,144 +5,338 @@ import {
   MdCalendarToday,
   MdExpandMore,
   MdSearch,
+  MdDownload,
 } from 'react-icons/md';
-import {FaFileCsv} from 'react-icons/fa';
 import StatsCard from '@/components/wallettopupreport/StatsCard';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {Transaction} from '@/components/wallettopupreport/types';
+import {useGetTopupApproved} from '@/lib/react-query/Topup';
+//import {useGetTopupApproved} from '@/lib/react-query/topup';
 
-// Mock data - you can move this to a constants file
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'REQ-89021',
-    requestId: '#REQ-89021',
-    clientName: 'John Doe',
-    clientInitials: 'JD',
-    clientColor:
-      'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300',
-    accountType: 'E-Private',
-    amount: 5000.0,
-    date: 'Oct 24, 2023',
-    paymentProof: {type: 'View', label: 'View'},
-    status: 'Completed',
-  },
-  {
-    id: 'REQ-89020',
-    requestId: '#REQ-89020',
-    clientName: 'Alice Smith',
-    clientInitials: 'AS',
-    clientColor:
-      'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-300',
-    accountType: 'Temp',
-    amount: 1200.0,
-    date: 'Oct 24, 2023',
-    paymentProof: {type: 'Image', label: 'Proof.jpg'},
-    status: 'Pending',
-  },
-  {
-    id: 'REQ-89019',
-    requestId: '#REQ-89019',
-    clientName: 'Robert Johnson',
-    clientInitials: 'RJ',
-    clientColor:
-      'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300',
-    accountType: 'E-Private',
-    amount: 15000.0,
-    date: 'Oct 23, 2023',
-    paymentProof: {type: 'PDF', label: 'Receipt.pdf'},
-    status: 'Completed',
-  },
-  {
-    id: 'REQ-89018',
-    requestId: '#REQ-89018',
-    clientName: 'Maria Williams',
-    clientInitials: 'MW',
-    clientColor:
-      'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-300',
-    accountType: 'Temp',
-    amount: 350.0,
-    date: 'Oct 22, 2023',
-    paymentProof: {type: 'Missing', label: 'Missing'},
-    status: 'Rejected',
-  },
-  {
-    id: 'REQ-89017',
-    requestId: '#REQ-89017',
-    clientName: 'David Brown',
-    clientInitials: 'DB',
-    clientColor:
-      'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-300',
-    accountType: 'E-Private',
-    amount: 2500.0,
-    date: 'Oct 21, 2023',
-    paymentProof: {type: 'View', label: 'Slip.png'},
-    status: 'Completed',
-  },
-  {
-    id: 'REQ-89016',
-    requestId: '#REQ-89016',
-    clientName: 'Sarah Miller',
-    clientInitials: 'SM',
-    clientColor:
-      'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300',
-    accountType: 'Corporate',
-    amount: 75000.0,
-    date: 'Oct 20, 2023',
-    paymentProof: {type: 'PDF', label: 'Receipt.pdf'},
-    status: 'Completed',
-  },
-  {
-    id: 'REQ-89015',
-    requestId: '#REQ-89015',
-    clientName: 'Michael Wilson',
-    clientInitials: 'MW',
-    clientColor: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300',
-    accountType: 'E-Private',
-    amount: 3200.0,
-    date: 'Oct 20, 2023',
-    paymentProof: {type: 'Image', label: 'Proof.jpg'},
-    status: 'Pending',
-  },
-  {
-    id: 'REQ-89014',
-    requestId: '#REQ-89014',
-    clientName: 'Emma Davis',
-    clientInitials: 'ED',
-    clientColor:
-      'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300',
-    accountType: 'Temp',
-    amount: 850.0,
-    date: 'Oct 19, 2023',
-    paymentProof: {type: 'Missing', label: 'Missing'},
-    status: 'Rejected',
-  },
-  {
-    id: 'REQ-89013',
-    requestId: '#REQ-89013',
-    clientName: 'James Taylor',
-    clientInitials: 'JT',
-    clientColor:
-      'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-300',
-    accountType: 'Corporate',
-    amount: 45000.0,
-    date: 'Oct 18, 2023',
-    paymentProof: {type: 'View', label: 'View'},
-    status: 'Completed',
-  },
-  {
-    id: 'REQ-89012',
-    requestId: '#REQ-89012',
-    clientName: 'Olivia Anderson',
-    clientInitials: 'OA',
-    clientColor:
-      'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-300',
-    accountType: 'E-Private',
-    amount: 1800.0,
-    date: 'Oct 17, 2023',
-    paymentProof: {type: 'Image', label: 'Proof.jpg'},
-    status: 'Pending',
-  },
-];
+// PDF Export Service - Separate from React component
+class PDFExportService {
+  static async generateWalletReport(
+    data: Transaction[],
+    stats: any[],
+    filename: string = 'wallet_topup_report.pdf',
+  ): Promise<void> {
+    try {
+      // Check if data is empty
+      if (!data || data.length === 0) {
+        throw new Error('No data available to export');
+      }
+
+      // Check if we're in browser environment
+      if (typeof window === 'undefined') {
+        throw new Error(
+          'PDF generation is only available in browser environment',
+        );
+      }
+
+      // Dynamically import jsPDF
+      let jsPDFModule;
+      try {
+        jsPDFModule = await import('jspdf');
+        console.log('jsPDF loaded successfully');
+      } catch (error) {
+        console.error('Failed to import jsPDF:', error);
+        throw new Error(
+          'PDF library (jspdf) is not installed. Please install it using: npm install jspdf jspdf-autotable',
+        );
+      }
+
+      const {jsPDF} = jsPDFModule;
+
+      if (!jsPDF || typeof jsPDF !== 'function') {
+        throw new Error('Failed to initialize PDF library');
+      }
+
+      // Try to load autoTable
+      let autoTableLoaded = false;
+      try {
+        await import('jspdf-autotable');
+        autoTableLoaded = true;
+        console.log('AutoTable loaded successfully');
+      } catch (error) {
+        console.warn(
+          'AutoTable not available, using basic table generation:',
+          error,
+        );
+        autoTableLoaded = false;
+      }
+
+      const doc = new jsPDF('landscape');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+
+      // Add title
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Wallet Top-Up Report', pageWidth / 2, margin, {
+        align: 'center',
+      });
+
+      // Add generation date
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(
+        `Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+        pageWidth / 2,
+        margin + 10,
+        {align: 'center'},
+      );
+
+      // Add statistics section if available
+      if (stats && stats.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Summary Statistics', margin, margin + 25);
+
+        // Create stats boxes
+        const statsStartY = margin + 35;
+        const statBoxWidth =
+          (pageWidth - 2 * margin - 15) / Math.min(stats.length, 4);
+
+        stats.forEach((stat, index) => {
+          if (index >= 4) return; // Limit to 4 stats per row
+
+          const x = margin + index * (statBoxWidth + 5);
+          const y = statsStartY;
+
+          // Draw stat box
+          doc.setDrawColor(200, 200, 200);
+          doc.setFillColor(245, 245, 245);
+          doc.rect(x, y, statBoxWidth, 25, 'FD');
+
+          // Add stat title
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          const title =
+            stat.title.length > 20
+              ? stat.title.substring(0, 17) + '...'
+              : stat.title;
+          doc.text(title, x + 5, y + 8, {maxWidth: statBoxWidth - 10});
+
+          // Add stat value
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          const value = stat.value;
+          doc.text(value, x + 5, y + 17, {maxWidth: statBoxWidth - 10});
+
+          // Add stat change if available
+          if (stat.trend) {
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            const changeText =
+              `${stat.trend || ''} ${stat.subtext || ''}`.trim();
+            if (changeText) {
+              doc.text(changeText.substring(0, 20), x + 5, y + 23, {
+                maxWidth: statBoxWidth - 10,
+              });
+            }
+          }
+        });
+      }
+
+      // Determine table start position
+      const tableStartY = margin + (stats && stats.length > 0 ? 70 : 45);
+
+      // Generate table based on autoTable availability
+      if (autoTableLoaded && (doc as any).autoTable) {
+        // Prepare table data for autoTable
+        const headers = [
+          [
+            'Date',
+            'Request ID',
+            'Client Name',
+            'Account Type',
+            'Amount',
+            'Payment Proof',
+            'Status',
+          ],
+        ];
+
+        const tableData = data.map((item) => [
+          item.date || 'N/A',
+          item.requestId || item.id || 'N/A',
+          item.clientName?.substring(0, 20) || 'N/A',
+          item.accountType || 'N/A',
+          item.amount ? `$${item.amount.toFixed(2)}` : '$0.00',
+          item.paymentProof?.label?.substring(0, 15) || 'N/A',
+          item.status || 'N/A',
+        ]);
+
+        // Configure and generate autoTable
+        (doc as any).autoTable({
+          startY: tableStartY,
+          head: headers,
+          body: tableData,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [245, 158, 11], // Orange color
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 8,
+            cellPadding: 3,
+          },
+          bodyStyles: {
+            fontSize: 7,
+            cellPadding: 2,
+            overflow: 'linebreak',
+          },
+          alternateRowStyles: {
+            fillColor: [245, 245, 245],
+          },
+          margin: {top: 10},
+          styles: {
+            overflow: 'linebreak',
+            cellPadding: 2,
+            fontSize: 7,
+            valign: 'middle',
+          },
+          columnStyles: {
+            0: {cellWidth: 20}, // Date
+            1: {cellWidth: 25}, // Request ID
+            2: {cellWidth: 30}, // Client Name
+            3: {cellWidth: 20}, // Account Type
+            4: {cellWidth: 20}, // Amount
+            5: {cellWidth: 25}, // Payment Proof
+            6: {cellWidth: 15}, // Status
+          },
+          didDrawPage: (data: any) => {
+            // Add page number
+            doc.setFontSize(8);
+            doc.text(
+              `Page ${data.pageNumber}`,
+              data.settings.margin.left,
+              doc.internal.pageSize.height - 10,
+            );
+          },
+        });
+      } else {
+        // Fallback: Simple table without autoTable
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(
+          'Wallet Top-Up Transactions (Limited Preview)',
+          margin,
+          tableStartY,
+        );
+
+        // Simple header
+        const headers = ['Date', 'ID', 'Client', 'Type', 'Amount', 'Status'];
+        let currentY = tableStartY + 10;
+
+        // Draw header
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(headers.join(' | '), margin, currentY);
+        currentY += 6;
+
+        // Draw separator
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 4;
+
+        // Draw data rows (limited to 30 for performance)
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        data.slice(0, 30).forEach((item, index) => {
+          if (currentY > pageHeight - 20) {
+            doc.addPage();
+            currentY = margin;
+          }
+
+          const row = [
+            item.date?.substring(0, 10) || 'N/A',
+            item.requestId?.substring(0, 8) || 'N/A',
+            item.clientName?.substring(0, 10) || 'N/A',
+            item.accountType?.substring(0, 8) || 'N/A',
+            item.amount ? `$${item.amount}` : '$0.00',
+            item.status?.substring(0, 10) || 'N/A',
+          ].join(' | ');
+
+          doc.text(row, margin, currentY);
+          currentY += 5;
+        });
+
+        // Add note about limited data
+        if (data.length > 30) {
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'italic');
+          doc.text(
+            `Note: Showing 30 of ${data.length} records. Install jspdf-autotable for full table.`,
+            margin,
+            currentY + 5,
+          );
+        }
+      }
+
+      // Get final Y position for footer
+      const finalY = (doc as any)?.lastAutoTable?.finalY || tableStartY + 150;
+
+      // Add footer
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.text(`Total Transactions: ${data.length}`, margin, finalY + 10);
+
+      // Calculate total amount
+      const totalAmount = data.reduce(
+        (sum, item) => sum + (item.amount || 0),
+        0,
+      );
+      doc.text(`Total Amount: $${totalAmount.toFixed(2)}`, margin, finalY + 17);
+
+      // Add company info
+      doc.setFontSize(8);
+      doc.text('Wallet Management System © 2024', pageWidth / 2, finalY + 10, {
+        align: 'center',
+      });
+
+      // Add export info
+      doc.text(
+        `Exported by: ${window.location.hostname}`,
+        pageWidth - margin,
+        finalY + 10,
+        {align: 'right'},
+      );
+
+      // Save the PDF
+      doc.save(filename);
+
+      console.log(
+        `PDF exported successfully: ${filename}, ${data.length} records`,
+      );
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error in PDF generation:', error);
+
+      // Provide detailed error information
+      if (error instanceof Error) {
+        if (error.message.includes('jspdf')) {
+          throw new Error(
+            'PDF library error. Please ensure jspdf is installed: npm install jspdf jspdf-autotable',
+          );
+        } else if (error.message.includes('No data')) {
+          throw new Error('No data available to export.');
+        } else if (error.message.includes('browser')) {
+          throw new Error('PDF generation requires a browser environment.');
+        }
+        throw new Error(`PDF Generation Error: ${error.message}`);
+      }
+
+      throw new Error('Failed to generate PDF. Please try again.');
+    }
+  }
+
+  static async exportTableData(
+    data: Transaction[],
+    stats: any[],
+  ): Promise<void> {
+    const filename = `wallet_topup_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    await this.generateWalletReport(data, stats, filename);
+  }
+}
 
 const WalletReport: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -153,18 +346,162 @@ const WalletReport: React.FC = () => {
     search: '',
   });
 
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+
+  // Use the React Query hook to fetch topup data
+  const {data: apiResponse, isLoading, isError, error} = useGetTopupApproved();
+
+  // Extract data from API response
+  const apiData = useMemo(() => {
+    if (!apiResponse) {
+      return {transactions: [], stats: {}};
+    }
+
+    console.log('API Response:', apiResponse);
+    return {
+      transactions: apiResponse.transactions || [],
+      stats: apiResponse.stats || {},
+      rawData: apiResponse.rawData || apiResponse,
+    };
+  }, [apiResponse]);
+
+  // Transform API data to Transaction format if needed
+  const transformedData = useMemo(() => {
+    const transactions = apiData.transactions;
+
+    // If transactions are already in the correct format, return them
+    if (transactions.length > 0 && transactions[0].id) {
+      return transactions;
+    }
+
+    // Transform if needed - adjust based on your actual API response structure
+    return transactions.map((tx: any, index: number) => ({
+      id: tx.id || `REQ-${10000 + index}`,
+      requestId: tx.requestId || `#REQ-${10000 + index}`,
+      clientName: tx.clientName || tx.user?.fullname || 'Unknown Client',
+      clientInitials: getInitials(tx.clientName || tx.user?.fullname || 'UC'),
+      clientColor: getColorClass(index),
+      accountType: tx.accountType || 'E-Private',
+      amount: tx.amount || 0,
+      date:
+        tx.date ||
+        tx.createdAt?.split('T')[0] ||
+        new Date().toLocaleDateString(),
+      paymentProof: {
+        type: tx.paymentProof?.type || 'View',
+        label: tx.paymentProof?.label || 'View',
+      },
+      status: tx.status || 'Pending',
+    }));
+  }, [apiData.transactions]);
+
+  // Helper function to get initials
+  const getInitials = (name: string): string => {
+    if (!name) return '??';
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Helper function to get color class based on index
+  const getColorClass = (index: number): string => {
+    const colors = [
+      'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300',
+      'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-300',
+      'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300',
+      'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-300',
+      'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-300',
+      'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300',
+      'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300',
+      'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300',
+      'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-300',
+      'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-300',
+    ];
+    return colors[index % colors.length];
+  };
+
+  // Calculate stats from the data
+  const calculatedStats = useMemo(() => {
+    const transactions = transformedData;
+    const totalAmount = transactions.reduce(
+      (sum, tx) => sum + (tx.amount || 0),
+      0,
+    );
+    const pendingCount = transactions.filter(
+      (tx) => tx.status === 'Pending',
+    ).length;
+    const completedCount = transactions.filter(
+      (tx) => tx.status === 'Completed',
+    ).length;
+
+    // Get most used account type
+    const accountTypes = transactions.reduce(
+      (acc, tx) => {
+        const type = tx.accountType || 'Unknown';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const mostUsedType = Object.entries(accountTypes).sort(
+      (a, b) => b[1] - a[1],
+    )[0];
+
+    return [
+      {
+        title: 'Total Top-Ups Value',
+        value: `$${totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
+        trend: '8.2%',
+        trendDirection: 'up',
+        subtext: 'vs last month',
+        icon: '💰',
+      },
+      {
+        title: 'Total Requests',
+        value: transactions.length.toString(),
+        trend: '12.5%',
+        trendDirection: 'up',
+        subtext: 'volume increase',
+        icon: '📋',
+      },
+      {
+        title: 'Most Used Method',
+        value: mostUsedType ? mostUsedType[0] : 'Bank Transfer',
+        subtext: mostUsedType
+          ? `${Math.round((mostUsedType[1] / transactions.length) * 100)}% of total`
+          : '65% of total volume',
+        icon: '🏦',
+        highlightValue: true,
+      },
+      {
+        title: 'Pending Approval',
+        value: pendingCount.toString(),
+        icon: '⏳',
+        alert: pendingCount > 0,
+      },
+    ];
+  }, [transformedData]);
+
   // Filter data
   const filteredData = useMemo(() => {
-    let data = [...MOCK_TRANSACTIONS];
+    let data = [...transformedData];
 
     // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       data = data.filter(
         (transaction) =>
-          transaction.requestId.toLowerCase().includes(searchLower) ||
-          transaction.clientName.toLowerCase().includes(searchLower) ||
-          transaction.id.toLowerCase().includes(searchLower),
+          (transaction.requestId &&
+            transaction.requestId.toLowerCase().includes(searchLower)) ||
+          (transaction.clientName &&
+            transaction.clientName.toLowerCase().includes(searchLower)) ||
+          (transaction.id &&
+            transaction.id.toLowerCase().includes(searchLower)),
       );
     }
 
@@ -183,49 +520,62 @@ const WalletReport: React.FC = () => {
     }
 
     return data;
-  }, [filters]);
+  }, [transformedData, filters]);
 
-  // Handle export to PDF
-  const handleExportPDF = () => {
-    console.log('Exporting to PDF:', filteredData);
-    alert('PDF export functionality would be implemented here');
-  };
+  // PDF Export handler
+  const handleExportPDF = async () => {
+    if (transformedData.length === 0) {
+      alert('No data available to export');
+      return;
+    }
 
-  // Handle export to CSV
-  const handleExportCSV = () => {
-    const headers = [
-      'Date',
-      'Request ID',
-      'Client Name',
-      'Account Type',
-      'Amount',
-      'Payment Proof',
-      'Status',
-    ];
-    const csvData = filteredData.map((transaction) => [
-      transaction.date,
-      transaction.requestId,
-      transaction.clientName,
-      transaction.accountType,
-      `$${transaction.amount.toLocaleString()}`,
-      transaction.paymentProof.label,
-      transaction.status,
-    ]);
+    setIsExporting(true);
+    setExportProgress(0);
 
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n');
+    try {
+      // Simulate progress for PDF export
+      const progressInterval = setInterval(() => {
+        setExportProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
 
-    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `wallet-topup-report-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+      console.log(
+        `Starting PDF export with ${transformedData.length} records...`,
+      );
+      await PDFExportService.exportTableData(transformedData, calculatedStats);
+
+      clearInterval(progressInterval);
+      setExportProgress(100);
+
+      // Reset after successful export
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 500);
+    } catch (error) {
+      console.error('Export error:', error);
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to export PDF. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('jspdf')) {
+          errorMessage = `PDF Export Error: ${error.message}\n\nPlease ensure you have installed the required packages:\nnpm install jspdf jspdf-autotable`;
+        } else if (error.message.includes('No data')) {
+          errorMessage = 'No data available to export.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      alert(errorMessage);
+      setIsExporting(false);
+      setExportProgress(0);
+    }
   };
 
   // Handle print
@@ -273,13 +623,13 @@ const WalletReport: React.FC = () => {
             
             <div class="print-meta">
               <div>
-                <strong>Date Range:</strong> ${filters.dateRange || 'Oct 1 - Oct 31, 2023'}<br>
+                <strong>Date Range:</strong> ${filters.dateRange || 'All dates'}<br>
                 <strong>Account Type:</strong> ${filters.accountType}<br>
                 <strong>Status:</strong> ${filters.status}
               </div>
               <div>
                 <strong>Total Records:</strong> ${filteredData.length}<br>
-                <strong>Total Amount:</strong> $${filteredData.reduce((sum, t) => sum + t.amount, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>
+                <strong>Total Amount:</strong> $${filteredData.reduce((sum, t) => sum + (t.amount || 0), 0).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>
                 <strong>Pending Approvals:</strong> ${filteredData.filter((t) => t.status === 'Pending').length}
               </div>
             </div>
@@ -306,24 +656,24 @@ const WalletReport: React.FC = () => {
 
                     return `
                     <tr>
-                      <td><strong>${transaction.date}</strong></td>
-                      <td style="font-family: monospace; color: #f5813d;">${transaction.requestId}</td>
+                      <td><strong>${transaction.date || 'N/A'}</strong></td>
+                      <td style="font-family: monospace; color: #f5813d;">${transaction.requestId || 'N/A'}</td>
                       <td>
                         <div style="display: flex; align-items: center;">
                           <div class="client-avatar" style="background: ${bgColor}; color: ${textColor};">${transaction.clientInitials}</div>
-                          ${transaction.clientName}
+                          ${transaction.clientName || 'Unknown Client'}
                         </div>
                       </td>
-                      <td><span class="account-badge">${transaction.accountType}</span></td>
-                      <td><strong>$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                      <td><span class="account-badge">${transaction.accountType || 'N/A'}</span></td>
+                      <td><strong>$${(transaction.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
                       <td>
                         <a href="#" class="proof-link" onclick="return false;">
-                          ${transaction.paymentProof.label}
+                          ${transaction.paymentProof?.label || 'View'}
                         </a>
                       </td>
                       <td>
-                        <span class="status status-${transaction.status.toLowerCase()}">
-                          ${transaction.status}
+                        <span class="status status-${(transaction.status || '').toLowerCase()}">
+                          ${transaction.status || 'Pending'}
                         </span>
                       </td>
                     </tr>
@@ -360,7 +710,7 @@ const WalletReport: React.FC = () => {
       accessor: 'date',
       render: (item: Transaction) => (
         <div className="text-header-text text-sm font-medium dark:text-white">
-          {item.date}
+          {item.date || 'N/A'}
         </div>
       ),
       className: 'min-w-[100px]',
@@ -371,7 +721,7 @@ const WalletReport: React.FC = () => {
       accessor: 'requestId',
       render: (item: Transaction) => (
         <span className="font-mono text-sm text-primary dark:text-orange-400">
-          {item.requestId}
+          {item.requestId || item.id || 'N/A'}
         </span>
       ),
       className: 'min-w-[120px]',
@@ -388,7 +738,7 @@ const WalletReport: React.FC = () => {
             {item.clientInitials}
           </div>
           <div className="text-header-text text-sm font-medium dark:text-white">
-            {item.clientName}
+            {item.clientName || 'Unknown Client'}
           </div>
         </div>
       ),
@@ -400,7 +750,7 @@ const WalletReport: React.FC = () => {
       accessor: 'accountType',
       render: (item: Transaction) => (
         <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold leading-5 text-primary">
-          {item.accountType}
+          {item.accountType || 'N/A'}
         </span>
       ),
       className: 'min-w-[100px]',
@@ -410,7 +760,10 @@ const WalletReport: React.FC = () => {
       accessor: 'amount',
       render: (item: Transaction) => (
         <div className="text-header-text text-right text-sm font-bold dark:text-white">
-          ${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+          $
+          {(item.amount || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+          })}
         </div>
       ),
       className: 'min-w-[100px] text-right',
@@ -438,13 +791,13 @@ const WalletReport: React.FC = () => {
         return (
           <span
             className={`inline-flex items-center gap-1 text-sm font-medium ${
-              item.paymentProof.type === 'Missing'
+              (item.paymentProof?.type || 'View') === 'Missing'
                 ? 'text-gray-400 dark:text-gray-500'
                 : 'cursor-pointer text-primary hover:text-blue-600 dark:text-orange-400'
             }`}
           >
-            {getProofIcon(item.paymentProof.type)}
-            {item.paymentProof.label}
+            {getProofIcon(item.paymentProof?.type || 'View')}
+            {item.paymentProof?.label || 'View'}
           </span>
         );
       },
@@ -461,28 +814,92 @@ const WalletReport: React.FC = () => {
             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
           Rejected:
             'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+          Approved:
+            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+          Declined:
+            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
         };
+
+        const status = item.status || 'Pending';
+        const style =
+          statusStyles[status as keyof typeof statusStyles] ||
+          'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
 
         return (
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[item.status]}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${style}`}
           >
             <span
               className={`size-1.5 rounded-full ${
-                item.status === 'Completed'
+                status === 'Completed' || status === 'Approved'
                   ? 'bg-emerald-500'
-                  : item.status === 'Pending'
+                  : status === 'Pending'
                     ? 'bg-yellow-500'
-                    : 'bg-red-500'
+                    : status === 'Rejected' || status === 'Declined'
+                      ? 'bg-red-500'
+                      : 'bg-gray-500'
               }`}
             ></span>
-            {item.status}
+            {status}
           </span>
         );
       },
       className: 'min-w-[100px]',
     },
   ];
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading wallet top-up data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-red-500">
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">Error Loading Data</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {error?.message || 'Failed to load wallet top-up data'}
+          </p>
+          <div className="text-gray-500 space-y-2 text-sm">
+            <p>API URL: /admin/transaction/pending/topup</p>
+            <p>Check browser console for detailed error information</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-white"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen w-full">
@@ -498,26 +915,50 @@ const WalletReport: React.FC = () => {
                 Detailed log of all wallet funding requests, payment proofs, and
                 verification status
               </p>
+              {transformedData.length > 0 && (
+                <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+                  Showing {filteredData.length} of {transformedData.length}{' '}
+                  transactions
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleExportPDF}
-                className="dark:bg-gray-800 dark:border-gray-700 text-header-text hover:bg-gray-50 dark:hover:bg-gray-700 flex h-10 items-center gap-2 whitespace-nowrap rounded-lg border border-[#dce0e5] bg-white px-3 text-sm font-medium transition-colors dark:text-white"
+                disabled={isExporting || transformedData.length === 0}
+                className={`border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 relative flex h-10 items-center gap-2 overflow-hidden rounded-lg border bg-white px-4 text-sm font-semibold transition-colors ${
+                  isExporting || transformedData.length === 0
+                    ? 'cursor-not-allowed opacity-50'
+                    : ''
+                }`}
+                title="Export Table Data as PDF"
               >
-                <MdPictureAsPdf className="text-lg" />
-                <span>Export PDF</span>
+                {isExporting ? (
+                  <>
+                    <div className="border-gray-300 border-t-gray-600 h-4 w-4 animate-spin rounded-full border-2"></div>
+                    <span>Exporting... {exportProgress}%</span>
+                    {/* Progress bar background */}
+                    <div className="bg-gray-200 absolute bottom-0 left-0 h-0.5 w-full">
+                      {/* Progress bar fill */}
+                      <div
+                        className="h-full bg-green-500 transition-all duration-300 ease-out"
+                        style={{width: `${exportProgress}%`}}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <MdPictureAsPdf className="text-lg" />
+                    <span>Export PDF</span>
+                  </>
+                )}
               </button>
-              <button
-                onClick={handleExportCSV}
-                className="dark:bg-gray-800 dark:border-gray-700 text-header-text hover:bg-gray-50 dark:hover:bg-gray-700 flex h-10 items-center gap-2 whitespace-nowrap rounded-lg border border-[#dce0e5] bg-white px-3 text-sm font-medium transition-colors dark:text-white"
-              >
-                <FaFileCsv className="text-lg" />
-                <span>Export CSV</span>
-              </button>
+
               <button
                 onClick={handlePrint}
                 className="flex h-10 items-center gap-2 whitespace-nowrap rounded-lg bg-orange-500 px-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                disabled={transformedData.length === 0}
               >
                 <MdPrint className="text-lg" />
                 <span>Print</span>
@@ -529,35 +970,19 @@ const WalletReport: React.FC = () => {
         {/* Stats Cards */}
         <div className="mb-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              title="Total Top-Ups Value"
-              value="$4,850,240.00"
-              trend="8.2%"
-              trendDirection="up"
-              subtext="vs last month"
-              icon={<span className="text-xl">💰</span>}
-            />
-            <StatsCard
-              title="Total Requests"
-              value="1,245"
-              trend="12.5%"
-              trendDirection="up"
-              subtext="volume increase"
-              icon={<span className="text-xl">📋</span>}
-            />
-            <StatsCard
-              title="Most Used Method"
-              value="Bank Transfer"
-              subtext="65% of total volume"
-              icon={<span className="text-xl">🏦</span>}
-              highlightValue
-            />
-            <StatsCard
-              title="Pending Approval"
-              value="24"
-              icon={<span className="text-xl">⏳</span>}
-              alert
-            />
+            {calculatedStats.map((stat, index) => (
+              <StatsCard
+                key={index}
+                title={stat.title}
+                value={stat.value}
+                trend={stat.trend}
+                trendDirection={stat.trendDirection as any}
+                subtext={stat.subtext}
+                icon={<span className="text-xl">{stat.icon}</span>}
+                highlightValue={stat.highlightValue}
+                alert={stat.alert}
+              />
+            ))}
           </div>
         </div>
 
@@ -579,7 +1004,7 @@ const WalletReport: React.FC = () => {
                       handleFilterChange('dateRange', e.target.value)
                     }
                     className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-                    placeholder="Oct 1 - Oct 31, 2023"
+                    placeholder="Select date range..."
                   />
                 </div>
 
@@ -615,6 +1040,8 @@ const WalletReport: React.FC = () => {
                     <option>Completed</option>
                     <option>Pending</option>
                     <option>Rejected</option>
+                    <option>Approved</option>
+                    <option>Declined</option>
                   </select>
                   <div className="text-secondary-text pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <MdExpandMore className="text-xl" />
@@ -639,15 +1066,63 @@ const WalletReport: React.FC = () => {
           </div>
 
           {/* Table */}
-          <GenericTable
-            data={filteredData}
-            columns={columns}
-            itemsPerPage={10}
-            searchAble={false}
-            title="Wallet Top-Up Transactions"
-            action={false}
-            paginationOff={false}
-          />
+          <div className="dark:border-gray-700 dark:bg-gray-800 overflow-hidden bg-white shadow-sm">
+            <div className="flex-1">
+              {transformedData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <svg
+                    className="text-gray-400 mb-4 h-12 w-12"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <h3 className="text-gray-900 mb-2 text-lg font-medium">
+                    No wallet top-up transactions found
+                  </h3>
+                </div>
+              ) : filteredData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <svg
+                    className="text-gray-400 mb-4 h-12 w-12"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <h3 className="text-gray-900 mb-2 text-lg font-medium">
+                    No matching transactions
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Try adjusting your search or filters
+                  </p>
+                </div>
+              ) : (
+                <GenericTable
+                  data={filteredData}
+                  columns={columns}
+                  itemsPerPage={10}
+                  searchAble={false}
+                  action={false}
+                  paginationOff={false}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Export Instructions */}
         </div>
       </div>
     </div>

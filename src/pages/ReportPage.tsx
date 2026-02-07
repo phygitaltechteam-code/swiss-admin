@@ -29,13 +29,13 @@ const Header: React.FC = () => {
               Generate and manage financial statements and audit logs.
             </p>
           </div>
-          <button className="border-gray-300 text-slate-custom hover:border-gray-400 hover:text-navy flex h-10 items-center justify-center gap-2 rounded-lg border bg-white px-4 text-sm font-medium shadow-sm transition-colors">
+          {/* <button className="border-gray-300 text-slate-custom hover:border-gray-400 hover:text-navy flex h-10 items-center justify-center gap-2 rounded-lg border bg-white px-4 text-sm font-medium shadow-sm transition-colors">
             <MdHistory className="text-lg" />
             Recent Downloads
-          </button>
+          </button> */}
         </div>
 
-        <div className="border-gray-200 flex flex-wrap items-center gap-4 rounded-xl border bg-white p-4 shadow-sm">
+        {/* <div className="border-gray-200 flex flex-wrap items-center gap-4 rounded-xl border bg-white p-4 shadow-sm">
           <div className="min-w-[240px] flex-1">
             <div className="group relative">
               <MdSearch className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 text-xl" />
@@ -65,7 +65,7 @@ const Header: React.FC = () => {
               <MdFilterList className="text-xl" />
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
     </header>
   );

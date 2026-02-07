@@ -4,13 +4,195 @@ import {FaFilePdf, FaFileCsv} from 'react-icons/fa6';
 import {FiPrinter} from 'react-icons/fi';
 import StatsCards from '@/components/alltransactionreports/StatsCards';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
-import {
-  STATS,
-  TRANSACTIONS,
-  Transaction,
-} from '@/components/alltransactionreports/constants';
+import {useGetAllTransaction} from '@/lib/react-query/alltransaction';
+import {jsPDF} from 'jspdf';
+import 'jspdf-autotable';
+import {MdSearch} from 'react-icons/md';
+
+// Define the Transaction interface based on your API response
+interface Transaction {
+  id: string;
+  particular: string;
+  amount: number;
+  amountType: string;
+  type: 'CREDIT' | 'DEBIT';
+  isPending: boolean;
+  isRejected: boolean;
+  rejectReason?: string | null;
+  createdAt: string;
+  fullname?: string;
+  email?: string;
+  phoneNumber?: string;
+  beneficiary?: {
+    fullName: string;
+    accountNumber: string;
+  } | null;
+  accountType: 'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT';
+}
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+// Helper function to format time
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+// Calculate stats from API data
+const calculateStats = (transactions: Transaction[]) => {
+  const totalTransactions = transactions.length;
+  const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const successfulTransactions = transactions.filter(
+    (t) => !t.isPending && !t.isRejected,
+  ).length;
+  const pendingTransactions = transactions.filter((t) => t.isPending).length;
+  const failedTransactions = transactions.filter((t) => t.isRejected).length;
+  const creditAmount = transactions
+    .filter((t) => t.type === 'CREDIT')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const debitAmount = transactions
+    .filter((t) => t.type === 'DEBIT')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  return {
+    totalTransactions,
+    totalAmount,
+    successfulTransactions,
+    pendingTransactions,
+    failedTransactions,
+    creditAmount,
+    debitAmount,
+  };
+};
 
 function AllTransaction() {
+  const {data: transactionData, isLoading, error} = useGetAllTransaction();
+
+  console.log('Full API Response:', transactionData); // Debug log
+  console.log('Error:', error); // Debug log
+
+  // Access the data from API response - FIXED: Check the correct path
+  const transactions: Transaction[] = useMemo(() => {
+    if (!transactionData) return [];
+
+    // Check different possible structures
+    if (Array.isArray(transactionData)) {
+      return transactionData;
+    } else if (transactionData.data && Array.isArray(transactionData.data)) {
+      return transactionData.data;
+    } else if (
+      transactionData.data &&
+      transactionData.data.data &&
+      Array.isArray(transactionData.data.data)
+    ) {
+      return transactionData.data.data;
+    }
+
+    console.warn('Unexpected API response structure:', transactionData);
+    return [];
+  }, [transactionData]);
+
+  console.log('Processed Transactions:', transactions); // Debug log
+
+  // Calculate stats from API data
+  const stats = useMemo(() => {
+    const statsData = calculateStats(transactions);
+
+    const statsArray = [
+      {
+        title: 'Total Transactions',
+        value: statsData.totalTransactions.toString(),
+        change: '+12.5%',
+        changeType: 'increase',
+        icon: '📊',
+        trend: '+12.5',
+        trendDirection: 'up',
+        trendLabel: 'from last month',
+        type: 'volume',
+      },
+      {
+        title: 'Total Amount',
+        value: `$${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        change: '+8.3%',
+        changeType: 'increase',
+        icon: '💰',
+        trend: '+8.3',
+        trendDirection: 'up',
+        trendLabel: 'from last month',
+        type: 'volume',
+      },
+      {
+        title: 'Successful',
+        value: statsData.successfulTransactions.toString(),
+        change: '+5.2%',
+        changeType: 'increase',
+        icon: '✅',
+        trend: '+5.2',
+        trendDirection: 'up',
+        trendLabel: 'success rate',
+        type: 'success',
+      },
+      {
+        title: 'Pending',
+        value: statsData.pendingTransactions.toString(),
+        change: '+2.1%',
+        changeType: 'increase',
+        icon: '⏳',
+        trend: '+2.1',
+        trendDirection: 'up',
+        trendLabel: 'awaiting processing',
+        type: 'pending',
+      },
+      {
+        title: 'Failed',
+        value: statsData.failedTransactions.toString(),
+        change: '-1.8%',
+        changeType: 'decrease',
+        icon: '❌',
+        trend: '-1.8',
+        trendDirection: 'down',
+        trendLabel: 'failure rate',
+        type: 'failed',
+      },
+      {
+        title: 'Total Credits',
+        value: `$${statsData.creditAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        change: '+15.7%',
+        changeType: 'increase',
+        icon: '📈',
+        trend: '+15.7',
+        trendDirection: 'up',
+        trendLabel: 'credit volume',
+        type: 'success',
+      },
+      {
+        title: 'Total Debits',
+        value: `$${statsData.debitAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        change: '+10.2%',
+        changeType: 'increase',
+        icon: '📉',
+        trend: '+10.2',
+        trendDirection: 'up',
+        trendLabel: 'debit volume',
+        type: 'pending',
+      },
+    ];
+
+    return statsArray;
+  }, [transactions]);
+
   const [filters, setFilters] = useState({
     dateRange: '',
     status: 'All Status',
@@ -21,7 +203,7 @@ function AllTransaction() {
 
   // Filter data
   const filteredData = useMemo(() => {
-    let data = [...TRANSACTIONS];
+    let data = [...transactions];
 
     // Apply search filter
     if (filters.search) {
@@ -29,22 +211,44 @@ function AllTransaction() {
       data = data.filter(
         (transaction) =>
           transaction.id.toLowerCase().includes(searchLower) ||
-          transaction.sender.name.toLowerCase().includes(searchLower) ||
-          transaction.recipient.name.toLowerCase().includes(searchLower) ||
-          transaction.note.toLowerCase().includes(searchLower),
+          transaction.particular.toLowerCase().includes(searchLower) ||
+          transaction.beneficiary?.fullName
+            ?.toLowerCase()
+            .includes(searchLower) ||
+          false ||
+          transaction.rejectReason?.toLowerCase().includes(searchLower) ||
+          false ||
+          transaction.fullname?.toLowerCase().includes(searchLower) ||
+          false ||
+          transaction.email?.toLowerCase().includes(searchLower) ||
+          false,
       );
     }
 
     // Apply status filter
     if (filters.status !== 'All Status') {
-      data = data.filter(
-        (transaction) => transaction.status === filters.status,
-      );
+      switch (filters.status) {
+        case 'Success':
+          data = data.filter((t) => !t.isPending && !t.isRejected);
+          break;
+        case 'Pending':
+          data = data.filter((t) => t.isPending);
+          break;
+        case 'Failed':
+          data = data.filter((t) => t.isRejected);
+          break;
+        case 'Reverted':
+          data = data.filter((t) => t.isRejected);
+          break;
+      }
     }
 
     // Apply type filter
     if (filters.type !== 'All Types') {
-      data = data.filter((transaction) => transaction.type === filters.type);
+      data = data.filter(
+        (transaction) =>
+          transaction.type.toLowerCase() === filters.type.toLowerCase(),
+      );
     }
 
     // Apply amount filter
@@ -72,12 +276,122 @@ function AllTransaction() {
     }
 
     return data;
-  }, [filters]);
+  }, [transactions, filters]);
 
   // Handle export to PDF
   const handleExportPDF = () => {
-    console.log('Exporting to PDF:', filteredData);
-    alert('PDF export functionality would be implemented here');
+    const doc = new jsPDF('landscape');
+
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(15, 21, 53);
+    doc.text('All Transaction Reports', 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text(
+      'Comprehensive log of all financial activities, including successful and failed transactions',
+      14,
+      28,
+    );
+    doc.text(
+      `Generated on ${new Date().toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}`,
+      14,
+      35,
+    );
+
+    // Stats summary
+    const statsData = calculateStats(filteredData);
+    doc.setFontSize(11);
+    doc.setTextColor(31, 41, 55);
+    doc.text('Summary Statistics', 14, 45);
+
+    doc.setFontSize(9);
+    doc.text(`Total Transactions: ${statsData.totalTransactions}`, 14, 55);
+    doc.text(
+      `Total Amount: $${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      14,
+      61,
+    );
+    doc.text(`Successful: ${statsData.successfulTransactions}`, 14, 67);
+    doc.text(`Pending: ${statsData.pendingTransactions}`, 14, 73);
+    doc.text(`Failed: ${statsData.failedTransactions}`, 14, 79);
+
+    // Filter info
+    doc.text(`Filters Applied:`, 200, 55);
+    doc.text(`Status: ${filters.status}`, 200, 61);
+    doc.text(`Type: ${filters.type}`, 200, 67);
+    doc.text(`Amount: ${filters.amount}`, 200, 73);
+    doc.text(`Records: ${filteredData.length}`, 200, 79);
+
+    // Table data
+    const tableData = filteredData.map((transaction) => [
+      formatDate(transaction.createdAt) +
+        ' ' +
+        formatTime(transaction.createdAt),
+      transaction.id.substring(0, 8) + '...',
+      transaction.particular,
+      transaction.fullname || 'N/A',
+      transaction.email || 'N/A',
+      transaction.beneficiary?.fullName || 'N/A',
+      transaction.beneficiary?.accountNumber || 'N/A',
+      transaction.type,
+      `$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      transaction.amountType,
+      transaction.isPending
+        ? 'Pending'
+        : transaction.isRejected
+          ? 'Failed'
+          : 'Success',
+      transaction.accountType
+        .replace('E_PRIVATEACCOUNT', 'Private')
+        .replace('E_TEMPORYACCOUNT', 'Temporary'),
+      transaction.rejectReason || 'N/A',
+    ]);
+
+    // Table headers
+    const headers = [
+      [
+        'Date/Time',
+        'TXN ID',
+        'Particular',
+        'Sender Name',
+        'Sender Email',
+        'Beneficiary',
+        'Account No.',
+        'Type',
+        'Amount',
+        'Currency',
+        'Status',
+        'Account Type',
+        'Note',
+      ],
+    ];
+
+    // Add table
+    (doc as any).autoTable({
+      head: headers,
+      body: tableData,
+      startY: 85,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [248, 250, 252],
+        textColor: [107, 114, 128],
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+    });
+
+    // Save PDF
+    doc.save(
+      `transactions-report-${new Date().toISOString().split('T')[0]}.pdf`,
+    );
   };
 
   // Handle export to CSV
@@ -86,27 +400,38 @@ function AllTransaction() {
       'Date',
       'Time',
       'Transaction ID',
+      'Particular',
       'Sender Name',
-      'Sender Account',
-      'Recipient Name',
-      'Recipient Account',
+      'Sender Email',
+      'Beneficiary Name',
+      'Beneficiary Account',
       'Type',
       'Amount',
+      'Amount Type',
       'Status',
-      'Note',
+      'Account Type',
+      'Reject Reason',
     ];
+
     const csvData = filteredData.map((transaction) => [
-      transaction.date,
-      transaction.time,
+      formatDate(transaction.createdAt),
+      formatTime(transaction.createdAt),
       transaction.id,
-      transaction.sender.name,
-      transaction.sender.account,
-      transaction.recipient.name,
-      transaction.recipient.account,
+      transaction.particular,
+      transaction.fullname || 'N/A',
+      transaction.email || 'N/A',
+      transaction.beneficiary?.fullName || 'N/A',
+      transaction.beneficiary?.accountNumber || 'N/A',
       transaction.type,
-      `$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-      transaction.status,
-      transaction.note,
+      transaction.amount.toString(),
+      transaction.amountType,
+      transaction.isPending
+        ? 'Pending'
+        : transaction.isRejected
+          ? 'Failed'
+          : 'Success',
+      transaction.accountType,
+      transaction.rejectReason || 'N/A',
     ]);
 
     const csvContent = [
@@ -118,7 +443,7 @@ function AllTransaction() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `all-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -127,122 +452,241 @@ function AllTransaction() {
 
   // Handle print
   const handlePrint = () => {
-    const printContent = document.getElementById('all-transactions-content');
+    const statsData = calculateStats(filteredData);
     const printWindow = window.open('', '_blank');
-    if (printWindow && printContent) {
+
+    if (printWindow) {
       printWindow.document.write(`
-        <html>
-          <head>
-            <title>All Transaction Reports</title>
-            <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-              body { font-family: 'Inter', sans-serif; margin: 20px; background: #fff; color: #000; }
-              .print-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
-              .print-header h1 { color: #0F1535; margin: 0; font-size: 28px; font-weight: 700; }
-              .print-header p { color: #6B7280; margin: 5px 0 0; font-size: 14px; }
-              .print-meta { display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 13px; }
-              .print-stats { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb; }
-              .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-              .stat-item { background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-              th { background-color: #f8fafc; color: #6B7280; font-weight: 600; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
-              td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
-              .type-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-              .type-credit { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-              .type-debit { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-              .status-badge { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
-              .status-success { background: #d1fae5; color: #065f46; }
-              .status-failed { background: #fee2e2; color: #991b1b; }
-              .status-pending { background: #fef3c7; color: #92400e; }
-              .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6B7280; font-size: 12px; }
-              @media print {
-                body { margin: 0; padding: 20px; }
-                button { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="print-header">
-              <h1>All Transaction Reports</h1>
-              <p>Comprehensive log of all financial activities, including successful and failed transactions</p>
-              <p>Generated on ${new Date().toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Transaction Report</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: 'Inter', sans-serif;
+              padding: 20px;
+              background: #fff;
+              color: #000;
+            }
+            .print-header {
+              text-align: center;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 2px solid #f0f0f0;
+            }
+            .print-header h1 {
+              color: #0F1535;
+              margin: 0;
+              font-size: 28px;
+              font-weight: 700;
+            }
+            .print-header p {
+              color: #6B7280;
+              margin: 5px 0 0;
+              font-size: 14px;
+            }
+            .summary-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 15px;
+              margin-bottom: 30px;
+            }
+            .summary-card {
+              background: #f8fafc;
+              padding: 15px;
+              border-radius: 8px;
+              border: 1px solid #e5e7eb;
+            }
+            .summary-card h3 {
+              color: #374151;
+              font-size: 14px;
+              margin-bottom: 8px;
+            }
+            .summary-card .value {
+              color: #111827;
+              font-size: 20px;
+              font-weight: 700;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+              font-size: 12px;
+            }
+            th {
+              background-color: #f8fafc;
+              color: #6B7280;
+              font-weight: 600;
+              text-transform: uppercase;
+              padding: 12px 8px;
+              text-align: left;
+              border-bottom: 2px solid #e5e7eb;
+            }
+            td {
+              padding: 10px 8px;
+              border-bottom: 1px solid #e5e7eb;
+              vertical-align: top;
+            }
+            .type-badge {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 11px;
+              font-weight: 600;
+            }
+            .type-CREDIT { background: #dbeafe; color: #1e40af; }
+            .type-DEBIT { background: #fef3c7; color: #92400e; }
+            .status-badge {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: 50px;
+              font-size: 11px;
+              font-weight: 600;
+            }
+            .status-success { background: #d1fae5; color: #065f46; }
+            .status-pending { background: #fef3c7; color: #92400e; }
+            .status-failed { background: #fee2e2; color: #991b1b; }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #6B7280;
+              font-size: 12px;
+            }
+            @media print {
+              body { margin: 0; padding: 15px; }
+              .no-print { display: none; }
+              table { page-break-inside: auto; }
+              tr { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-header">
+            <h1>All Transaction Reports</h1>
+            <p>Comprehensive log of all financial activities</p>
+            <p>Generated on ${new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}</p>
+          </div>
+          
+          <div class="summary-grid">
+            <div class="summary-card">
+              <h3>Total Transactions</h3>
+              <div class="value">${statsData.totalTransactions}</div>
             </div>
-            
-            <div class="print-meta">
-              <div>
-                <strong>Date Range:</strong> ${filters.dateRange || 'Oct 1 - Oct 31, 2023'}<br>
-                <strong>Status:</strong> ${filters.status}<br>
-                <strong>Type:</strong> ${filters.type}
-              </div>
-              <div>
-                <strong>Total Records:</strong> ${filteredData.length}<br>
-                <strong>Total Amount:</strong> $${filteredData.reduce((sum, t) => sum + t.amount, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>
-                <strong>Filter:</strong> ${filters.amount}
-              </div>
+            <div class="summary-card">
+              <h3>Total Amount</h3>
+              <div class="value">$${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
             </div>
-            
-            <table>
-              <thead>
+            <div class="summary-card">
+              <h3>Successful</h3>
+              <div class="value">${statsData.successfulTransactions}</div>
+            </div>
+            <div class="summary-card">
+              <h3>Pending</h3>
+              <div class="value">${statsData.pendingTransactions}</div>
+            </div>
+            <div class="summary-card">
+              <h3>Failed</h3>
+              <div class="value">${statsData.failedTransactions}</div>
+            </div>
+            <div class="summary-card">
+              <h3>Filtered Records</h3>
+              <div class="value">${filteredData.length}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Date/Time</th>
+                <th>TXN ID</th>
+                <th>Particular</th>
+                <th>Sender</th>
+                <th>Beneficiary</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Account Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredData
+                .map(
+                  (transaction) => `
                 <tr>
-                  <th>Date/Time</th>
-                  <th>TXN ID</th>
-                  <th>Sender</th>
-                  <th>Recipient</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Admin Note</th>
+                  <td>
+                    <div><strong>${formatDate(transaction.createdAt)}</strong></div>
+                    <div style="color: #6B7280;">${formatTime(transaction.createdAt)}</div>
+                  </td>
+                  <td style="font-family: monospace; color: #6B7280; font-size: 11px;">
+                    ${transaction.id.substring(0, 8)}...
+                  </td>
+                  <td>${transaction.particular}</td>
+                  <td>
+                    <div><strong>${transaction.fullname || 'N/A'}</strong></div>
+                    <div style="color: #6B7280; font-size: 11px;">${transaction.email || 'N/A'}</div>
+                  </td>
+                  <td>
+                    ${
+                      transaction.beneficiary
+                        ? `
+                      <div><strong>${transaction.beneficiary.fullName}</strong></div>
+                      <div style="color: #6B7280; font-size: 11px;">${transaction.beneficiary.accountNumber}</div>
+                    `
+                        : '<div style="color: #6B7280;">N/A</div>'
+                    }
+                  </td>
+                  <td>
+                    <span class="type-badge type-${transaction.type}">
+                      ${transaction.type}
+                    </span>
+                  </td>
+                  <td>
+                    <strong>$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+                    <div style="color: #6B7280; font-size: 11px;">${transaction.amountType}</div>
+                  </td>
+                  <td>
+                    <span class="status-badge status-${transaction.isPending ? 'pending' : transaction.isRejected ? 'failed' : 'success'}">
+                      ${transaction.isPending ? 'Pending' : transaction.isRejected ? 'Failed' : 'Success'}
+                    </span>
+                  </td>
+                  <td>
+                    ${transaction.accountType.replace('E_PRIVATEACCOUNT', 'Private').replace('E_TEMPORYACCOUNT', 'Temporary')}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                ${filteredData
-                  .map(
-                    (transaction) => `
-                  <tr>
-                    <td>
-                      <div><strong>${transaction.date}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transaction.time}</div>
-                    </td>
-                    <td style="font-family: monospace; color: #6B7280;">${transaction.id}</td>
-                    <td>
-                      <div><strong>${transaction.sender.name}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transaction.sender.account}</div>
-                    </td>
-                    <td>
-                      <div><strong>${transaction.recipient.name}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transaction.recipient.account}</div>
-                    </td>
-                    <td>
-                      <span class="type-badge type-${transaction.type.toLowerCase()}">
-                        ${transaction.type}
-                      </span>
-                    </td>
-                    <td><strong>$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
-                    <td>
-                      <span class="status-badge status-${transaction.status.toLowerCase()}">
-                        ${transaction.status}
-                      </span>
-                    </td>
-                    <td style="color: #6B7280; font-style: italic;">${transaction.note}</td>
-                  </tr>
-                `,
-                  )
-                  .join('')}
-              </tbody>
-            </table>
-            
-            <div class="footer">
-              <p>Report generated by Admin Panel • Confidential Financial Data</p>
-            </div>
-          </body>
+              `,
+                )
+                .join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>Report generated by Admin Panel • Confidential Financial Data</p>
+            <p>Page 1 of 1</p>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(() => window.close(), 500);
+            }
+          </script>
+        </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
     }
   };
 
@@ -255,67 +699,87 @@ function AllTransaction() {
   const columns: Column<Transaction>[] = [
     {
       header: 'Date/Time',
-      accessor: 'date',
+      accessor: 'createdAt',
       render: (item: Transaction) => (
         <div>
           <div className="text-header-text text-sm font-medium dark:text-white">
-            {item.date}
+            {formatDate(item.createdAt)}
           </div>
           <div className="text-secondary-text dark:text-gray-400 text-xs">
-            {item.time}
+            {formatTime(item.createdAt)}
           </div>
         </div>
       ),
-      className: 'min-w-[120px]',
+      className: 'min-w-[130px]',
       sortable: true,
     },
     {
       header: 'TXN ID',
       accessor: 'id',
       render: (item: Transaction) => (
-        <span className="font-mono text-secondary-text dark:text-gray-400 text-sm">
-          {item.id}
+        <span
+          className="font-mono text-secondary-text dark:text-gray-400 text-xs"
+          title={item.id}
+        >
+          {item.id.substring(0, 8)}...
         </span>
       ),
-      className: 'min-w-[120px]',
+      className: 'min-w-[100px]',
+    },
+    {
+      header: 'Particular',
+      accessor: 'particular',
+      render: (item: Transaction) => (
+        <div className="text-header-text text-sm dark:text-white">
+          {item.particular}
+        </div>
+      ),
+      className: 'min-w-[180px]',
     },
     {
       header: 'Sender',
-      accessor: 'sender',
+      accessor: 'fullname',
       render: (item: Transaction) => (
         <div>
           <div className="text-header-text text-sm dark:text-white">
-            {item.sender.name}
+            {item.fullname || 'N/A'}
           </div>
-          <div className="font-mono text-secondary-text dark:text-gray-400 text-xs">
-            {item.sender.account}
+          <div className="text-secondary-text dark:text-gray-400 text-xs">
+            {item.email || 'N/A'}
           </div>
         </div>
       ),
-      className: 'min-w-[140px]',
-      sortable: true,
+      className: 'min-w-[160px]',
     },
     {
-      header: 'Recipient',
-      accessor: 'recipient',
+      header: 'Beneficiary',
+      accessor: 'beneficiary',
       render: (item: Transaction) => (
         <div>
-          <div className="text-header-text text-sm dark:text-white">
-            {item.recipient.name}
-          </div>
-          <div className="font-mono text-secondary-text dark:text-gray-400 text-xs">
-            {item.recipient.account}
-          </div>
+          {item.beneficiary ? (
+            <>
+              <div className="text-header-text text-sm dark:text-white">
+                {item.beneficiary.fullName}
+              </div>
+              <div className="font-mono text-secondary-text dark:text-gray-400 text-xs">
+                {item.beneficiary.accountNumber}
+              </div>
+            </>
+          ) : (
+            <div className="text-secondary-text dark:text-gray-500 text-sm italic">
+              N/A
+            </div>
+          )}
         </div>
       ),
-      className: 'min-w-[140px]',
+      className: 'min-w-[160px]',
     },
     {
       header: 'Type',
       accessor: 'type',
       render: (item: Transaction) => {
         const typeClasses =
-          item.type === 'Credit'
+          item.type === 'CREDIT'
             ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
             : 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800';
 
@@ -333,17 +797,27 @@ function AllTransaction() {
       header: 'Amount',
       accessor: 'amount',
       render: (item: Transaction) => (
-        <div className="text-header-text text-right text-sm font-bold dark:text-white">
-          ${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+        <div className="text-right">
+          <div className="text-header-text text-sm font-bold dark:text-white">
+            ${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+          </div>
+          <div className="text-secondary-text dark:text-gray-400 text-xs">
+            {item.amountType}
+          </div>
         </div>
       ),
-      className: 'min-w-[100px] text-right',
+      className: 'min-w-[120px] text-right',
       sortable: true,
     },
     {
       header: 'Status',
       accessor: 'status',
       render: (item: Transaction) => {
+        const status = item.isPending
+          ? 'Pending'
+          : item.isRejected
+            ? 'Failed'
+            : 'Success';
         const statusStyles = {
           Success:
             'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -355,34 +829,82 @@ function AllTransaction() {
 
         return (
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[item.status]}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[status]}`}
           >
             <span
               className={`size-1.5 rounded-full ${
-                item.status === 'Success'
+                status === 'Success'
                   ? 'bg-green-500'
-                  : item.status === 'Failed'
+                  : status === 'Failed'
                     ? 'bg-red-500'
                     : 'bg-yellow-500'
               }`}
             ></span>
-            {item.status}
+            {status}
           </span>
         );
       },
-      className: 'min-w-[90px] text-center',
+      className: 'min-w-[100px] text-center',
     },
     {
-      header: 'Admin Note',
-      accessor: 'note',
+      header: 'Account Type',
+      accessor: 'accountType',
+      render: (item: Transaction) => {
+        const accountType =
+          item.accountType === 'E_PRIVATEACCOUNT' ? 'Private' : 'Temporary';
+        return (
+          <span className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+            {accountType}
+          </span>
+        );
+      },
+      className: 'min-w-[100px] text-center',
+    },
+    {
+      header: 'Note',
+      accessor: 'rejectReason',
       render: (item: Transaction) => (
-        <span className="text-secondary-text dark:text-gray-500 text-sm italic">
-          {item.note}
+        <span
+          className="text-secondary-text dark:text-gray-500 text-sm italic"
+          title={item.rejectReason || ''}
+        >
+          {item.rejectReason || 'N/A'}
         </span>
       ),
       className: 'min-w-[150px]',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark flex min-h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-orange-500"></div>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">
+            Loading transactions...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark flex min-h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+            <span className="text-2xl">❌</span>
+          </div>
+          <h3 className="text-gray-900 mb-2 text-lg font-medium dark:text-white">
+            Error loading transactions
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Failed to load transaction data. Please try again.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen w-full">
@@ -428,7 +950,7 @@ function AllTransaction() {
 
         {/* Statistics Cards */}
         <div className="mb-6">
-          <StatsCards stats={STATS} />
+          <StatsCards stats={stats} />
         </div>
 
         {/* Filters and Table */}
@@ -437,24 +959,6 @@ function AllTransaction() {
           <div className="dark:border-gray-800 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm dark:bg-[#111a22]">
             <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
               <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
-                {/* Date Picker */}
-                <div className="relative min-w-[200px] flex-1 lg:flex-none">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-secondary-text dark:text-gray-400 text-lg">
-                      📅
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={filters.dateRange}
-                    onChange={(e) =>
-                      handleFilterChange('dateRange', e.target.value)
-                    }
-                    className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-                    placeholder="Oct 1 - Oct 31, 2023"
-                  />
-                </div>
-
                 {/* Status Select */}
                 <div className="relative min-w-[140px] flex-1 lg:flex-none">
                   <select
@@ -483,8 +987,8 @@ function AllTransaction() {
                     className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
                   >
                     <option>All Types</option>
-                    <option>Credit</option>
-                    <option>Debit</option>
+                    <option>CREDIT</option>
+                    <option>DEBIT</option>
                   </select>
                   <div className="text-secondary-text dark:text-gray-400 pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <span className="text-lg">⌄</span>
@@ -516,7 +1020,7 @@ function AllTransaction() {
               <div className="relative w-full lg:w-64">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <span className="text-secondary-text dark:text-gray-400 text-lg">
-                    🔍
+                    <MdSearch />
                   </span>
                 </div>
                 <input
@@ -524,22 +1028,28 @@ function AllTransaction() {
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
                   className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-                  placeholder="Search TXN ID, User..."
+                  placeholder="Search TXN ID, Particular..."
                 />
               </div>
             </div>
           </div>
 
           {/* Table */}
-          <GenericTable
-            data={filteredData}
-            columns={columns}
-            itemsPerPage={10}
-            searchAble={false}
-            title="All Transactions"
-            action={false}
-            paginationOff={false}
-          />
+          <div className="dark:border-gray-800 rounded-xl border border-[#e5e7eb] bg-white shadow-sm dark:bg-[#111a22]">
+            <div className="p-4">
+              <h3 className="text-header-text mb-4 text-lg font-semibold dark:text-white">
+                All Transactions ({filteredData.length} records)
+              </h3>
+              <GenericTable
+                data={filteredData}
+                columns={columns}
+                itemsPerPage={10}
+                searchAble={false}
+                action={false}
+                paginationOff={false}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
