@@ -10,13 +10,13 @@ interface TransferFiltersProps {
     search: string;
   };
   onFilterChange: (key: string, value: string) => void;
+  countries?: string[];
 }
 
 const TransferFilters: React.FC<TransferFiltersProps> = ({
   filters,
   onFilterChange,
-}) => {
-  const countries = [
+  countries = [
     'All Countries',
     'United States',
     'United Kingdom',
@@ -26,7 +26,8 @@ const TransferFilters: React.FC<TransferFiltersProps> = ({
     'Australia',
     'Canada',
     'France',
-  ];
+  ],
+}) => {
   const statuses = [
     'All Statuses',
     'Completed',
@@ -39,7 +40,7 @@ const TransferFilters: React.FC<TransferFiltersProps> = ({
     <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
       <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
         {/* Date Picker */}
-        <div className="relative min-w-[200px] flex-1 lg:flex-none">
+        <div className="relative min-w-[180px] flex-1 sm:flex-none">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <MdCalendarToday className="text-secondary-text text-lg" />
           </div>
@@ -48,12 +49,12 @@ const TransferFilters: React.FC<TransferFiltersProps> = ({
             value={filters.dateRange}
             onChange={(e) => onFilterChange('dateRange', e.target.value)}
             className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-            placeholder="Oct 1 - Oct 31, 2023"
+            placeholder="All dates"
           />
         </div>
 
         {/* Country Select */}
-        <div className="relative min-w-[180px] flex-1 lg:flex-none">
+        <div className="relative min-w-[160px] flex-1 sm:flex-none">
           <select
             value={filters.country}
             onChange={(e) => onFilterChange('country', e.target.value)}
@@ -71,7 +72,7 @@ const TransferFilters: React.FC<TransferFiltersProps> = ({
         </div>
 
         {/* Status Select */}
-        <div className="relative min-w-[160px] flex-1 lg:flex-none">
+        <div className="relative min-w-[150px] flex-1 sm:flex-none">
           <select
             value={filters.status}
             onChange={(e) => onFilterChange('status', e.target.value)}
