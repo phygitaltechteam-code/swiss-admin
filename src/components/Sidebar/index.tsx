@@ -1,28 +1,23 @@
-import React, {useEffect, useRef, useState} from 'react';
+/* eslint-disable*/
+
+import {useEffect, useRef, useState} from 'react';
 import {Link, useLocation} from '@tanstack/react-router';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import {SidebarProps} from '@/types';
-import {FaArrowLeftLong, FaUsers} from 'react-icons/fa6';
-import {IoIosArrowUp, IoIosArrowDown} from 'react-icons/io';
-import {useAuthContext} from '@/context/AuthContext';
+import {IoIosArrowDown} from 'react-icons/io';
+import {BiHome} from 'react-icons/bi';
 import {
-  MdDashboard,
   MdAccountCircle,
+  MdCreditScore,
+  MdDashboard,
   MdDescription,
   MdFactCheck,
-  MdCreditScore,
-  MdPriceCheck,
   MdPercent,
+  MdPriceCheck,
   MdSettings,
-  MdList,
-  MdPerson,
-  MdHistory,
-  MdAccountBalance,
-  MdChevronRight,
-  MdChevronLeft,
-  MdMenu,
 } from 'react-icons/md';
-import {FiBarChart} from 'react-icons/fi';
+import {useAuthContext} from '@/context/AuthContext';
+import {FaUsers} from 'react-icons/fa';
 
 const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
   const location = useLocation();
@@ -31,41 +26,26 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
   const isEmployee = user?.role === 'EMPLOYEE';
   const isAdmin = user?.role === 'ADMIN';
   const isCompany = user?.role === 'COMPANY';
+  const isFixedOpenRef = useRef(false);
+  const [isFixedOpen, setIsFixedOpen] = useState(false);
+  const isExpanded = sidebarOpen || isFixedOpen;
 
-  const [openProfileMenu, setOpenProfileMenu] = useState(false);
-  const [openClientsMenu, setOpenClientsMenu] = useState(false);
-  const [openReportsMenu, setOpenReportsMenu] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Check if mobile on mount and resize
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth < 1024) {
-        // On mobile, sidebar should be closed by default
-        setSidebarOpen(false);
-      } else {
-        // On desktop, sidebar should be open
-        setSidebarOpen(true);
-      }
-    };
-
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-
-    return () => {
-      window.removeEventListener('resize', checkIfMobile);
-    };
-  }, [setSidebarOpen]);
+  console.log('isExpandedvbbbn', isExpanded);
+  const [hoveredRoute, setHoveredRoute] = useState<string | null>(null);
+  const [hoveredRect, setHoveredRect] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [showSubRoutes, setShowSubRoutes] = useState<{
+    label: string;
+    subRoutes: any[];
+  } | null>(null);
 
   const handleSignOut = async () => {
     console.log('logouttt');
     localStorage.clear();
     window.location.reload();
   };
-
-  // Define routes with React Icons
   const sidebarRoutes = isEmployee
     ? [
         {
@@ -143,58 +123,48 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
 
   const trigger = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLDivElement>(null);
+  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
 
   const storedSidebarExpanded = localStorage.getItem('sidebar-expanded');
   const [sidebarExpanded, setSidebarExpanded] = useState(
     storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true',
   );
 
-  // Toggle sidebar collapse (for desktop)
-  const toggleSidebar = () => {
-    if (isMobile) {
-      setSidebarOpen(!sidebarOpen);
-    } else {
-      setIsCollapsed(!isCollapsed);
-    }
-  };
+  const [isHovered, setIsHovered] = useState(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Close sidebar when clicking outside (mobile only)
   useEffect(() => {
-    if (!sidebarOpen || !isMobile) return;
-
     const clickHandler = (event: MouseEvent) => {
-      const target = event.target as Node;
-
+      const {target} = event;
+      if (!sidebar.current || !trigger.current) return;
       if (
-        sidebar.current?.contains(target) ||
-        trigger.current?.contains(target) ||
-        (target as HTMLElement).closest('[data-sidebar-toggle]')
-      ) {
+        !sidebarOpen ||
+        sidebar.current.contains(target as Node) ||
+        trigger.current.contains(target as Node)
+      )
         return;
-      }
-
       setSidebarOpen(false);
+      setHoveredRoute(null);
+      setShowSubRoutes(null);
     };
+    document.addEventListener('click', clickHandler);
+    return () => document.removeEventListener('click', clickHandler);
+  }, [sidebarOpen, setSidebarOpen]);
 
-    const timeout = setTimeout(() => {
-      document.addEventListener('click', clickHandler);
-    }, 50);
-
-    return () => {
-      clearTimeout(timeout);
-      document.removeEventListener('click', clickHandler);
-    };
-  }, [sidebarOpen, isMobile, setSidebarOpen]);
-
-  // Close sidebar on escape key (mobile only)
   useEffect(() => {
     const keyHandler = ({keyCode}: KeyboardEvent) => {
-      if (!sidebarOpen || keyCode !== 27 || !isMobile) return;
+      if (!sidebarOpen || keyCode !== 27) return;
       setSidebarOpen(false);
+      setHoveredRoute(null);
+      setShowSubRoutes(null);
     };
     document.addEventListener('keydown', keyHandler);
     return () => document.removeEventListener('keydown', keyHandler);
-  });
+  }, [sidebarOpen, setSidebarOpen]);
 
   useEffect(() => {
     localStorage.setItem('sidebar-expanded', sidebarExpanded.toString());
@@ -205,237 +175,241 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
     }
   }, [sidebarExpanded]);
 
-  // Determine if a route is active
-  const isRouteActive = (route: any) => {
-    if (route.path) {
-      return (
-        pathname === route.path || (route.path && pathname.includes(route.path))
-      );
-    }
-    return false;
-  };
-
-  // Handle link click (close sidebar on mobile)
-  const handleLinkClick = () => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  };
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+  // Handle screen resize for responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+        setIsFixedOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
-    <>
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && isMobile && (
-        <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Mobile Menu Button */}
-      {isMobile && !sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white shadow-lg lg:hidden"
-          aria-label="Open menu"
-        >
-          <MdMenu size={24} />
-        </button>
-      )}
-
-      {/* Sidebar */}
+    <div className="relative z-50">
+      {/* SIDEBAR */}
       <aside
-        ref={sidebar}
-        className={`fixed left-0 top-0 z-9999 flex h-screen flex-col bg-white shadow-lg transition-all duration-300 ease-in-out ${
-          isMobile
-            ? sidebarOpen
-              ? 'w-72 translate-x-0'
-              : 'w-72 -translate-x-full'
-            : isCollapsed
-              ? 'w-20 translate-x-0'
-              : 'w-64 translate-x-0'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen flex-col bg-white text-black transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:static lg:translate-x-0`}
       >
-        {/* Logo Area */}
-        <div className="b mt-4 flex h-16 items-center justify-between px-4 lg:px-6">
+        {/* Header */}
+        <div className="flex items-center justify-between px-2 py-2 lg:py-6">
           <button
-            onClick={toggleSidebar}
-            className="flex items-center gap-3 transition-opacity hover:opacity-80"
+            className="flex items-center gap-2"
+            onClick={() => {
+              const nextState = !isExpanded;
+
+              setSidebarOpen(nextState);
+              setIsFixedOpen(nextState);
+
+              // Close any open floating submenus when toggling
+              setHoveredRoute(null);
+              setShowSubRoutes(null);
+              setHoveredRect(null);
+            }}
           >
-            <div className="flex shrink-0 items-center justify-center rounded-lg bg-primary/10 p-1.5">
-              <MdAccountBalance className="text-2xl text-primary" />
-            </div>
-            {(!isCollapsed || isMobile) && (
-              <h1 className="text-gray-900 font-display text-lg font-bold tracking-tight">
-                Swiss Admin
-              </h1>
+            {isExpanded ? (
+              <p className="px-4 text-3xl font-extrabold text-primary">
+                Swiss Quote
+              </p>
+            ) : (
+              <div className="flex items-center rounded-full p-1">
+                <BiHome className="h-15 w-15 text-primary" />
+              </div>
             )}
           </button>
-
-          {/* Collapse/Expand button for desktop */}
-          {!isMobile && (
-            <button
-              onClick={toggleSidebar}
-              className="hover:bg-gray-100 flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? (
-                <MdChevronRight className="text-gray-600" size={20} />
-              ) : (
-                <MdChevronLeft className="text-gray-600" size={20} />
-              )}
-            </button>
-          )}
-
-          {/* Close button for mobile */}
-          {isMobile && (
-            <button
-              ref={trigger}
-              onClick={() => setSidebarOpen(false)}
-              aria-controls="sidebar"
-              aria-expanded={sidebarOpen}
-              className="hover:bg-gray-100 flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
-            >
-              <FaArrowLeftLong className="text-gray-600" size={20} />
-            </button>
-          )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex grow flex-col gap-1 overflow-y-auto p-4">
-          {(!isCollapsed || isMobile) && (
-            <p className="text-gray-500 mb-2 px-3 text-xs font-semibold uppercase tracking-wider">
-              Main Menu
-            </p>
-          )}
+        {/* SUB-MENUBAR */}
+        <div className="no-scrollbar flex flex-col overflow-y-auto px-2 duration-300 ease-linear">
+          <nav className="mt-4 space-y-1 p-2">
+            <ul>
+              {sidebarRoutes.map((route, index) =>
+                route.subRoutes ? (
+                  <SidebarLinkGroup activeCondition={isExpanded} key={index}>
+                    {(handleClick, open) => (
+                      <div className="relative">
+                        <button
+                          onMouseEnter={(e) => {
+                            if (!isExpanded) {
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
+                              setHoveredLabel(route.label);
+                              setTooltipPos({
+                                top: rect.top + rect.height / 2,
+                                left: rect.right + 8,
+                              });
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            setHoveredLabel(null);
+                            setTooltipPos(null);
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const rect = (
+                              e.currentTarget as HTMLElement
+                            ).getBoundingClientRect();
 
-          {sidebarRoutes.map((route, index) => {
-            if (route.subRoutes) {
-              const isOpen =
-                route.label === 'Clients'
-                  ? openClientsMenu
-                  : route.label === 'Settings'
-                    ? openProfileMenu
-                    : false;
+                            setHoveredRect({
+                              top: rect.top,
+                              left: rect.right + 5,
+                            });
+                            setHoveredRoute(route.label);
 
-              const setIsOpen =
-                route.label === 'Clients'
-                  ? setOpenClientsMenu
-                  : route.label === 'Settings'
-                    ? setOpenProfileMenu
-                    : () => {};
-
-              return (
-                <div key={index} className="mb-1">
-                  <button
-                    onClick={() => {
-                      if (!isMobile || !isCollapsed) {
-                        setIsOpen(!isOpen);
-                      } else {
-                        handleLinkClick();
-                      }
-                    }}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 transition-colors ${
-                      isRouteActive(route)
-                        ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-gray-100 text-black hover:text-primary'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {route.icon}
-                      {(!isCollapsed || isMobile) && (
-                        <span className="text-sm font-medium">
-                          {route.label}
-                        </span>
-                      )}
-                    </div>
-                    {(!isCollapsed || isMobile) && (
-                      <IoIosArrowUp
-                        className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                        size={16}
-                      />
+                            setShowSubRoutes({
+                              label: route.label,
+                              subRoutes: route.subRoutes || [],
+                            });
+                          }}
+                          className={`group flex w-full items-center gap-2.5 rounded px-3 py-2 text-sm font-medium text-black hover:bg-primary/10 ${
+                            pathname.includes(route.path!) ? 'bg-graydark' : ''
+                          }`}
+                        >
+                          <span className="text-black transition-colors group-hover:text-primary">
+                            {route.icon}
+                          </span>
+                          {isExpanded && route.label}
+                          {isExpanded && (
+                            <IoIosArrowDown
+                              className={`ml-auto transform duration-200 ${open ? 'rotate-180' : ''}`}
+                            />
+                          )}
+                        </button>
+                        {isExpanded && open && (
+                          <ul className="ml-6 mt-1 space-y-1">
+                            {route.subRoutes.map((subRoute, subIndex) => (
+                              <li key={subIndex}>
+                                <Link
+                                  to={subRoute.path}
+                                  onClick={() => {
+                                    setHoveredRoute(null);
+                                    setShowSubRoutes(null);
+                                    setSidebarOpen(false);
+                                  }}
+                                  className="block rounded px-3 py-2 text-sm text-black hover:bg-primary/20"
+                                >
+                                  {subRoute.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     )}
-                  </button>
-
-                  {/* Submenu */}
-                  {isOpen && (!isCollapsed || isMobile) && (
-                    <div className="border-gray-200 ml-2 mt-1 border-l pl-2">
-                      <ul className="flex flex-col gap-1">
-                        {route.subRoutes.map((subRoute, subIndex) => (
-                          <li key={subIndex}>
-                            {subRoute.path ? (
-                              <Link
-                                to={subRoute.path}
-                                className="text-gray-600 hover:bg-gray-100 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:text-primary"
-                                activeProps={{
-                                  className: '!text-primary !bg-primary/10',
-                                }}
-                                onClick={handleLinkClick}
-                              >
-                                {(!isCollapsed || isMobile) &&
-                                  subRoute.icon && (
-                                    <span className="hidden lg:block">
-                                      {subRoute.icon}
-                                    </span>
-                                  )}
-                                <span>{subRoute.label}</span>
-                              </Link>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  subRoute.onClick?.();
-                                  handleLinkClick();
-                                }}
-                                className="text-gray-600 hover:bg-gray-100 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:text-red-600"
-                              >
-                                <span>{subRoute.label}</span>
-                              </button>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <Link
-                key={index}
-                to={route.path!}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                  isRouteActive(route)
-                    ? 'bg-primary/10 text-primary'
-                    : 'hover:bg-gray-100 text-black hover:text-primary'
-                }`}
-                onClick={handleLinkClick}
-              >
-                {route.icon}
-                {(!isCollapsed || isMobile) && (
-                  <span className="text-sm font-medium">{route.label}</span>
-                )}
-              </Link>
-            );
-          })}
+                  </SidebarLinkGroup>
+                ) : (
+                  <li key={index}>
+                    <Link
+                      to={route.path}
+                      onMouseEnter={(e) => {
+                        const rect = (
+                          e.currentTarget as unknown as HTMLAnchorElement
+                        ).getBoundingClientRect();
+                        setHoveredLabel(route.label);
+                        setTooltipPos({
+                          top: rect.top + rect.height / 2,
+                          left: rect.right + 8,
+                        });
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredLabel(null);
+                        setTooltipPos(null);
+                      }}
+                      onClick={() => {
+                        setHoveredRoute(null);
+                        setShowSubRoutes(null);
+                        setSidebarOpen(false);
+                      }}
+                      className={`group flex w-full items-center gap-2.5 rounded px-3 py-2 text-sm font-medium text-black hover:bg-primary/10 ${
+                        pathname.includes(route.path) ? 'bg-primary/10' : ''
+                      }`}
+                    >
+                      <span className="text-black transition-colors group-hover:text-primary">
+                        {route.icon}
+                      </span>
+                      {isExpanded && route.label}
+                    </Link>
+                  </li>
+                ),
+              )}
+            </ul>
+          </nav>
         </div>
-
-        {/* Minimal profile when collapsed on desktop */}
-        {isCollapsed && !isMobile && (
-          <div className="border-gray-200 border-t p-4">
-            <div className="flex items-center justify-center">
-              <button
-                onClick={handleSignOut}
-                className="hover:bg-gray-100 flex h-10 w-10 items-center justify-center rounded-full transition-colors"
-                title="Logout"
-              >
-                <MdSettings className="text-gray-600" size={20} />
-              </button>
-            </div>
-          </div>
-        )}
       </aside>
-    </>
+
+      {hoveredLabel && tooltipPos && !isExpanded && (
+        <div
+          className="fixed z-50 rounded bg-white px-2 py-1 text-xs text-black shadow"
+          style={{
+            top: tooltipPos.top,
+            left: tooltipPos.left,
+            transform: 'translateY(-50%)',
+          }}
+        >
+          {hoveredLabel}
+        </div>
+      )}
+
+      {/* Floating Subroute Menu when sidebar is collapsed */}
+      {showSubRoutes && hoveredRect && (
+        <div
+          className="fixed z-[999] w-56 overflow-y-auto rounded-md bg-white p-2 text-black shadow-lg"
+          style={{
+            top: (() => {
+              const menuItemCount = showSubRoutes.subRoutes.length;
+              const estimatedHeight = menuItemCount * 40 + 20; // 40px per item + padding
+              const maxTop = window.innerHeight - estimatedHeight - 20;
+
+              return Math.min(hoveredRect.top, maxTop);
+            })(),
+            left: hoveredRect.left + 5,
+            maxHeight: 'calc(100vh - 100px)', // Reserve space for weather widget
+          }}
+          onMouseEnter={() => {
+            if (closeTimeoutRef.current) {
+              clearTimeout(closeTimeoutRef.current);
+            }
+          }}
+          onMouseLeave={() => {
+            closeTimeoutRef.current = setTimeout(() => {
+              setHoveredRoute(null);
+              setShowSubRoutes(null);
+              setHoveredRect(null);
+            }, 300);
+          }}
+        >
+          {showSubRoutes.subRoutes.map((subRoute, subIndex) => (
+            <Link
+              key={subIndex}
+              to={subRoute.path}
+              onClick={() => {
+                setHoveredRect(null);
+                setHoveredRoute(null);
+                setShowSubRoutes(null);
+                if (window.innerWidth < 1024) {
+                  setSidebarOpen(false);
+                }
+              }}
+              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-black hover:bg-primary/10"
+            >
+              {subRoute.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
