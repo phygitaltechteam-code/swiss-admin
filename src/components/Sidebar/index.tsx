@@ -66,7 +66,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             icon: <FaUsers size={22} />,
             subRoutes: [
               {label: 'Client List', path: '/client/displayclient'},
-              {label: 'Client Profile', path: '/client/profile'},
+              // {label: 'Client Profile', path: '/client/profile'},
               {
                 label: 'Transaction History',
                 path: '/client/transactionhistory',

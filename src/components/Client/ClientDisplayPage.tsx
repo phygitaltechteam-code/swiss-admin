@@ -17,6 +17,8 @@ interface Client {
   privateBalance: number;
   tempBalance: number;
   isActive: boolean;
+  isVerified: boolean;
+  isRejected: boolean;
 
   // Additional fields from API
   address?: string;
@@ -28,22 +30,24 @@ interface Client {
   passport?: string | null;
   aadharCard?: string | null;
   panCard?: string | null;
-  isVerified?: boolean;
-  isRejected?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  rejectedReason?: string | null;
 }
 
 // Helper function to transform API data to Client type
 const transformApiDataToClient = (apiClient: any): Client => {
-  // For now, using mock data for transaction fields since they're not in API
-  // You can replace these with actual data if your API provides it
-  const mockData = {
-    totalTrans: Math.floor(Math.random() * 100),
-    transVolume: Math.floor(Math.random() * 100000),
-    privateBalance: Math.floor(Math.random() * 50000),
-    tempBalance: Math.floor(Math.random() * 5000),
-  };
+  // Extract wallet data
+  const walletData = apiClient.wallets?.[0] || {};
+  const privateBalance = walletData.eprivateAccount || 0;
+  const tempBalance = walletData.temporyAccount || 0;
+
+  // Get transaction count
+  const totalTrans = apiClient._count?.senderTransactions || 0;
+
+  // For now, transaction volume is not in the API, so we'll calculate based on some logic
+  // or leave it as 0. You can adjust this based on your actual data structure
+  const transVolume = 0; // This could be calculated from actual transaction data if available
 
   return {
     id: apiClient.id || '',
@@ -51,11 +55,13 @@ const transformApiDataToClient = (apiClient: any): Client => {
     name: apiClient.user?.fullname || 'Unknown',
     mobile: apiClient.user?.phoneNumber || 'N/A',
     email: apiClient.user?.email || 'N/A',
-    totalTrans: mockData.totalTrans,
-    transVolume: mockData.transVolume,
-    privateBalance: mockData.privateBalance,
-    tempBalance: mockData.tempBalance,
+    totalTrans: totalTrans,
+    transVolume: transVolume,
+    privateBalance: privateBalance,
+    tempBalance: tempBalance,
     isActive: apiClient.user?.isActive || false,
+    isVerified: apiClient.user?.isVerified || false,
+    isRejected: apiClient.user?.isRejected || false,
     // Additional fields from API
     address: apiClient.address,
     city: apiClient.city,
@@ -66,10 +72,9 @@ const transformApiDataToClient = (apiClient: any): Client => {
     passport: apiClient.passport,
     aadharCard: apiClient.aadharCard,
     panCard: apiClient.panCard,
-    isVerified: apiClient.user?.isVerified,
-    isRejected: apiClient.user?.isRejected,
     createdAt: apiClient.createdAt,
     updatedAt: apiClient.updatedAt,
+    rejectedReason: apiClient.rejectedReason,
   };
 };
 
@@ -105,25 +110,20 @@ const ClientDisplay: React.FC = () => {
       // Handle different response structures
       let dataArray: any[] = [];
 
-      if (Array.isArray(apiResponse)) {
-        // If response is directly an array
+      // Based on your API response structure
+      if (apiResponse.data && Array.isArray(apiResponse.data)) {
+        // This matches your actual API response structure
+        dataArray = apiResponse.data;
+        console.log(
+          'Found data array in apiResponse.data:',
+          dataArray.length,
+          'items',
+        );
+      } else if (Array.isArray(apiResponse)) {
         dataArray = apiResponse;
-      } else if (apiResponse.data) {
-        // If response has data property
-        if (Array.isArray(apiResponse.data)) {
-          dataArray = apiResponse.data;
-        } else {
-          // If data is a single object, wrap it in an array
-          dataArray = [apiResponse.data];
-        }
-      } else if (apiResponse.status && apiResponse.data) {
-        // If response has status and data properties
-        if (Array.isArray(apiResponse.data)) {
-          dataArray = apiResponse.data;
-        } else {
-          // If data is a single object, wrap it in an array
-          dataArray = [apiResponse.data];
-        }
+      } else {
+        console.log('Unexpected API response structure:', apiResponse);
+        dataArray = [];
       }
 
       console.log('Data array to transform:', dataArray);
@@ -195,8 +195,7 @@ const ClientDisplay: React.FC = () => {
             {item.name}
           </span>
           <span className="text-gray-900 mt-0.5 text-xs">
-            {' '}
-            {item.accountNumber}{' '}
+            {item.accountNumber}
           </span>
           {/* Show verification status */}
           <div className="mt-1 flex gap-2">
@@ -208,6 +207,11 @@ const ClientDisplay: React.FC = () => {
             {item.isRejected && (
               <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
                 Rejected
+              </span>
+            )}
+            {item.rejectedReason && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                With Reason
               </span>
             )}
           </div>
@@ -249,34 +253,27 @@ const ClientDisplay: React.FC = () => {
       className: 'min-w-[120px]',
     },
     {
-      header: 'Total Trans.',
+      header: 'Transactions',
       accessor: 'totalTrans',
       render: (item) => (
-        <span className="text-right text-sm font-medium text-[#0F1535] dark:text-white">
-          {item.totalTrans}
-        </span>
+        <div className="text-right">
+          <span className="text-sm font-medium text-[#0F1535] dark:text-white">
+            {item.totalTrans}
+          </span>
+        </div>
       ),
       className: 'min-w-[100px] text-right',
-      sortable: true,
-    },
-    {
-      header: 'Trans. Volume',
-      accessor: 'transVolume',
-      render: (item) => (
-        <span className="text-right text-sm font-medium text-[#0F1535] dark:text-white">
-          {formatCurrency(item.transVolume)}
-        </span>
-      ),
-      className: 'min-w-[120px] text-right',
       sortable: true,
     },
     {
       header: 'Private Balance',
       accessor: 'privateBalance',
       render: (item) => (
-        <span className="font-mono text-right text-sm font-bold tracking-tight text-[#0F1535] dark:text-white">
-          {formatCurrency(item.privateBalance)}
-        </span>
+        <div className="text-right">
+          <span className="font-mono text-sm font-bold tracking-tight text-[#0F1535] dark:text-white">
+            {formatCurrency(item.privateBalance)}
+          </span>
+        </div>
       ),
       className: 'min-w-[120px] text-right',
       sortable: true,
@@ -285,9 +282,11 @@ const ClientDisplay: React.FC = () => {
       header: 'Temp Balance',
       accessor: 'tempBalance',
       render: (item) => (
-        <span className="font-mono dark:text-gray-300 text-gray-900 text-right text-sm font-medium tracking-tight">
-          {formatCurrency(item.tempBalance)}
-        </span>
+        <div className="text-right">
+          <span className="font-mono text-sm font-bold tracking-tight text-[#0F1535] dark:text-white">
+            {formatCurrency(item.tempBalance)}
+          </span>
+        </div>
       ),
       className: 'min-w-[120px] text-right',
       sortable: true,
@@ -335,6 +334,24 @@ const ClientDisplay: React.FC = () => {
     // Show confirmation dialog
   };
 
+  // Calculate summary statistics
+  const totalPrivateBalance = clientsData.reduce(
+    (sum, client) => sum + client.privateBalance,
+    0,
+  );
+  const totalTempBalance = clientsData.reduce(
+    (sum, client) => sum + client.tempBalance,
+    0,
+  );
+  const totalTransactions = clientsData.reduce(
+    (sum, client) => sum + client.totalTrans,
+    0,
+  );
+  const activeClients = clientsData.filter((client) => client.isActive).length;
+  const verifiedClients = clientsData.filter(
+    (client) => client.isVerified,
+  ).length;
+
   return (
     <main className="dark:bg-gray-900 ml-0 min-h-screen flex-1 bg-white p-6 md:p-8">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
@@ -359,6 +376,138 @@ const ClientDisplay: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Summary Cards */}
+        {clientsData.length > 0 && !isLoading && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="dark:bg-gray-800 dark:border-gray-700 rounded-xl border border-stroke bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                    Total Clients
+                  </p>
+                  <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
+                    {clientsData.length}
+                  </p>
+                </div>
+                <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
+                  <svg
+                    className="h-5 w-5 text-blue-600 dark:text-blue-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="dark:bg-gray-800 dark:border-gray-700 rounded-xl border border-stroke bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                    Active Clients
+                  </p>
+                  <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
+                    {activeClients}
+                  </p>
+                </div>
+                <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
+                  <svg
+                    className="h-5 w-5 text-green-600 dark:text-green-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="dark:bg-gray-800 dark:border-gray-700 rounded-xl border border-stroke bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                    Verified Clients
+                  </p>
+                  <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
+                    {verifiedClients}
+                  </p>
+                </div>
+                <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
+                  <svg
+                    className="h-5 w-5 text-purple-600 dark:text-purple-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="dark:bg-gray-800 dark:border-gray-700 rounded-xl border border-stroke bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                    Total Private Balance
+                  </p>
+                  <p className="text-lg font-bold text-[#0F1535] dark:text-white">
+                    {formatCurrency(totalPrivateBalance)}
+                  </p>
+                </div>
+                <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
+                  <svg
+                    className="h-5 w-5 text-amber-600 dark:text-amber-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="dark:bg-gray-800 dark:border-gray-700 rounded-xl border border-stroke bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                    Total Transactions
+                  </p>
+                  <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
+                    {totalTransactions}
+                  </p>
+                </div>
+                <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
+                  <svg
+                    className="h-5 w-5 text-red-600 dark:text-red-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {isLoading && (
@@ -409,8 +558,8 @@ const ClientDisplay: React.FC = () => {
                     className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 text-gray-900 block w-full cursor-pointer appearance-none rounded-lg border border-stroke bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
                   >
                     <option value="">Private Balance</option>
-                    <option value="high">High</option>
-                    <option value="low">Low</option>
+                    <option value="high">High (≥ $5,000)</option>
+                    <option value="low">Low (&lt; $5,000)</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <svg
@@ -436,8 +585,8 @@ const ClientDisplay: React.FC = () => {
                     className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 text-gray-900 block w-full cursor-pointer appearance-none rounded-lg border border-stroke bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
                   >
                     <option value="">Temp Balance</option>
-                    <option value="high">High</option>
-                    <option value="low">Low</option>
+                    <option value="high">High (≥ $500)</option>
+                    <option value="low">Low (&lt; $500)</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <svg
@@ -462,9 +611,11 @@ const ClientDisplay: React.FC = () => {
                     onChange={(e) => setTransVolumeFilter(e.target.value)}
                     className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 text-gray-900 block w-full cursor-pointer appearance-none rounded-lg border border-stroke bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
                   >
-                    <option value="">Trans. Volume</option>
-                    <option value="high">High</option>
-                    <option value="low">Low</option>
+                    <option value="">Status</option>
+                    <option value="verified">Verified Only</option>
+                    <option value="rejected">Rejected Only</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <svg
@@ -495,8 +646,22 @@ const ClientDisplay: React.FC = () => {
                       Client Records ({filteredData.length} total)
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
-                      Showing real client data from API
+                      Showing real-time client data from API
                     </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">
+                      Total Private:{' '}
+                      <span className="font-bold text-[#0F1535] dark:text-white">
+                        {formatCurrency(totalPrivateBalance)}
+                      </span>
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">
+                      • Total Temp:{' '}
+                      <span className="font-bold text-[#0F1535] dark:text-white">
+                        {formatCurrency(totalTempBalance)}
+                      </span>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -509,9 +674,9 @@ const ClientDisplay: React.FC = () => {
                   searchAble={false} // We have external search
                   action={true}
                   onView={handleView}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  itemsPerPage={5}
+                  // onEdit={handleEdit}
+                  // onDelete={handleDelete}
+                  itemsPerPage={10}
                   viewTooltip="View Client Details"
                   editTooltip="Edit Client"
                   deleteTooltip="Delete Client"
@@ -534,7 +699,7 @@ const ClientDisplay: React.FC = () => {
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 {apiResponse
                   ? 'API returned data but it could not be processed. Check console for details.'
-                  : 'No client data is available.'}
+                  : 'No client data is available. Try refreshing the page.'}
               </p>
               <button
                 onClick={() => {
