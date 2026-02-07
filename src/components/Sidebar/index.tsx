@@ -17,7 +17,7 @@ import {
   MdSettings,
 } from 'react-icons/md';
 import {useAuthContext} from '@/context/AuthContext';
-import {FaUsers} from 'react-icons/fa';
+import {FaUsers, FaUserTie} from 'react-icons/fa';
 
 const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
   const location = useLocation();
@@ -69,7 +69,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
           {
             label: 'Beneficiary Management',
             path: '/client/beneficiary',
-            icon: <FaUsers size={22} />,
+            icon: <FaUserTie size={22} />,
           },
           {
             label: 'Verifications',

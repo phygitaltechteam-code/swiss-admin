@@ -302,12 +302,12 @@ const ClientProfile: React.FC = () => {
               {/* Personal Info */}
               <Card
                 title="Personal & Contact Information"
-                action={
-                  <button className="hover:text-primary-hover flex items-center gap-1 text-sm font-medium text-primary transition-colors">
-                    <MdEdit className="text-sm" />
-                    Edit Details
-                  </button>
-                }
+                // action={
+                //   <button className="hover:text-primary-hover flex items-center gap-1 text-sm font-medium text-primary transition-colors">
+                //     <MdEdit className="text-sm" />
+                //     Edit Details
+                //   </button>
+                // }
               >
                 <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
                   <div>
@@ -523,23 +523,7 @@ const ClientProfile: React.FC = () => {
                         />
                       </div>
                     </div>
-                    <div className="border-gray-200 dark:border-gray-800 flex items-center justify-between border-b border-dashed pb-3 last:border-0 last:pb-0">
-                      <span className="text-subtext-light dark:text-subtext-dark text-sm">
-                        Customer ID
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-text-light dark:text-text-dark font-mono text-right text-sm font-medium">
-                          {clientData.id?.slice(0, 8)}...
-                        </span>
-                        <MdContentCopy
-                          className="text-gray-400 cursor-pointer text-sm transition-colors hover:text-primary"
-                          onClick={() =>
-                            handleCopyToClipboard(clientData.id || '')
-                          }
-                          title="Copy customer ID"
-                        />
-                      </div>
-                    </div>
+
                     <div className="border-gray-200 dark:border-gray-800 flex items-center justify-between border-b border-dashed pb-3 last:border-0 last:pb-0">
                       <span className="text-subtext-light dark:text-subtext-dark text-sm">
                         Country
@@ -639,9 +623,9 @@ const ClientProfile: React.FC = () => {
                       </div>
 
                       <div className="flex gap-3">
-                        <button className="flex-1 rounded-lg bg-white/10 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:bg-white/30">
+                        {/* <button className="flex-1 rounded-lg bg-white/10 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:bg-white/30">
                           Add Funds
-                        </button>
+                        </button> */}
                         <button className="hover:bg-primary-hover flex-1 rounded-lg bg-primary py-2.5 text-xs font-medium text-white shadow-lg shadow-orange-900/20 transition-all active:bg-orange-700">
                           Withdraw
                         </button>
@@ -734,22 +718,6 @@ const ClientProfile: React.FC = () => {
                         </p>
                         <p className="mt-1 text-xs leading-relaxed text-red-700 dark:text-red-300">
                           Reason: {clientData.rejectedReason}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Alert Box for Pending Verification */}
-                  {!userData?.isVerified && !userData?.isRejected && (
-                    <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-900/10">
-                      <MdInfo className="mt-0.5 flex-shrink-0 text-xl text-amber-600 dark:text-amber-500" />
-                      <div>
-                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                          Pending Verification
-                        </p>
-                        <p className="mt-1 text-xs leading-relaxed text-amber-700 dark:text-amber-300">
-                          Account verification is pending. Please review
-                          submitted documents.
                         </p>
                       </div>
                     </div>
