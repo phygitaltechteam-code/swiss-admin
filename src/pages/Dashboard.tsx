@@ -1,5 +1,5 @@
 // components/Dashboard/Dashboard.tsx
-import React, {useState, useCallback, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   Users,
   Receipt,
@@ -12,9 +12,6 @@ import {
   MoreVertical,
   CalendarDays,
   RefreshCw,
-  Menu,
-  X,
-  ChevronDown,
 } from 'lucide-react';
 import StatsCard from '@/components/Dashboard/StatsCards';
 import {
@@ -25,6 +22,7 @@ import {useAuthContext} from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import GenericButton from '@/components/Forms/Buttons/GenericButton';
 import {buildDashboardFilters, useDashboardData} from '@/lib/api/dashboard';
+import {useGetDashToUpGraph} from '@/lib/react-query/dashboard';
 
 const Dashboard: React.FC = () => {
   const {user} = useAuthContext();
@@ -35,14 +33,11 @@ const Dashboard: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customDateRange, setCustomDateRange] = useState({start: '', end: ''});
   const datePickerRef = useRef<HTMLDivElement>(null);
-
-  // Build API filters
   const filters = buildDashboardFilters(
     selectedPeriod,
     selectedPeriod === 'custom' ? customDateRange : undefined,
   );
 
-  // Use the dashboard data hook
   const {
     data: dashboardData,
     isLoading,
@@ -53,7 +48,6 @@ const Dashboard: React.FC = () => {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  // Handle period change
   const handlePeriodChange = (period: '30d' | '7d' | '24h' | 'custom') => {
     setSelectedPeriod(period);
     if (period === 'custom') {
@@ -202,19 +196,19 @@ const Dashboard: React.FC = () => {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   };
 
-  const sampleTopupsVsTransfers = {
-    topups: [65, 59, 80, 81, 56, 55, 40],
-    transfers: [28, 48, 40, 19, 86, 27, 90],
-    labels: [
-      'Week 1',
-      'Week 2',
-      'Week 3',
-      'Week 4',
-      'Week 5',
-      'Week 6',
-      'Week 7',
-    ],
-  };
+  // const sampleTopupsVsTransfers = {
+  //   topups: [65, 59, 80, 81, 56, 55, 40],
+  //   transfers: [28, 48, 40, 19, 86, 27, 90],
+  //   labels: [
+  //     'Week 1',
+  //     'Week 2',
+  //     'Week 3',
+  //     'Week 4',
+  //     'Week 5',
+  //     'Week 6',
+  //     'Week 7',
+  //   ],
+  // };
 
   // Responsive breakpoints
   const isMobile = window.innerWidth < 640;
@@ -222,22 +216,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="font-body min-h-screen w-full bg-white/50 text-neutral-500">
-      {/* Mobile Header */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-stroke bg-white p-4 lg:hidden">
-        <button
-          onClick={toggleSidebar}
-          className="hover:bg-gray-100 rounded-lg p-2"
-        >
-          {isSidebarOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
-        </button>
-        <h1 className="text-xl font-bold text-black">Dashboard</h1>
-        <div className="w-10"></div> {/* Spacer for balance */}
-      </div>
-
       <main className="relative flex min-h-screen w-full flex-col">
         <div className="flex flex-1">
           <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
@@ -501,14 +479,14 @@ const Dashboard: React.FC = () => {
 
                   <div className="min-h-0 flex-1">
                     <TopUpsVsTransfersChart
-                      data={sampleTopupsVsTransfers}
-                      responsive={true}
+                    // data={sampleTopupsVsTransfers}
+                    // responsive={true}
                     />
                   </div>
 
                   <div className="mt-4 flex flex-wrap justify-center gap-4 sm:gap-6">
                     <div className="flex items-center gap-2">
-                      <span className="bg-navy h-3 w-3 rounded-full"></span>
+                      <span className="h-3 w-3 rounded-full bg-black"></span>
                       <span className="text-xs font-medium text-neutral-500">
                         Top-ups
                       </span>

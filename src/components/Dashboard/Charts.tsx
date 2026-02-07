@@ -1,6 +1,5 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  AreaChart,
   Area,
   XAxis,
   YAxis,
@@ -13,8 +12,8 @@ import {
   ComposedChart,
 } from 'recharts';
 import {ChartDataPoint, BarChartDataPoint} from '@/types/dashboard';
+import {useGetDashToUpGraph} from '@/lib/react-query/dashboard';
 
-// Mock Data
 const volumeData: ChartDataPoint[] = [
   {name: '1 Nov', volume: 4000, fees: 2400},
   {name: '5 Nov', volume: 3000, fees: 1398},
@@ -24,14 +23,6 @@ const volumeData: ChartDataPoint[] = [
   {name: '25 Nov', volume: 2390, fees: 3800},
   {name: '30 Nov', volume: 3490, fees: 4300},
   {name: '3 Dec', volume: 4200, fees: 4800},
-];
-
-const weeklyData: BarChartDataPoint[] = [
-  {day: 'Mon', topUps: 4000, transfers: 2400},
-  {day: 'Tue', topUps: 3000, transfers: 1398},
-  {day: 'Wed', topUps: 2000, transfers: 9800},
-  {day: 'Thu', topUps: 2780, transfers: 3908},
-  {day: 'Fri', topUps: 1890, transfers: 4800},
 ];
 
 export const VolumeVsFeesChart: React.FC = () => {
@@ -94,6 +85,44 @@ export const VolumeVsFeesChart: React.FC = () => {
 };
 
 export const TopUpsVsTransfersChart: React.FC = () => {
+  const {mutateAsync: fetchWeeklyData} = useGetDashToUpGraph();
+  const [weeklyData, setWeeklyData] = useState<BarChartDataPoint[]>([]);
+  const getCurrentWeekRange = () => {
+    const today = new Date();
+
+    // Make week start from Monday
+    const day = today.getDay(); // 0 = Sun, 1 = Mon ...
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() + diffToMonday);
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+
+    const format = (date: Date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    return {
+      startDate: format(startDate),
+      endDate: format(endDate),
+    };
+  };
+
+  useEffect(() => {
+    const loadWeeklyData = async () => {
+      const {startDate, endDate} = getCurrentWeekRange();
+
+      const response = await fetchWeeklyData({
+        from: startDate,
+        to: endDate,
+      });
+      setWeeklyData(response);
+      console.log('week data', response); // or setState here
+    };
+
+    loadWeeklyData();
+  }, []);
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart

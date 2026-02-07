@@ -54,6 +54,10 @@ const BeneficiaryContent: React.FC = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const {data: beneficiaries} = useGetBeneficiary();
+  const [beneficiaryStatus, setBeneficiaryStatus] = useState<
+    'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'
+  >('ALL');
+
   const navigate = useNavigate();
   const filteredBeneficiaries = useMemo(() => {
     if (!beneficiaries) return [];
@@ -177,9 +181,7 @@ const BeneficiaryContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {/* Pending Card */}
           <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
             <div className="flex items-start justify-between">
               <div>
@@ -241,7 +243,6 @@ const BeneficiaryContent: React.FC = () => {
 
         {/* Client List Table */}
         <div className="overflow-hidden rounded-xl border border-[#f4ece7] bg-white shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
-          {/* Table Header */}
           <div className="flex items-center justify-between border-b border-[#f4ece7] px-6 py-4 dark:border-[#3a2a20]">
             <h2 className="text-lg font-semibold text-[#0F1535] dark:text-white">
               Client List

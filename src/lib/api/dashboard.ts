@@ -8,6 +8,11 @@ import {useQuery} from '@tanstack/react-query';
 
 import toast from 'react-hot-toast';
 
+export type dashGraph = {
+  from: string;
+  to: string;
+};
+
 const mapPeriodToFilter = (period: string): DashboardFilterType => {
   switch (period) {
     case '30d':
@@ -100,6 +105,18 @@ export const getDashboardData = async (
 
     toast.error(errorMessage);
     throw new Error(errorMessage);
+  }
+};
+
+export const getDashboardTopUpGrap = async (data: dashGraph) => {
+  try {
+    const response = await api.get(
+      `/admin/transaction/cash-flow/graphs/weekly`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
   }
 };
 

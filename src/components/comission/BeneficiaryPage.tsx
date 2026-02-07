@@ -18,20 +18,9 @@ import {
 } from '@/lib/react-query/Beneficiary';
 import {Route} from '@/routes/_app/client/beneficiaryverification.$id';
 import {getRequestStatus} from '../approval/methods';
-
 import {MdArrowBack} from 'react-icons/md';
 import {useNavigate} from '@tanstack/react-router';
 import toast from 'react-hot-toast';
-
-// --- Types ---
-
-interface Beneficiary {
-  id: string;
-  name: string;
-  bank: string;
-  accountLast4: string;
-  status: 'verified' | 'pending' | 'rejected';
-}
 
 const BeneficiaryPage: React.FC = () => {
   const {id} = Route.useParams();
