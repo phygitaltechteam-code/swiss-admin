@@ -1,5 +1,5 @@
 // components/Dashboard/Dashboard.tsx
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useRef} from 'react';
 import {
   Users,
   Receipt,
@@ -12,6 +12,9 @@ import {
   MoreVertical,
   CalendarDays,
   RefreshCw,
+  Menu,
+  X,
+  ChevronDown,
 } from 'lucide-react';
 import StatsCard from '@/components/Dashboard/StatsCards';
 import {
@@ -19,7 +22,6 @@ import {
   VolumeVsFeesChart,
 } from '@/components/Dashboard/Charts';
 import {useAuthContext} from '@/context/AuthContext';
-//import { buildDashboardFilters, useDashboardData } from '@/lib/react-query/dashboard';
 import toast from 'react-hot-toast';
 import GenericButton from '@/components/Forms/Buttons/GenericButton';
 import {buildDashboardFilters, useDashboardData} from '@/lib/api/dashboard';
@@ -30,7 +32,9 @@ const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<
     '30d' | '7d' | '24h' | 'custom'
   >('30d');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [customDateRange, setCustomDateRange] = useState({start: '', end: ''});
+  const datePickerRef = useRef<HTMLDivElement>(null);
 
   // Build API filters
   const filters = buildDashboardFilters(
@@ -52,6 +56,11 @@ const Dashboard: React.FC = () => {
   // Handle period change
   const handlePeriodChange = (period: '30d' | '7d' | '24h' | 'custom') => {
     setSelectedPeriod(period);
+    if (period === 'custom') {
+      setShowDatePicker(true);
+    } else {
+      setShowDatePicker(false);
+    }
   };
 
   // Handle custom date range change
@@ -65,11 +74,27 @@ const Dashboard: React.FC = () => {
   // Apply custom filter
   const handleApplyCustomFilter = () => {
     if (customDateRange.start && customDateRange.end) {
+      setShowDatePicker(false);
       refetch();
     } else {
       toast.error('Please select both start and end dates');
     }
   };
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target as Node)
+      ) {
+        setShowDatePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Format numbers for display
   const formatNumber = (num: number) => {
@@ -108,9 +133,9 @@ const Dashboard: React.FC = () => {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="font-body flex h-screen w-full items-center justify-center bg-white/50">
+      <div className="font-body flex min-h-screen w-full items-center justify-center bg-white/50 p-4">
         <div className="text-center">
-          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-primary"></div>
+          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
           <h3 className="text-gray-900 text-lg font-semibold">
             Loading Dashboard
           </h3>
@@ -123,7 +148,7 @@ const Dashboard: React.FC = () => {
   // Show error state
   if (isError || error) {
     return (
-      <div className="font-body flex h-screen w-full items-center justify-center bg-white/50">
+      <div className="font-body flex min-h-screen w-full items-center justify-center bg-white/50 p-4">
         <div className="max-w-md text-center">
           <div className="mb-4 text-5xl text-red-500">⚠️</div>
           <h3 className="text-gray-900 mb-2 text-lg font-semibold">
@@ -170,7 +195,7 @@ const Dashboard: React.FC = () => {
     totalTransfers: 20,
   };
 
-  // Sample chart data (since API doesn't provide it)
+  // Sample chart data
   const sampleVolumeVsFees = {
     volume: [30, 45, 35, 55, 40, 60, 50],
     fees: [5, 7, 4, 8, 6, 9, 7],
@@ -191,19 +216,39 @@ const Dashboard: React.FC = () => {
     ],
   };
 
+  // Responsive breakpoints
+  const isMobile = window.innerWidth < 640;
+  const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+
   return (
-    <div className="font-body flex w-full overflow-hidden bg-white/50 text-neutral-500">
-      <main className="relative flex h-full flex-1 flex-col transition-all duration-300">
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-6 lg:p-8">
-            <div className="mx-auto flex max-w-7xl flex-col gap-8">
+    <div className="font-body min-h-screen w-full bg-white/50 text-neutral-500">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-stroke bg-white p-4 lg:hidden">
+        <button
+          onClick={toggleSidebar}
+          className="hover:bg-gray-100 rounded-lg p-2"
+        >
+          {isSidebarOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </button>
+        <h1 className="text-xl font-bold text-black">Dashboard</h1>
+        <div className="w-10"></div> {/* Spacer for balance */}
+      </div>
+
+      <main className="relative flex min-h-screen w-full flex-col">
+        <div className="flex flex-1">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            <div className="mx-auto w-full max-w-7xl">
               {/* Header with controls */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-header font-display text-2xl font-bold text-black">
+              <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex-1">
+                  <h3 className="font-display text-2xl font-bold text-black sm:text-3xl">
                     System Performance
                   </h3>
-                  <p className="text-sm text-black">
+                  <p className="mt-1 text-sm text-black sm:text-base">
                     Current Filter:{' '}
                     <span className="font-medium text-primary">
                       {filters.filter === '30Days'
@@ -221,109 +266,128 @@ const Dashboard: React.FC = () => {
                     )}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+
+                <div className="flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => refetch()}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg border bg-white px-3 py-1.5 text-sm font-medium"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-medium sm:px-4 sm:py-2"
                     title="Refresh Data"
                   >
                     <RefreshCw className="h-4 w-4" />
-                    Refresh
+                    <span className="hidden sm:inline">Refresh</span>
                   </button>
-                  <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-stroke bg-white p-1 shadow-sm">
-                    <button
-                      onClick={() => handlePeriodChange('30d')}
-                      className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        selectedPeriod === '30d'
-                          ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
-                          : 'hover:bg-gray-50 hover:text-header text-neutral-500'
-                      }`}
-                    >
-                      30 Days
-                    </button>
-                    <button
-                      onClick={() => handlePeriodChange('7d')}
-                      className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        selectedPeriod === '7d'
-                          ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
-                          : 'hover:bg-gray-50 hover:text-header text-neutral-500'
-                      }`}
-                    >
-                      7 Days
-                    </button>
-                    <button
-                      onClick={() => handlePeriodChange('24h')}
-                      className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        selectedPeriod === '24h'
-                          ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
-                          : 'hover:bg-gray-50 hover:text-header text-neutral-500'
-                      }`}
-                    >
-                      24 Hours
-                    </button>
-                    <div className="bg-gray-200 mx-1 h-5 w-px shrink-0"></div>
-                    <button
-                      onClick={() => handlePeriodChange('custom')}
-                      className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        selectedPeriod === 'custom'
-                          ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
-                          : 'hover:bg-gray-50 hover:text-header text-neutral-500'
-                      }`}
-                    >
-                      <CalendarDays className="h-4 w-4" />
-                      Custom
-                    </button>
+
+                  {/* Period Selector - Responsive */}
+                  <div className="relative" ref={datePickerRef}>
+                    <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-stroke bg-white p-1 shadow-sm">
+                      <button
+                        onClick={() => handlePeriodChange('30d')}
+                        className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          selectedPeriod === '30d'
+                            ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
+                            : 'hover:bg-gray-50 text-neutral-500 hover:text-black'
+                        }`}
+                      >
+                        <span className="hidden sm:inline">30 Days</span>
+                        <span className="sm:hidden">30D</span>
+                      </button>
+                      <button
+                        onClick={() => handlePeriodChange('7d')}
+                        className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          selectedPeriod === '7d'
+                            ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
+                            : 'hover:bg-gray-50 text-neutral-500 hover:text-black'
+                        }`}
+                      >
+                        <span className="hidden sm:inline">7 Days</span>
+                        <span className="sm:hidden">7D</span>
+                      </button>
+                      <button
+                        onClick={() => handlePeriodChange('24h')}
+                        className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          selectedPeriod === '24h'
+                            ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
+                            : 'hover:bg-gray-50 text-neutral-500 hover:text-black'
+                        }`}
+                      >
+                        <span className="hidden sm:inline">24 Hours</span>
+                        <span className="sm:hidden">24H</span>
+                      </button>
+                      <div className="bg-gray-200 mx-1 h-5 w-px shrink-0"></div>
+                      <button
+                        onClick={() => handlePeriodChange('custom')}
+                        className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          selectedPeriod === 'custom'
+                            ? 'bg-primary text-white shadow-sm hover:bg-orange-600'
+                            : 'hover:bg-gray-50 text-neutral-500 hover:text-black'
+                        }`}
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                        <span className="hidden sm:inline">Custom</span>
+                      </button>
+                    </div>
+
+                    {/* Custom Date Range Picker - Dropdown on mobile, inline on desktop */}
+                    {selectedPeriod === 'custom' && showDatePicker && (
+                      <div
+                        className={`${
+                          isMobile || isTablet
+                            ? 'absolute right-0 top-full z-40 mt-2 w-full min-w-[300px] sm:w-auto'
+                            : 'mt-4 w-full'
+                        } border-gray-200 rounded-lg border bg-white p-4 shadow-lg`}
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                          <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                            <label className="text-gray-700 text-sm font-medium sm:w-12">
+                              From:
+                            </label>
+                            <input
+                              type="date"
+                              value={customDateRange.start}
+                              onChange={(e) =>
+                                handleCustomDateChange('start', e.target.value)
+                              }
+                              className="border-gray-300 w-full rounded border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                          <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                            <label className="text-gray-700 text-sm font-medium sm:w-8">
+                              To:
+                            </label>
+                            <input
+                              type="date"
+                              value={customDateRange.end}
+                              onChange={(e) =>
+                                handleCustomDateChange('end', e.target.value)
+                              }
+                              className="border-gray-300 w-full rounded border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                          <button
+                            onClick={handleApplyCustomFilter}
+                            className="mt-2 rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 sm:ml-2 sm:mt-0"
+                            disabled={
+                              !customDateRange.start || !customDateRange.end
+                            }
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Custom Date Range Picker */}
-              {selectedPeriod === 'custom' && (
-                <div className="border-gray-200 flex flex-wrap items-center gap-3 rounded-lg border bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <label className="text-gray-700 text-sm font-medium">
-                      From:
-                    </label>
-                    <input
-                      type="date"
-                      value={customDateRange.start}
-                      onChange={(e) =>
-                        handleCustomDateChange('start', e.target.value)
-                      }
-                      className="border-gray-300 rounded border px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-gray-700 text-sm font-medium">
-                      To:
-                    </label>
-                    <input
-                      type="date"
-                      value={customDateRange.end}
-                      onChange={(e) =>
-                        handleCustomDateChange('end', e.target.value)
-                      }
-                      className="border-gray-300 rounded border px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <button
-                    onClick={handleApplyCustomFilter}
-                    className="ml-auto rounded bg-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!customDateRange.start || !customDateRange.end}
-                  >
-                    Apply Filter
-                  </button>
-                </div>
-              )}
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {/* Stats Grid - Responsive */}
+              <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <StatsCard
                   title="Total Clients"
                   value={formatNumber(data.customers)}
                   change={`${changePercentages.customers}%`}
                   isPositive={changePercentages.customers >= 0}
                   icon={Users}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Transactions"
@@ -331,6 +395,7 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.transactions}%`}
                   isPositive={changePercentages.transactions >= 0}
                   icon={Receipt}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Fees Collected"
@@ -338,6 +403,7 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.fees}%`}
                   isPositive={changePercentages.fees >= 0}
                   icon={DollarSign}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Tx Amount"
@@ -345,6 +411,7 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.txAmount}%`}
                   isPositive={changePercentages.txAmount >= 0}
                   icon={BarChart3}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Total Reserves"
@@ -352,6 +419,7 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.Total_reserves}%`}
                   isPositive={changePercentages.Total_reserves >= 0}
                   icon={PiggyBank}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Beneficiaries"
@@ -359,6 +427,7 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.beneficiary}%`}
                   isPositive={changePercentages.beneficiary >= 0}
                   icon={Users2}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Total Top-ups"
@@ -366,6 +435,7 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.totalTopups}%`}
                   isPositive={changePercentages.totalTopups >= 0}
                   icon={CreditCard}
+                  compact={isMobile}
                 />
                 <StatsCard
                   title="Total Transfers"
@@ -373,32 +443,36 @@ const Dashboard: React.FC = () => {
                   change={`${changePercentages.totalTransfers}%`}
                   isPositive={changePercentages.totalTransfers >= 0}
                   icon={Send}
+                  compact={isMobile}
                 />
               </div>
 
-              {/* Charts Row */}
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+              {/* Charts Section - Responsive */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 {/* Large Chart */}
-                <div className="flex h-[400px] flex-col rounded-xl bg-white p-6 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] xl:col-span-2">
-                  <div className="mb-2 flex items-center justify-between">
+                <div className="flex h-[350px] flex-col rounded-xl bg-white p-4 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] sm:h-[400px] sm:p-6 lg:col-span-1 lg:col-span-2 xl:col-span-2">
+                  <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h3 className="text-header font-display text-lg font-bold text-black">
+                      <h3 className="font-display text-lg font-bold text-black sm:text-xl">
                         Transaction Volume vs Fees
                       </h3>
                       <p className="text-sm text-neutral-500">
                         Comparing volume flow against revenue collected.
                       </p>
                     </div>
-                    <button className="hover:bg-gray-100 rounded-lg p-2 text-neutral-500 transition-colors hover:text-primary">
+                    <button className="hover:bg-gray-100 self-start rounded-lg p-2 text-neutral-500 transition-colors hover:text-primary sm:self-auto">
                       <MoreVertical className="h-5 w-5" />
                     </button>
                   </div>
 
-                  <div className="min-h-0 w-full flex-1">
-                    <VolumeVsFeesChart data={sampleVolumeVsFees} />
+                  <div className="min-h-0 flex-1">
+                    <VolumeVsFeesChart
+                      data={sampleVolumeVsFees}
+                      responsive={true}
+                    />
                   </div>
 
-                  <div className="mt-2 flex justify-center gap-6">
+                  <div className="mt-4 flex flex-wrap justify-center gap-4 sm:gap-6">
                     <div className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full bg-primary"></span>
                       <span className="text-xs font-medium text-neutral-500">
@@ -415,9 +489,9 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Small Chart */}
-                <div className="flex h-[400px] flex-col rounded-xl bg-white p-6 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] xl:col-span-1">
-                  <div className="mb-2">
-                    <h3 className="text-header font-display text-lg font-bold text-black">
+                <div className="flex h-[350px] flex-col rounded-xl bg-white p-4 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] sm:h-[400px] sm:p-6 lg:col-span-1">
+                  <div className="mb-4">
+                    <h3 className="font-display text-lg font-bold text-black sm:text-xl">
                       Top-ups vs Transfers
                     </h3>
                     <p className="text-sm text-neutral-500">
@@ -425,11 +499,14 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="min-h-0 w-full flex-1">
-                    <TopUpsVsTransfersChart data={sampleTopupsVsTransfers} />
+                  <div className="min-h-0 flex-1">
+                    <TopUpsVsTransfersChart
+                      data={sampleTopupsVsTransfers}
+                      responsive={true}
+                    />
                   </div>
 
-                  <div className="mt-2 flex justify-center gap-6">
+                  <div className="mt-4 flex flex-wrap justify-center gap-4 sm:gap-6">
                     <div className="flex items-center gap-2">
                       <span className="bg-navy h-3 w-3 rounded-full"></span>
                       <span className="text-xs font-medium text-neutral-500">
@@ -445,45 +522,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Data Summary Card */}
-              <div className="border-gray-100 rounded-xl border bg-white p-6 shadow-sm">
-                <h4 className="text-gray-900 mb-4 text-lg font-bold">
-                  Data Summary
-                </h4>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <div>
-                    <p className="text-gray-600 text-sm">Filter Applied</p>
-                    <p className="font-semibold">{filters.filter}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">Last Updated</p>
-                    <p className="font-semibold">
-                      {new Date().toLocaleTimeString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">Total Amount</p>
-                    <p className="font-semibold">
-                      {formatCurrency(data.txAmount)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">Active Period</p>
-                    <p className="font-semibold">{selectedPeriod}</p>
-                  </div>
-                </div>
-              </div>
             </div>
-            <footer className="mb-6 mt-12 text-center">
-              <p className="text-xs text-secondary/60">
-                © {new Date().getFullYear()} Nexus Bank Admin Portal. All
-                rights reserved. Version 2.4.0
-              </p>
-              <p className="text-gray-500 mt-1 text-xs">
-                Data fetched: {new Date().toLocaleString()}
-              </p>
-            </footer>
           </div>
         </div>
       </main>

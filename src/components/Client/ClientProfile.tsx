@@ -41,6 +41,10 @@ const ClientProfile: React.FC = () => {
   const clientData = apiResponse?.data || apiResponse; // Handle both response structures
   const userData = clientData?.user;
 
+  const walletData = clientData?.wallets?.[0] || {};
+  const temporyAccountBalance = walletData.temporyAccount || 0;
+  const eprivateAccountBalance = walletData.eprivateAccount || 0;
+
   // Format date
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -79,22 +83,6 @@ const ClientProfile: React.FC = () => {
       minimumFractionDigits: 2,
     }).format(amount);
   };
-
-  // Generate mock balance data (replace with real API data when available)
-  const getMockBalanceData = () => {
-    // Generate consistent mock data based on client ID
-    const seed =
-      clientId?.split('-').reduce((acc, part) => acc + part.charCodeAt(0), 0) ||
-      0;
-    return {
-      privateBalance: (seed % 50000) + 1000,
-      tempBalance: (seed % 5000) + 100,
-      totalTransactions: (seed % 100) + 10,
-      transactionVolume: (seed % 100000) + 5000,
-    };
-  };
-
-  const mockData = getMockBalanceData();
 
   // Handle back button click
   const handleBackClick = () => {
@@ -595,7 +583,6 @@ const ClientProfile: React.FC = () => {
                 </Card>
               </div>
             </div>
-
             {/* Right Column (1/3) */}
             <div className="space-y-6 lg:col-span-1">
               <Card
@@ -637,7 +624,7 @@ const ClientProfile: React.FC = () => {
 
                       <div className="mb-2">
                         <h4 className="text-3xl font-bold tracking-tight text-white">
-                          {formatCurrency(mockData.privateBalance)}
+                          {formatCurrency(eprivateAccountBalance)}
                         </h4>
                       </div>
 
@@ -646,7 +633,8 @@ const ClientProfile: React.FC = () => {
                           <MdArrowUpward className="text-sm" />
                         </span>
                         <span>
-                          Total Transactions: {mockData.totalTransactions}
+                          {/* You can add transaction count here if available */}
+                          Account Balance
                         </span>
                       </div>
 
@@ -680,7 +668,7 @@ const ClientProfile: React.FC = () => {
 
                     <div className="mb-1">
                       <h4 className="text-text-light dark:text-text-dark text-2xl font-bold tracking-tight">
-                        {formatCurrency(mockData.tempBalance)}
+                        {formatCurrency(temporyAccountBalance)}
                       </h4>
                     </div>
                     <p className="text-subtext-light dark:text-subtext-dark text-xs">
@@ -698,6 +686,8 @@ const ClientProfile: React.FC = () => {
                   </div>
 
                   {/* Activity Summary */}
+                  {/* Remove or update this section since we don't have transaction data in the response */}
+                  {/*
                   <div className="dark:bg-gray-800/50 dark:border-border-dark rounded-2xl border border-stroke bg-white p-5 shadow-sm">
                     <h4 className="text-text-light dark:text-text-dark mb-4 text-sm font-semibold">
                       Transaction Summary
@@ -708,7 +698,7 @@ const ClientProfile: React.FC = () => {
                           Total Transactions
                         </span>
                         <span className="text-text-light dark:text-text-dark text-sm font-medium">
-                          {mockData.totalTransactions}
+                          {clientData.totalTransactions || 0}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -716,7 +706,7 @@ const ClientProfile: React.FC = () => {
                           Transaction Volume
                         </span>
                         <span className="text-text-light dark:text-text-dark text-sm font-medium">
-                          {formatCurrency(mockData.transactionVolume)}
+                          {formatCurrency(clientData.transactionVolume || 0)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -725,13 +715,14 @@ const ClientProfile: React.FC = () => {
                         </span>
                         <span className="text-text-light dark:text-text-dark text-sm font-medium">
                           {formatCurrency(
-                            mockData.transactionVolume /
-                              Math.max(mockData.totalTransactions, 1),
+                            (clientData.transactionVolume || 0) /
+                            Math.max(clientData.totalTransactions || 1, 1)
                           )}
                         </span>
                       </div>
                     </div>
                   </div>
+                  */}
 
                   {/* Alert Box for Rejected Status */}
                   {clientData.rejectedReason && (
