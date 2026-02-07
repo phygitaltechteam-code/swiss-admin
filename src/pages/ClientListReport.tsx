@@ -1,5 +1,6 @@
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
-import React, {useState} from 'react';
+import {useGetClients} from '@/lib/react-query/client';
+import React, {useState, useEffect, useMemo} from 'react';
 import {
   MdDownload,
   MdAdd,
@@ -9,154 +10,70 @@ import {
   MdPerson,
   MdAttachMoney,
   MdCalendarToday,
+  MdCheckCircle,
+  MdCancel,
+  MdPending,
+  MdTrendingUp,
+  MdTrendingDown,
+  MdPictureAsPdf,
 } from 'react-icons/md';
 
-// Mock Data
-const CLIENT_DATA = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    accountNumber: 'ACC-001234',
-    accountType: 'Premium',
-    balance: 125000.5,
-    status: 'Active',
-    lastActivity: '2023-10-15',
-    joinDate: '2023-01-10',
-    totalTransactions: 145,
-  },
-  {
-    id: '2',
-    name: 'Sarah Smith',
-    email: 'sarah.smith@example.com',
-    phone: '+1 (555) 987-6543',
-    accountNumber: 'ACC-001235',
-    accountType: 'Standard',
-    balance: 75000.25,
-    status: 'Active',
-    lastActivity: '2023-10-14',
-    joinDate: '2023-02-15',
-    totalTransactions: 89,
-  },
-  {
-    id: '3',
-    name: 'Michael Brown',
-    email: 'michael.b@example.com',
-    phone: '+44 7700 900077',
-    accountNumber: 'ACC-001236',
-    accountType: 'Business',
-    balance: 250000.0,
-    status: 'Inactive',
-    lastActivity: '2023-09-28',
-    joinDate: '2023-03-20',
-    totalTransactions: 0,
-  },
-  {
-    id: '4',
-    name: 'Emily Chen',
-    email: 'emily.chen@example.com',
-    phone: '+1 (415) 555-0199',
-    accountNumber: 'ACC-001237',
-    accountType: 'Premium',
-    balance: 189000.75,
-    status: 'Active',
-    lastActivity: '2023-10-13',
-    joinDate: '2023-04-05',
-    totalTransactions: 234,
-  },
-  {
-    id: '5',
-    name: 'David Wilson',
-    email: 'david.w@example.com',
-    phone: '+1 (212) 555-8821',
-    accountNumber: 'ACC-001238',
-    accountType: 'Standard',
-    balance: 45000.0,
-    status: 'Active',
-    lastActivity: '2023-10-12',
-    joinDate: '2023-05-15',
-    totalTransactions: 67,
-  },
-  {
-    id: '6',
-    name: 'Lisa Johnson',
-    email: 'lisa.j@example.com',
-    phone: '+1 (310) 555-6677',
-    accountNumber: 'ACC-001239',
-    accountType: 'Business',
-    balance: 375000.5,
-    status: 'Pending',
-    lastActivity: '2023-10-10',
-    joinDate: '2023-06-10',
-    totalTransactions: 0,
-  },
-  {
-    id: '7',
-    name: 'Robert Taylor',
-    email: 'robert.t@example.com',
-    phone: '+1 (718) 555-9988',
-    accountNumber: 'ACC-001240',
-    accountType: 'Standard',
-    balance: 32000.25,
-    status: 'Active',
-    lastActivity: '2023-10-11',
-    joinDate: '2023-07-05',
-    totalTransactions: 45,
-  },
-  {
-    id: '8',
-    name: 'Jennifer Martinez',
-    email: 'jennifer.m@example.com',
-    phone: '+1 (305) 555-1122',
-    accountNumber: 'ACC-001241',
-    accountType: 'Premium',
-    balance: 210000.0,
-    status: 'Active',
-    lastActivity: '2023-10-09',
-    joinDate: '2023-08-20',
-    totalTransactions: 189,
-  },
-];
+// Types based on your API response
+interface ApiClient {
+  id: string;
+  userId: string;
+  passport: string | null;
+  aadharCard: string | null;
+  panCard: string | null;
+  passportNumber: string | null;
+  aadharCardNumber: string | null;
+  panCardNumber: string | null;
+  accountNumber: string;
+  address: string;
+  city: string;
+  photo: string;
+  state: string;
+  country: string;
+  pincode: string;
+  securityPin: string;
+  rejectedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    fullname: string;
+    email: string;
+    phoneNumber: string;
+    isActive: boolean;
+    dob: string | null;
+    isVerified: boolean;
+    isRejected: boolean;
+  };
+  wallets: Array<{
+    eprivateAccount: number;
+    temporyAccount: number;
+  }>;
+  _count: {
+    senderTransactions: number;
+  };
+}
 
-const STATS_DATA = [
-  {
-    title: 'Total Clients',
-    value: '1,248',
-    change: '+12%',
-    changeLabel: 'vs last month',
-    icon: MdPerson,
-    color: 'bg-blue-100 text-blue-600',
-    trend: 'up',
-  },
-  {
-    title: 'Active Clients',
-    value: '1,042',
-    change: '+8%',
-    changeLabel: 'vs last month',
-    icon: MdOutlineAccountBalance,
-    color: 'bg-green-100 text-green-600',
-    trend: 'up',
-  },
-  {
-    title: 'Total Balance',
-    value: '$2.5M',
-    change: '+15%',
-    changeLabel: 'vs last quarter',
-    icon: MdAttachMoney,
-    color: 'bg-purple-100 text-purple-600',
-    trend: 'up',
-  },
-  {
-    title: 'Avg. Activity',
-    value: '28 days',
-    change: '-2 days',
-    changeLabel: 'vs last month',
-    icon: MdCalendarToday,
-    color: 'bg-yellow-100 text-yellow-600',
-    trend: 'down',
-  },
-];
+interface ClientRow {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  state: string;
+  accountNumber: string;
+  accountType: string;
+  balance: number;
+  status: string;
+  transactions: number;
+  createdAt: string;
+  updatedAt: string;
+  isVerified: boolean;
+  isRejected: boolean;
+}
 
 // Stats Card Component
 interface StatCardProps {
@@ -205,127 +122,626 @@ const StatCard: React.FC<StatCardProps> = ({stat}) => {
   );
 };
 
-// Filters Component
-const Filters: React.FC = () => {
+// Helper function to determine status
+const getStatus = (client: ApiClient): string => {
+  if (client.user.isRejected) return 'Rejected';
+  if (!client.user.isActive) return 'Inactive';
+  if (!client.user.isVerified) return 'Pending';
+  return 'Active';
+};
+
+// Helper function to determine account type
+const getAccountType = (client: ApiClient): string => {
+  const totalBalance =
+    (client.wallets?.[0]?.eprivateAccount || 0) +
+    (client.wallets?.[0]?.temporyAccount || 0);
+
+  if (totalBalance >= 100000) return 'Premium';
+  if (totalBalance >= 50000) return 'Standard';
+  return 'Basic';
+};
+
+// Helper function to calculate total balance
+const getTotalBalance = (client: ApiClient): number => {
   return (
-    <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 flex flex-col items-start justify-between gap-4 rounded-xl border bg-white p-4 shadow-sm lg:flex-row lg:items-center">
-      <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
-        {/* Search */}
-        <div className="relative flex-1 lg:w-64 lg:flex-none">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MdSearch className="text-gray-400" size={20} />
-          </div>
-          <input
-            className="border-gray-300 text-gray-900 placeholder-gray-500 dark:border-gray-600 dark:bg-gray-700 block w-full rounded-lg border bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-            placeholder="Search clients by name, email, account..."
-            type="text"
-          />
-        </div>
-
-        {/* Account Type Filter */}
-        <div className="relative">
-          <select className="border-gray-300 text-gray-900 dark:border-gray-600 dark:bg-gray-700 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white">
-            <option value="">All Types</option>
-            <option value="premium">Premium</option>
-            <option value="standard">Standard</option>
-            <option value="business">Business</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <svg
-              className="text-gray-400 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Status Filter */}
-        <div className="relative">
-          <select className="border-gray-300 text-gray-900 dark:border-gray-600 dark:bg-gray-700 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="pending">Pending</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <svg
-              className="text-gray-400 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Button */}
-      <button className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 flex items-center gap-2 rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold transition-colors">
-        <MdFilterList className="text-lg" />
-        More Filters
-      </button>
-    </div>
+    (client.wallets?.[0]?.eprivateAccount || 0) +
+    (client.wallets?.[0]?.temporyAccount || 0)
   );
 };
+
+// Format currency helper
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+// Format compact currency for stats
+const formatCompactCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount);
+};
+
+// PDF Export Service - Separate from React component
+class PDFExportService {
+  static async generateClientReport(
+    data: ClientRow[],
+    stats: any[],
+    filename: string = 'clients_report.pdf',
+  ): Promise<void> {
+    try {
+      // Check if data is empty
+      if (!data || data.length === 0) {
+        throw new Error('No data available to export');
+      }
+
+      // Check if we're in browser environment
+      if (typeof window === 'undefined') {
+        throw new Error(
+          'PDF generation is only available in browser environment',
+        );
+      }
+
+      // Dynamically import jsPDF
+      let jsPDFModule;
+      try {
+        jsPDFModule = await import('jspdf');
+        console.log('jsPDF loaded successfully');
+      } catch (error) {
+        console.error('Failed to import jsPDF:', error);
+        throw new Error(
+          'PDF library (jspdf) is not installed. Please install it using: npm install jspdf jspdf-autotable',
+        );
+      }
+
+      const {jsPDF} = jsPDFModule;
+
+      if (!jsPDF || typeof jsPDF !== 'function') {
+        throw new Error('Failed to initialize PDF library');
+      }
+
+      // Try to load autoTable
+      let autoTableLoaded = false;
+      try {
+        await import('jspdf-autotable');
+        autoTableLoaded = true;
+        console.log('AutoTable loaded successfully');
+      } catch (error) {
+        console.warn(
+          'AutoTable not available, using basic table generation:',
+          error,
+        );
+        autoTableLoaded = false;
+      }
+
+      const doc = new jsPDF('landscape');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+
+      // Add title
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Client List Report', pageWidth / 2, margin, {align: 'center'});
+
+      // Add generation date
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(
+        `Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+        pageWidth / 2,
+        margin + 10,
+        {align: 'center'},
+      );
+
+      // Add statistics section if available
+      if (stats && stats.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Summary Statistics', margin, margin + 25);
+
+        // Create stats boxes
+        const statsStartY = margin + 35;
+        const statBoxWidth =
+          (pageWidth - 2 * margin - 15) / Math.min(stats.length, 5);
+
+        stats.forEach((stat, index) => {
+          if (index >= 5) return; // Limit to 5 stats per row
+
+          const x = margin + index * (statBoxWidth + 5);
+          const y = statsStartY;
+
+          // Draw stat box
+          doc.setDrawColor(200, 200, 200);
+          doc.setFillColor(245, 245, 245);
+          doc.rect(x, y, statBoxWidth, 25, 'FD');
+
+          // Add stat title
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          const title =
+            stat.title.length > 15
+              ? stat.title.substring(0, 12) + '...'
+              : stat.title;
+          doc.text(title, x + 5, y + 8, {maxWidth: statBoxWidth - 10});
+
+          // Add stat value
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          const value = stat.value;
+          doc.text(value, x + 5, y + 17, {maxWidth: statBoxWidth - 10});
+
+          // Add stat change
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          const changeText =
+            `${stat.change || ''} ${stat.changeLabel || ''}`.trim();
+          if (changeText) {
+            doc.text(changeText.substring(0, 20), x + 5, y + 23, {
+              maxWidth: statBoxWidth - 10,
+            });
+          }
+        });
+      }
+
+      // Determine table start position
+      const tableStartY = margin + (stats && stats.length > 0 ? 70 : 45);
+
+      // Generate table based on autoTable availability
+      if (autoTableLoaded && (doc as any).autoTable) {
+        // Prepare table data for autoTable
+        const headers = [
+          [
+            '#',
+            'Client Name',
+            'Email',
+            'Phone',
+            'Account Number',
+            'Account Type',
+            'Balance',
+            'Status',
+            'Transactions',
+            'Join Date',
+          ],
+        ];
+
+        const tableData = data.map((item, index) => [
+          (index + 1).toString(),
+          item.name.substring(0, 20),
+          item.email.substring(0, 25),
+          item.phone || 'N/A',
+          item.accountNumber.substring(0, 15) || 'N/A',
+          item.accountType,
+          formatCurrency(item.balance),
+          item.status,
+          item.transactions.toString(),
+          new Date(item.createdAt).toLocaleDateString(),
+        ]);
+
+        // Configure and generate autoTable
+        (doc as any).autoTable({
+          startY: tableStartY,
+          head: headers,
+          body: tableData,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 8,
+            cellPadding: 3,
+          },
+          bodyStyles: {
+            fontSize: 7,
+            cellPadding: 2,
+            overflow: 'linebreak',
+          },
+          alternateRowStyles: {
+            fillColor: [245, 245, 245],
+          },
+          margin: {top: 10},
+          styles: {
+            overflow: 'linebreak',
+            cellPadding: 2,
+            fontSize: 7,
+            valign: 'middle',
+          },
+          columnStyles: {
+            0: {cellWidth: 8}, // Index
+            1: {cellWidth: 25}, // Name
+            2: {cellWidth: 30}, // Email
+            3: {cellWidth: 18}, // Phone
+            4: {cellWidth: 22}, // Account Number
+            5: {cellWidth: 16}, // Account Type
+            6: {cellWidth: 20}, // Balance
+            7: {cellWidth: 15}, // Status
+            8: {cellWidth: 15}, // Transactions
+            9: {cellWidth: 18}, // Join Date
+          },
+          didDrawPage: (data: any) => {
+            // Add page number
+            doc.setFontSize(8);
+            doc.text(
+              `Page ${data.pageNumber}`,
+              data.settings.margin.left,
+              doc.internal.pageSize.height - 10,
+            );
+          },
+        });
+      } else {
+        // Fallback: Simple table without autoTable
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Client List (Limited Preview)', margin, tableStartY);
+
+        // Simple header
+        const headers = ['No.', 'Name', 'Email', 'Balance', 'Status'];
+        let currentY = tableStartY + 10;
+
+        // Draw header
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(headers.join(' | '), margin, currentY);
+        currentY += 6;
+
+        // Draw separator
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 4;
+
+        // Draw data rows (limited to 30 for performance)
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        data.slice(0, 30).forEach((item, index) => {
+          if (currentY > pageHeight - 20) {
+            doc.addPage();
+            currentY = margin;
+          }
+
+          const row = [
+            (index + 1).toString(),
+            item.name.substring(0, 15),
+            item.email.substring(0, 15),
+            formatCurrency(item.balance),
+            item.status.substring(0, 10),
+          ].join(' | ');
+
+          doc.text(row, margin, currentY);
+          currentY += 5;
+        });
+
+        // Add note about limited data
+        if (data.length > 30) {
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'italic');
+          doc.text(
+            `Note: Showing 30 of ${data.length} records. Install jspdf-autotable for full table.`,
+            margin,
+            currentY + 5,
+          );
+        }
+      }
+
+      // Get final Y position for footer
+      const finalY = (doc as any)?.lastAutoTable?.finalY || tableStartY + 150;
+
+      // Add footer
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.text(`Total Clients: ${data.length}`, margin, finalY + 10);
+
+      // Add company info
+      doc.setFontSize(8);
+      doc.text('Client Management System © 2024', pageWidth / 2, finalY + 10, {
+        align: 'center',
+      });
+
+      // Add export info
+      doc.text(
+        `Exported by: ${window.location.hostname}`,
+        pageWidth - margin,
+        finalY + 10,
+        {align: 'right'},
+      );
+
+      // Save the PDF
+      doc.save(filename);
+
+      console.log(
+        `PDF exported successfully: ${filename}, ${data.length} records`,
+      );
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error in PDF generation:', error);
+
+      // Provide detailed error information
+      if (error instanceof Error) {
+        if (error.message.includes('jspdf')) {
+          throw new Error(
+            'PDF library error. Please ensure jspdf is installed: npm install jspdf jspdf-autotable',
+          );
+        } else if (error.message.includes('No data')) {
+          throw new Error('No data available to export.');
+        } else if (error.message.includes('browser')) {
+          throw new Error('PDF generation requires a browser environment.');
+        }
+        throw new Error(`PDF Generation Error: ${error.message}`);
+      }
+
+      throw new Error('Failed to generate PDF. Please try again.');
+    }
+  }
+
+  static async exportTableData(
+    data: ClientRow[],
+    stats: any[],
+    exportAll: boolean,
+  ): Promise<void> {
+    const filename = exportAll
+      ? 'all_clients_report.pdf'
+      : 'filtered_clients_report.pdf';
+    await this.generateClientReport(data, stats, filename);
+  }
+}
 
 // Main Page Component
 const ClientListReport: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [accountTypeFilter, setAccountTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+
+  // Use the React Query hook to fetch clients
+  const {data: apiResponse, isLoading, isError, error} = useGetClients();
+
+  // Get the actual client data from API response
+  const rawClientData: ApiClient[] = useMemo(() => {
+    if (!apiResponse) {
+      console.log('No API response yet');
+      return [];
+    }
+
+    // Check different possible response structures
+    if (Array.isArray(apiResponse)) {
+      console.log('API response is already an array');
+      return apiResponse;
+    }
+
+    if (apiResponse.data && Array.isArray(apiResponse.data)) {
+      console.log('Found data array in apiResponse.data');
+      return apiResponse.data;
+    }
+
+    console.log('Unexpected API response structure:', apiResponse);
+    return [];
+  }, [apiResponse]);
+
+  // Calculate dynamic stats from the data
+  const dynamicStats = useMemo(() => {
+    const totalClients = rawClientData.length;
+
+    // Calculate active clients (based on status)
+    const activeClients = rawClientData.filter((client) => {
+      const status = getStatus(client);
+      return status === 'Active';
+    }).length;
+
+    // Calculate total balance
+    const totalBalance =
+      rawClientData.reduce((sum, client) => {
+        return sum + getTotalBalance(client);
+      }, 0) / 100; // Divide by 100 if balance is in cents
+
+    // Calculate average transactions per client
+    const totalTransactions = rawClientData.reduce((sum, client) => {
+      return sum + (client._count?.senderTransactions || 0);
+    }, 0);
+
+    const avgTransactions =
+      totalClients > 0 ? totalTransactions / totalClients : 0;
+
+    // Calculate verified clients
+    const verifiedClients = rawClientData.filter(
+      (client) => client.user?.isVerified,
+    ).length;
+
+    // Calculate percentage changes (for demo, you can replace with real data)
+    const clientGrowth = totalClients > 0 ? '+12%' : '+0%';
+    const activeGrowth = activeClients > 0 ? '+8%' : '+0%';
+    const balanceGrowth = totalBalance > 0 ? '+15%' : '+0%';
+    const activityGrowth = avgTransactions > 0 ? '-2 days' : '0 days';
+
+    return [
+      {
+        title: 'Total Clients',
+        value: totalClients.toLocaleString(),
+        change: clientGrowth,
+        changeLabel: 'vs last month',
+        icon: MdPerson,
+        color: 'bg-blue-100 text-blue-600',
+        trend: 'up' as const,
+      },
+      {
+        title: 'Active Clients',
+        value: activeClients.toLocaleString(),
+        change: activeGrowth,
+        changeLabel: 'vs last month',
+        icon: MdOutlineAccountBalance,
+        color: 'bg-green-100 text-green-600',
+        trend: 'up' as const,
+      },
+      {
+        title: 'Total Balance',
+        value: formatCompactCurrency(totalBalance),
+        change: balanceGrowth,
+        changeLabel: 'vs last quarter',
+        icon: MdAttachMoney,
+        color: 'bg-purple-100 text-purple-600',
+        trend: 'up' as const,
+      },
+      {
+        title: 'Avg. Transactions',
+        value: avgTransactions.toFixed(1),
+        change: activityGrowth,
+        changeLabel: 'per client',
+        icon: MdCalendarToday,
+        color: 'bg-yellow-100 text-yellow-600',
+        trend: activityGrowth.startsWith('-')
+          ? ('down' as const)
+          : ('up' as const),
+      },
+      {
+        title: 'Verified Clients',
+        value: verifiedClients.toString(),
+        change: verifiedClients > 0 ? '+5%' : '+0%',
+        changeLabel: 'vs last month',
+        icon: MdCheckCircle,
+        color: 'bg-indigo-100 text-indigo-600',
+        trend: 'up' as const,
+      },
+    ];
+  }, [rawClientData]);
+
+  // Transform API data to ClientRow format
+  const clientData: ClientRow[] = useMemo(() => {
+    console.log('Transforming', rawClientData.length, 'clients');
+
+    return rawClientData.map((client) => {
+      const balance = getTotalBalance(client);
+
+      return {
+        id: client.id,
+        name: client.user?.fullname || 'N/A',
+        email: client.user?.email || 'N/A',
+        phone: client.user?.phoneNumber || 'N/A',
+        city: client.city || 'N/A',
+        state: client.state || 'N/A',
+        accountNumber: client.accountNumber || 'N/A',
+        accountType: getAccountType(client),
+        balance: balance / 100, // Assuming balance is in cents/paisa
+        status: getStatus(client),
+        transactions: client._count?.senderTransactions || 0,
+        createdAt: client.createdAt,
+        updatedAt: client.updatedAt,
+        isVerified: client.user?.isVerified || false,
+        isRejected: client.user?.isRejected || false,
+      };
+    });
+  }, [rawClientData]);
 
   // Filter data
-  const filteredData = CLIENT_DATA.filter((item) => {
+  const filteredData = clientData.filter((item) => {
     if (
       searchQuery &&
       !item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       !item.email.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !item.accountNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      !item.accountNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !item.phone.toLowerCase().includes(searchQuery.toLowerCase())
     ) {
       return false;
     }
+
     if (
       accountTypeFilter &&
+      accountTypeFilter !== '' &&
       accountTypeFilter !== 'All Types' &&
       item.accountType.toLowerCase() !== accountTypeFilter.toLowerCase()
     ) {
       return false;
     }
+
     if (
       statusFilter &&
+      statusFilter !== '' &&
       statusFilter !== 'All Status' &&
       item.status.toLowerCase() !== statusFilter.toLowerCase()
     ) {
       return false;
     }
+
     return true;
   });
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
+  // PDF Export handler
+  const handleExportPDF = async () => {
+    if (clientData.length === 0) {
+      alert('No data available to export');
+      return;
+    }
+
+    setIsExporting(true);
+    setExportProgress(0);
+
+    try {
+      // Ask user what to export
+      const exportAll = window.confirm(
+        'Do you want to export all data or only filtered results?\n\nClick OK for all data, Cancel for filtered results only.',
+      );
+
+      const dataToExport = exportAll ? clientData : filteredData;
+
+      if (dataToExport.length === 0) {
+        alert('No data to export based on your selection');
+        setIsExporting(false);
+        return;
+      }
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setExportProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
+      console.log(`Starting PDF export with ${dataToExport.length} records...`);
+      await PDFExportService.exportTableData(
+        dataToExport,
+        dynamicStats,
+        exportAll,
+      );
+
+      clearInterval(progressInterval);
+      setExportProgress(100);
+
+      // Reset after successful export
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 500);
+    } catch (error) {
+      console.error('Export error:', error);
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to export PDF. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('jspdf')) {
+          errorMessage = `PDF Export Error: ${error.message}\n\nPlease ensure you have installed the required packages:\nnpm install jspdf jspdf-autotable`;
+        } else if (error.message.includes('No data')) {
+          errorMessage = 'No data available to export.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      alert(errorMessage);
+      setIsExporting(false);
+      setExportProgress(0);
+    }
   };
 
   // Define columns for GenericTable
-  const columns: Column<(typeof CLIENT_DATA)[0]>[] = [
+  const columns: Column<ClientRow>[] = [
     {
       header: 'Client Name',
       accessor: 'name',
@@ -337,18 +753,37 @@ const ClientListReport: React.FC = () => {
           <span className="text-gray-500 dark:text-gray-400 text-xs">
             {item.email}
           </span>
+          <div className="mt-1 flex items-center gap-1">
+            {item.isVerified && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <MdCheckCircle className="h-3 w-3" />
+                Verified
+              </span>
+            )}
+            {item.isRejected && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                <MdCancel className="h-3 w-3" />
+                Rejected
+              </span>
+            )}
+          </div>
         </div>
       ),
-      className: 'min-w-[180px]',
+      className: 'min-w-[200px]',
       sortable: true,
     },
     {
       header: 'Contact',
       accessor: 'phone',
       render: (item) => (
-        <span className="text-gray-900 text-sm dark:text-white">
-          {item.phone}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-gray-900 text-sm dark:text-white">
+            {item.phone}
+          </span>
+          <span className="text-gray-500 dark:text-gray-400 text-xs">
+            {item.city}, {item.state}
+          </span>
+        </div>
       ),
       className: 'min-w-[140px]',
     },
@@ -381,78 +816,130 @@ const ClientListReport: React.FC = () => {
     {
       header: 'Status',
       accessor: 'status',
-      render: (item) => (
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            item.status === 'Active'
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-              : item.status === 'Pending'
-                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-          }`}
-        >
-          <span
-            className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
-              item.status === 'Active'
-                ? 'bg-green-500'
-                : item.status === 'Pending'
-                  ? 'bg-yellow-500'
-                  : 'bg-gray-500'
-            }`}
-          />
-          {item.status}
-        </span>
-      ),
-      className: 'min-w-[100px]',
+      render: (item) => {
+        const getStatusIcon = () => {
+          switch (item.status) {
+            case 'Active':
+              return;
+            case 'Pending':
+              return;
+            case 'Rejected':
+              return;
+            case 'Inactive':
+              return;
+            default:
+              return null;
+          }
+        };
+
+        return <span>{item.status}</span>;
+      },
+      className: 'min-w-[110px]',
     },
     {
       header: 'Transactions',
-      accessor: 'totalTransactions',
+      accessor: 'transactions',
       render: (item) => (
-        <span className="text-gray-900 text-sm font-medium dark:text-white">
-          {item.totalTransactions}
-        </span>
-      ),
-      className: 'min-w-[100px]',
-      sortable: true,
-    },
-    {
-      header: 'Last Activity',
-      accessor: 'lastActivity',
-      render: (item) => (
-        <span className="text-gray-900 text-sm dark:text-white">
-          {new Date(item.lastActivity).toLocaleDateString()}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-gray-900 text-sm font-medium dark:text-white">
+            {item.transactions}
+          </span>
+          <span className="text-gray-500 dark:text-gray-400 text-xs">
+            {item.transactions > 0 ? 'Completed' : 'No transactions'}
+          </span>
+        </div>
       ),
       className: 'min-w-[120px]',
       sortable: true,
     },
+    {
+      header: 'Join Date',
+      accessor: 'createdAt',
+      render: (item) => (
+        <div className="flex flex-col">
+          <span className="text-gray-900 text-sm dark:text-white">
+            {new Date(item.createdAt).toLocaleDateString()}
+          </span>
+          <span className="text-gray-500 dark:text-gray-400 text-xs">
+            Last: {new Date(item.updatedAt).toLocaleDateString()}
+          </span>
+        </div>
+      ),
+      className: 'min-w-[140px]',
+      sortable: true,
+    },
   ];
 
-  const handleView = (item: (typeof CLIENT_DATA)[0]) => {
+  const handleView = (item: ClientRow) => {
     console.log('View client:', item);
-    // Navigate to client details or open modal
+    // Implement view functionality
   };
 
-  const handleEdit = (item: (typeof CLIENT_DATA)[0]) => {
+  const handleEdit = (item: ClientRow) => {
     console.log('Edit client:', item);
-    // Open edit modal
+    // Implement edit functionality
   };
 
-  const handleDelete = (item: (typeof CLIENT_DATA)[0]) => {
+  const handleDelete = (item: ClientRow) => {
     console.log('Delete client:', item);
-    // Show confirmation dialog
-  };
-
-  const handleExportCSV = () => {
-    console.log('Exporting CSV...');
-    // CSV export logic
+    // Implement delete functionality
   };
 
   const handleAddClient = () => {
     console.log('Adding new client...');
-    // Navigate to add client form
+    // Implement add client functionality
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading clients...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-red-500">
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">Error Loading Clients</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {error?.message || 'Failed to load client data'}
+          </p>
+          <div className="text-gray-500 space-y-2 text-sm">
+            <p>API URL: http://192.168.29.165:4400/api/v1/admin/customer</p>
+            <p>Check browser console for detailed error information</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-white"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen w-full">
@@ -468,14 +955,42 @@ const ClientListReport: React.FC = () => {
                 Comprehensive directory of all registered clients, assets, and
                 account statuses.
               </p>
+              {clientData.length > 0 && (
+                <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+                  Showing {filteredData.length} of {clientData.length} clients
+                </p>
+              )}
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
-                onClick={handleExportCSV}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
+                onClick={handleExportPDF}
+                disabled={isExporting || clientData.length === 0}
+                className={`border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 relative flex h-10 items-center gap-2 overflow-hidden rounded-lg border bg-white px-4 text-sm font-semibold transition-colors ${
+                  isExporting || clientData.length === 0
+                    ? 'cursor-not-allowed opacity-50'
+                    : ''
+                }`}
+                title="Export Table Data as PDF"
               >
-                <MdDownload className="text-lg" />
-                <span>Export CSV</span>
+                {isExporting ? (
+                  <>
+                    <div className="border-gray-300 border-t-gray-600 h-4 w-4 animate-spin rounded-full border-2"></div>
+                    <span>Exporting... {exportProgress}%</span>
+                    {/* Progress bar background */}
+                    <div className="bg-gray-200 absolute bottom-0 left-0 h-0.5 w-full">
+                      {/* Progress bar fill */}
+                      <div
+                        className="h-full bg-green-500 transition-all duration-300 ease-out"
+                        style={{width: `${exportProgress}%`}}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <MdPictureAsPdf className="text-lg" />
+                    <span>Export PDF</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={handleAddClient}
@@ -489,7 +1004,7 @@ const ClientListReport: React.FC = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {STATS_DATA.map((stat, index) => (
+            {dynamicStats.map((stat, index) => (
               <StatCard key={index} stat={stat} />
             ))}
           </div>
@@ -523,23 +1038,8 @@ const ClientListReport: React.FC = () => {
                     <option value="">All Types</option>
                     <option value="premium">Premium</option>
                     <option value="standard">Standard</option>
-                    <option value="business">Business</option>
+                    <option value="basic">Basic</option>
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                    <svg
-                      className="text-gray-400 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
                 </div>
 
                 {/* Status Filter */}
@@ -553,22 +1053,8 @@ const ClientListReport: React.FC = () => {
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                     <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                    <svg
-                      className="text-gray-400 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
                 </div>
               </div>
 
@@ -580,24 +1066,73 @@ const ClientListReport: React.FC = () => {
 
             {/* Generic Table Container */}
             <div className="dark:border-gray-700 dark:bg-gray-800 overflow-hidden bg-white shadow-sm">
-              {/* Generic Table Component */}
               <div className="flex-1">
-                <GenericTable
-                  data={filteredData}
-                  columns={columns}
-                  searchAble={false} // Using external search
-                  action={true}
-                  onView={handleView}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  itemsPerPage={6}
-                  viewTooltip="View Client Details"
-                  editTooltip="Edit Client"
-                  deleteTooltip="Delete Client"
-                  variant="default"
-                />
+                {clientData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <svg
+                      className="text-gray-400 mb-4 h-12 w-12"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <h3 className="text-gray-900 mb-2 text-lg font-medium">
+                      No clients found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {rawClientData.length === 0
+                        ? 'No data loaded from API. Check console for details.'
+                        : 'Data transformation may have failed.'}
+                    </p>
+                  </div>
+                ) : filteredData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <svg
+                      className="text-gray-400 mb-4 h-12 w-12"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    <h3 className="text-gray-900 mb-2 text-lg font-medium">
+                      No matching clients
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Try adjusting your search or filters
+                    </p>
+                  </div>
+                ) : (
+                  <GenericTable
+                    data={filteredData}
+                    columns={columns}
+                    searchAble={false}
+                    action={true}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    itemsPerPage={10}
+                    viewTooltip="View Client Details"
+                    editTooltip="Edit Client"
+                    deleteTooltip="Delete Client"
+                    variant="default"
+                  />
+                )}
               </div>
             </div>
+
+            {/* Export Instructions */}
           </div>
         </div>
       </main>
