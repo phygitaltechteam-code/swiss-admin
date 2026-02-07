@@ -34,3 +34,17 @@ export interface TableExportData {
   rows: string[][];
   fileName: string;
 }
+
+export interface ExportData {
+  id: string;
+  fullname: string;
+  email: string;
+  phoneNumber: string;
+  accountNumber: string;
+  isActive: boolean;
+  isVerified: boolean;
+  isRejected: boolean;
+  rejectedReason: string;
+  foreignBeneficiariesCount: number;
+  verifiedForeignCount: number;
+}

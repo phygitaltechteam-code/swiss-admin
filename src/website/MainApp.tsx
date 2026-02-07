@@ -158,7 +158,7 @@ export default function MainApp() {
                 Wealth Potential
               </span>
             </h1>
-            <p className="text-gray mb-10 max-w-lg text-lg font-light leading-relaxed md:text-xl">
+            <p className="mb-10 max-w-lg text-lg font-light leading-relaxed text-gray md:text-xl">
               Experience bespoke financial solutions and Swiss banking
               excellence designed for the discerning investor.
             </p>

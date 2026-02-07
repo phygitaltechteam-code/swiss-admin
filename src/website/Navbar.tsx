@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
           <div
-            className="flex items-center gap-3 cursor-pointer"
+            className="flex cursor-pointer items-center gap-3"
             onClick={() => {
               navigate({
                 to: '/',

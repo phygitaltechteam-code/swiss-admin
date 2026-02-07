@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
               <span className="text-lg font-bold text-black">Swissquote</span>
             </div>
             <p className="text-slate-body mb-6 text-sm leading-relaxed">
-              Swissquote Bank Ltd is Switzerland's leading online bank. We
+              Swissquote Bank Ltd is Switzerland &apos;s leading online bank. We
               provide online financial and trading services. We are regulated by
               FINMA and listed on the SIX Swiss Exchange.
             </p>

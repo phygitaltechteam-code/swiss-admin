@@ -19,6 +19,7 @@ import {Route as AuthImport} from './routes/_auth';
 import {Route as AppImport} from './routes/_app';
 import {Route as AuthSignupImport} from './routes/_auth/signup';
 import {Route as AuthSigninImport} from './routes/_auth/signin';
+import {Route as AuthLandingpageImport} from './routes/_auth/landingpage';
 import {Route as AppWallettopupreportImport} from './routes/_app/wallettopupreport';
 import {Route as AppTransfersReportImport} from './routes/_app/transfersReport';
 import {Route as AppTransactionReportImport} from './routes/_app/transactionReport';
@@ -29,7 +30,6 @@ import {Route as AppBeneficiaryreportImport} from './routes/_app/beneficiaryrepo
 import {Route as AppAlltransactionImport} from './routes/_app/alltransaction';
 import {Route as AppClientTransferviewImport} from './routes/_app/client/transferview';
 import {Route as AppClientTransferApprovalsImport} from './routes/_app/client/transfer-approvals';
-import {Route as AppClientTransactionhistoryImport} from './routes/_app/client/transactionhistory';
 import {Route as AppClientTopupApprovalsImport} from './routes/_app/client/topup-approvals';
 import {Route as AppClientProfileImport} from './routes/_app/client/profile';
 import {Route as AppClientDisplayclientImport} from './routes/_app/client/displayclient';
@@ -38,12 +38,13 @@ import {Route as AppClientBeneficiaryImport} from './routes/_app/client/benefici
 import {Route as AppClientAddcommisionImport} from './routes/_app/client/addcommision';
 import {Route as AppApprovalCustomerregisterapproveImport} from './routes/_app/Approval/customerregisterapprove';
 import {Route as NativeTokenUserPassImport} from './routes/_native/token.$user.$pass';
+import {Route as AppClientTransactionhistoryIdImport} from './routes/_app/client/transactionhistory.$id';
 import {Route as AppClientBeneficiaryverificationIdImport} from './routes/_app/client/beneficiaryverification.$id';
 import {Route as AppApprovalRegistrationDetailsIdImport} from './routes/_app/Approval/registrationDetails.$id';
 
 // Create Virtual Routes
 
-const AppIndexLazyImport = createFileRoute('/_app/')();
+const AuthIndexLazyImport = createFileRoute('/_auth/')();
 const AppDashboardLazyImport = createFileRoute('/_app/dashboard')();
 
 // Create/Update Routes
@@ -68,11 +69,11 @@ const AppRoute = AppImport.update({
   getParentRoute: () => rootRoute,
 } as any);
 
-const AppIndexLazyRoute = AppIndexLazyImport.update({
+const AuthIndexLazyRoute = AuthIndexLazyImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() => import('./routes/_app/index.lazy').then((d) => d.Route));
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() => import('./routes/_auth/index.lazy').then((d) => d.Route));
 
 const AppDashboardLazyRoute = AppDashboardLazyImport.update({
   id: '/dashboard',
@@ -91,6 +92,12 @@ const AuthSignupRoute = AuthSignupImport.update({
 const AuthSigninRoute = AuthSigninImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => AuthRoute,
+} as any);
+
+const AuthLandingpageRoute = AuthLandingpageImport.update({
+  id: '/landingpage',
+  path: '/landingpage',
   getParentRoute: () => AuthRoute,
 } as any);
 
@@ -156,13 +163,6 @@ const AppClientTransferApprovalsRoute = AppClientTransferApprovalsImport.update(
   } as any,
 );
 
-const AppClientTransactionhistoryRoute =
-  AppClientTransactionhistoryImport.update({
-    id: '/client/transactionhistory',
-    path: '/client/transactionhistory',
-    getParentRoute: () => AppRoute,
-  } as any);
-
 const AppClientTopupApprovalsRoute = AppClientTopupApprovalsImport.update({
   id: '/client/topup-approvals',
   path: '/client/topup-approvals',
@@ -211,6 +211,13 @@ const NativeTokenUserPassRoute = NativeTokenUserPassImport.update({
   path: '/token/$user/$pass',
   getParentRoute: () => NativeRoute,
 } as any);
+
+const AppClientTransactionhistoryIdRoute =
+  AppClientTransactionhistoryIdImport.update({
+    id: '/client/transactionhistory/$id',
+    path: '/client/transactionhistory/$id',
+    getParentRoute: () => AppRoute,
+  } as any);
 
 const AppClientBeneficiaryverificationIdRoute =
   AppClientBeneficiaryverificationIdImport.update({
@@ -314,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWallettopupreportImport;
       parentRoute: typeof AppImport;
     };
+    '/_auth/landingpage': {
+      id: '/_auth/landingpage';
+      path: '/landingpage';
+      fullPath: '/landingpage';
+      preLoaderRoute: typeof AuthLandingpageImport;
+      parentRoute: typeof AuthImport;
+    };
     '/_auth/signin': {
       id: '/_auth/signin';
       path: '/signin';
@@ -335,12 +349,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardLazyImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/': {
-      id: '/_app/';
+    '/_auth/': {
+      id: '/_auth/';
       path: '/';
       fullPath: '/';
-      preLoaderRoute: typeof AppIndexLazyImport;
-      parentRoute: typeof AppImport;
+      preLoaderRoute: typeof AuthIndexLazyImport;
+      parentRoute: typeof AuthImport;
     };
     '/_app/Approval/customerregisterapprove': {
       id: '/_app/Approval/customerregisterapprove';
@@ -391,13 +405,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientTopupApprovalsImport;
       parentRoute: typeof AppImport;
     };
-    '/_app/client/transactionhistory': {
-      id: '/_app/client/transactionhistory';
-      path: '/client/transactionhistory';
-      fullPath: '/client/transactionhistory';
-      preLoaderRoute: typeof AppClientTransactionhistoryImport;
-      parentRoute: typeof AppImport;
-    };
     '/_app/client/transfer-approvals': {
       id: '/_app/client/transfer-approvals';
       path: '/client/transfer-approvals';
@@ -426,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientBeneficiaryverificationIdImport;
       parentRoute: typeof AppImport;
     };
+    '/_app/client/transactionhistory/$id': {
+      id: '/_app/client/transactionhistory/$id';
+      path: '/client/transactionhistory/$id';
+      fullPath: '/client/transactionhistory/$id';
+      preLoaderRoute: typeof AppClientTransactionhistoryIdImport;
+      parentRoute: typeof AppImport;
+    };
     '/_native/token/$user/$pass': {
       id: '/_native/token/$user/$pass';
       path: '/token/$user/$pass';
@@ -448,7 +462,6 @@ interface AppRouteChildren {
   AppTransfersReportRoute: typeof AppTransfersReportRoute;
   AppWallettopupreportRoute: typeof AppWallettopupreportRoute;
   AppDashboardLazyRoute: typeof AppDashboardLazyRoute;
-  AppIndexLazyRoute: typeof AppIndexLazyRoute;
   AppApprovalCustomerregisterapproveRoute: typeof AppApprovalCustomerregisterapproveRoute;
   AppClientAddcommisionRoute: typeof AppClientAddcommisionRoute;
   AppClientBeneficiaryRoute: typeof AppClientBeneficiaryRoute;
@@ -456,11 +469,11 @@ interface AppRouteChildren {
   AppClientDisplayclientRoute: typeof AppClientDisplayclientRoute;
   AppClientProfileRoute: typeof AppClientProfileRoute;
   AppClientTopupApprovalsRoute: typeof AppClientTopupApprovalsRoute;
-  AppClientTransactionhistoryRoute: typeof AppClientTransactionhistoryRoute;
   AppClientTransferApprovalsRoute: typeof AppClientTransferApprovalsRoute;
   AppClientTransferviewRoute: typeof AppClientTransferviewRoute;
   AppApprovalRegistrationDetailsIdRoute: typeof AppApprovalRegistrationDetailsIdRoute;
   AppClientBeneficiaryverificationIdRoute: typeof AppClientBeneficiaryverificationIdRoute;
+  AppClientTransactionhistoryIdRoute: typeof AppClientTransactionhistoryIdRoute;
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -473,7 +486,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppTransfersReportRoute: AppTransfersReportRoute,
   AppWallettopupreportRoute: AppWallettopupreportRoute,
   AppDashboardLazyRoute: AppDashboardLazyRoute,
-  AppIndexLazyRoute: AppIndexLazyRoute,
   AppApprovalCustomerregisterapproveRoute:
     AppApprovalCustomerregisterapproveRoute,
   AppClientAddcommisionRoute: AppClientAddcommisionRoute,
@@ -482,24 +494,28 @@ const AppRouteChildren: AppRouteChildren = {
   AppClientDisplayclientRoute: AppClientDisplayclientRoute,
   AppClientProfileRoute: AppClientProfileRoute,
   AppClientTopupApprovalsRoute: AppClientTopupApprovalsRoute,
-  AppClientTransactionhistoryRoute: AppClientTransactionhistoryRoute,
   AppClientTransferApprovalsRoute: AppClientTransferApprovalsRoute,
   AppClientTransferviewRoute: AppClientTransferviewRoute,
   AppApprovalRegistrationDetailsIdRoute: AppApprovalRegistrationDetailsIdRoute,
   AppClientBeneficiaryverificationIdRoute:
     AppClientBeneficiaryverificationIdRoute,
+  AppClientTransactionhistoryIdRoute: AppClientTransactionhistoryIdRoute,
 };
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren);
 
 interface AuthRouteChildren {
+  AuthLandingpageRoute: typeof AuthLandingpageRoute;
   AuthSigninRoute: typeof AuthSigninRoute;
   AuthSignupRoute: typeof AuthSignupRoute;
+  AuthIndexLazyRoute: typeof AuthIndexLazyRoute;
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthLandingpageRoute: AuthLandingpageRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
+  AuthIndexLazyRoute: AuthIndexLazyRoute,
 };
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
@@ -525,10 +541,11 @@ export interface FileRoutesByFullPath {
   '/transactionReport': typeof AppTransactionReportRoute;
   '/transfersReport': typeof AppTransfersReportRoute;
   '/wallettopupreport': typeof AppWallettopupreportRoute;
+  '/landingpage': typeof AuthLandingpageRoute;
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/dashboard': typeof AppDashboardLazyRoute;
-  '/': typeof AppIndexLazyRoute;
+  '/': typeof AuthIndexLazyRoute;
   '/Approval/customerregisterapprove': typeof AppApprovalCustomerregisterapproveRoute;
   '/client/addcommision': typeof AppClientAddcommisionRoute;
   '/client/beneficiary': typeof AppClientBeneficiaryRoute;
@@ -536,11 +553,11 @@ export interface FileRoutesByFullPath {
   '/client/displayclient': typeof AppClientDisplayclientRoute;
   '/client/profile': typeof AppClientProfileRoute;
   '/client/topup-approvals': typeof AppClientTopupApprovalsRoute;
-  '/client/transactionhistory': typeof AppClientTransactionhistoryRoute;
   '/client/transfer-approvals': typeof AppClientTransferApprovalsRoute;
   '/client/transferview': typeof AppClientTransferviewRoute;
   '/Approval/registrationDetails/$id': typeof AppApprovalRegistrationDetailsIdRoute;
   '/client/beneficiaryverification/$id': typeof AppClientBeneficiaryverificationIdRoute;
+  '/client/transactionhistory/$id': typeof AppClientTransactionhistoryIdRoute;
   '/token/$user/$pass': typeof NativeTokenUserPassRoute;
 }
 
@@ -554,10 +571,11 @@ export interface FileRoutesByTo {
   '/transactionReport': typeof AppTransactionReportRoute;
   '/transfersReport': typeof AppTransfersReportRoute;
   '/wallettopupreport': typeof AppWallettopupreportRoute;
+  '/landingpage': typeof AuthLandingpageRoute;
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/dashboard': typeof AppDashboardLazyRoute;
-  '/': typeof AppIndexLazyRoute;
+  '/': typeof AuthIndexLazyRoute;
   '/Approval/customerregisterapprove': typeof AppApprovalCustomerregisterapproveRoute;
   '/client/addcommision': typeof AppClientAddcommisionRoute;
   '/client/beneficiary': typeof AppClientBeneficiaryRoute;
@@ -565,11 +583,11 @@ export interface FileRoutesByTo {
   '/client/displayclient': typeof AppClientDisplayclientRoute;
   '/client/profile': typeof AppClientProfileRoute;
   '/client/topup-approvals': typeof AppClientTopupApprovalsRoute;
-  '/client/transactionhistory': typeof AppClientTransactionhistoryRoute;
   '/client/transfer-approvals': typeof AppClientTransferApprovalsRoute;
   '/client/transferview': typeof AppClientTransferviewRoute;
   '/Approval/registrationDetails/$id': typeof AppApprovalRegistrationDetailsIdRoute;
   '/client/beneficiaryverification/$id': typeof AppClientBeneficiaryverificationIdRoute;
+  '/client/transactionhistory/$id': typeof AppClientTransactionhistoryIdRoute;
   '/token/$user/$pass': typeof NativeTokenUserPassRoute;
 }
 
@@ -587,10 +605,11 @@ export interface FileRoutesById {
   '/_app/transactionReport': typeof AppTransactionReportRoute;
   '/_app/transfersReport': typeof AppTransfersReportRoute;
   '/_app/wallettopupreport': typeof AppWallettopupreportRoute;
+  '/_auth/landingpage': typeof AuthLandingpageRoute;
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_app/dashboard': typeof AppDashboardLazyRoute;
-  '/_app/': typeof AppIndexLazyRoute;
+  '/_auth/': typeof AuthIndexLazyRoute;
   '/_app/Approval/customerregisterapprove': typeof AppApprovalCustomerregisterapproveRoute;
   '/_app/client/addcommision': typeof AppClientAddcommisionRoute;
   '/_app/client/beneficiary': typeof AppClientBeneficiaryRoute;
@@ -598,11 +617,11 @@ export interface FileRoutesById {
   '/_app/client/displayclient': typeof AppClientDisplayclientRoute;
   '/_app/client/profile': typeof AppClientProfileRoute;
   '/_app/client/topup-approvals': typeof AppClientTopupApprovalsRoute;
-  '/_app/client/transactionhistory': typeof AppClientTransactionhistoryRoute;
   '/_app/client/transfer-approvals': typeof AppClientTransferApprovalsRoute;
   '/_app/client/transferview': typeof AppClientTransferviewRoute;
   '/_app/Approval/registrationDetails/$id': typeof AppApprovalRegistrationDetailsIdRoute;
   '/_app/client/beneficiaryverification/$id': typeof AppClientBeneficiaryverificationIdRoute;
+  '/_app/client/transactionhistory/$id': typeof AppClientTransactionhistoryIdRoute;
   '/_native/token/$user/$pass': typeof NativeTokenUserPassRoute;
 }
 
@@ -618,6 +637,7 @@ export interface FileRouteTypes {
     | '/transactionReport'
     | '/transfersReport'
     | '/wallettopupreport'
+    | '/landingpage'
     | '/signin'
     | '/signup'
     | '/dashboard'
@@ -629,11 +649,11 @@ export interface FileRouteTypes {
     | '/client/displayclient'
     | '/client/profile'
     | '/client/topup-approvals'
-    | '/client/transactionhistory'
     | '/client/transfer-approvals'
     | '/client/transferview'
     | '/Approval/registrationDetails/$id'
     | '/client/beneficiaryverification/$id'
+    | '/client/transactionhistory/$id'
     | '/token/$user/$pass';
   fileRoutesByTo: FileRoutesByTo;
   to:
@@ -646,6 +666,7 @@ export interface FileRouteTypes {
     | '/transactionReport'
     | '/transfersReport'
     | '/wallettopupreport'
+    | '/landingpage'
     | '/signin'
     | '/signup'
     | '/dashboard'
@@ -657,11 +678,11 @@ export interface FileRouteTypes {
     | '/client/displayclient'
     | '/client/profile'
     | '/client/topup-approvals'
-    | '/client/transactionhistory'
     | '/client/transfer-approvals'
     | '/client/transferview'
     | '/Approval/registrationDetails/$id'
     | '/client/beneficiaryverification/$id'
+    | '/client/transactionhistory/$id'
     | '/token/$user/$pass';
   id:
     | '__root__'
@@ -677,10 +698,11 @@ export interface FileRouteTypes {
     | '/_app/transactionReport'
     | '/_app/transfersReport'
     | '/_app/wallettopupreport'
+    | '/_auth/landingpage'
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_app/dashboard'
-    | '/_app/'
+    | '/_auth/'
     | '/_app/Approval/customerregisterapprove'
     | '/_app/client/addcommision'
     | '/_app/client/beneficiary'
@@ -688,11 +710,11 @@ export interface FileRouteTypes {
     | '/_app/client/displayclient'
     | '/_app/client/profile'
     | '/_app/client/topup-approvals'
-    | '/_app/client/transactionhistory'
     | '/_app/client/transfer-approvals'
     | '/_app/client/transferview'
     | '/_app/Approval/registrationDetails/$id'
     | '/_app/client/beneficiaryverification/$id'
+    | '/_app/client/transactionhistory/$id'
     | '/_native/token/$user/$pass';
   fileRoutesById: FileRoutesById;
 }
@@ -741,7 +763,6 @@ export const routeTree = rootRoute
         "/_app/transfersReport",
         "/_app/wallettopupreport",
         "/_app/dashboard",
-        "/_app/",
         "/_app/Approval/customerregisterapprove",
         "/_app/client/addcommision",
         "/_app/client/beneficiary",
@@ -749,18 +770,20 @@ export const routeTree = rootRoute
         "/_app/client/displayclient",
         "/_app/client/profile",
         "/_app/client/topup-approvals",
-        "/_app/client/transactionhistory",
         "/_app/client/transfer-approvals",
         "/_app/client/transferview",
         "/_app/Approval/registrationDetails/$id",
-        "/_app/client/beneficiaryverification/$id"
+        "/_app/client/beneficiaryverification/$id",
+        "/_app/client/transactionhistory/$id"
       ]
     },
     "/_auth": {
       "filePath": "_auth.tsx",
       "children": [
+        "/_auth/landingpage",
         "/_auth/signin",
-        "/_auth/signup"
+        "/_auth/signup",
+        "/_auth/"
       ]
     },
     "/_customer": {
@@ -804,6 +827,10 @@ export const routeTree = rootRoute
       "filePath": "_app/wallettopupreport.tsx",
       "parent": "/_app"
     },
+    "/_auth/landingpage": {
+      "filePath": "_auth/landingpage.tsx",
+      "parent": "/_auth"
+    },
     "/_auth/signin": {
       "filePath": "_auth/signin.tsx",
       "parent": "/_auth"
@@ -816,9 +843,9 @@ export const routeTree = rootRoute
       "filePath": "_app/dashboard.lazy.tsx",
       "parent": "/_app"
     },
-    "/_app/": {
-      "filePath": "_app/index.lazy.tsx",
-      "parent": "/_app"
+    "/_auth/": {
+      "filePath": "_auth/index.lazy.tsx",
+      "parent": "/_auth"
     },
     "/_app/Approval/customerregisterapprove": {
       "filePath": "_app/Approval/customerregisterapprove.tsx",
@@ -848,10 +875,6 @@ export const routeTree = rootRoute
       "filePath": "_app/client/topup-approvals.tsx",
       "parent": "/_app"
     },
-    "/_app/client/transactionhistory": {
-      "filePath": "_app/client/transactionhistory.tsx",
-      "parent": "/_app"
-    },
     "/_app/client/transfer-approvals": {
       "filePath": "_app/client/transfer-approvals.tsx",
       "parent": "/_app"
@@ -866,6 +889,10 @@ export const routeTree = rootRoute
     },
     "/_app/client/beneficiaryverification/$id": {
       "filePath": "_app/client/beneficiaryverification.$id.tsx",
+      "parent": "/_app"
+    },
+    "/_app/client/transactionhistory/$id": {
+      "filePath": "_app/client/transactionhistory.$id.tsx",
       "parent": "/_app"
     },
     "/_native/token/$user/$pass": {
