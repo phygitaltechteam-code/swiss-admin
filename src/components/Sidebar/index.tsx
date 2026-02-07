@@ -62,17 +62,14 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             icon: <MdDashboard size={22} />,
           },
           {
-            label: 'Clients',
+            label: 'Client',
+            path: '/client/displayclient',
             icon: <FaUsers size={22} />,
-            subRoutes: [
-              {label: 'Client List', path: '/client/displayclient'},
-              // {label: 'Client Profile', path: '/client/profile'},
-              {
-                label: 'Transaction History',
-                path: '/client/transactionhistory',
-              },
-              {label: 'Beneficiary Management', path: '/client/beneficiary'},
-            ],
+          },
+          {
+            label: 'Beneficiary Management',
+            path: '/client/beneficiary',
+            icon: <FaUsers size={22} />,
           },
           {
             label: 'Verifications',
@@ -204,9 +201,10 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
         } lg:static lg:translate-x-0`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-2 py-2 lg:py-6">
+
+        <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-5">
           <button
-            className="flex items-center gap-2"
+            className="flex items-center gap-3 rounded-lg transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
             onClick={() => {
               const nextState = !isExpanded;
 
@@ -218,14 +216,17 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
               setShowSubRoutes(null);
               setHoveredRect(null);
             }}
+            aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {isExpanded ? (
-              <p className="px-4 text-3xl font-extrabold text-primary">
-                Swiss Quote
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text px-2 text-2xl font-bold text-primary text-transparent lg:text-3xl">
+                  Swiss Quote
+                </p>
+              </div>
             ) : (
-              <div className="flex items-center rounded-full p-1">
-                <BiHome className="h-15 w-15 text-primary" />
+              <div className="flex items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 p-2.5 shadow-sm transition-all duration-200 hover:from-primary/15 hover:to-primary/10">
+                <BiHome className="h-7 w-7 text-primary lg:h-8 lg:w-8" />
               </div>
             )}
           </button>
