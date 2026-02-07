@@ -164,6 +164,16 @@ export const useRejectTopup = () => {
     },
   });
 };
+export const useGettransactionbyId = (transactionId: string) => {
+  return useQuery({
+    queryKey: ['transaction', transactionId],
+    queryFn: async () => {
+      const response = await api.get(`/admin/transaction/${transactionId}`);
+      // console.log('GET Client', response.data);
+      return response.data;
+    },
+  });
+};
 
 // Helper function to find transactions in nested response
 const findTransactionsInResponse = (data: any): ApiTransaction[] => {

@@ -16,8 +16,9 @@ const DEFAULT_STATS: SummaryStats = {
 };
 
 const MainTopupPage: React.FC = () => {
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<TransactionTopup | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<string | null>(
+    null,
+  );
   const {data: topupData, isLoading, error, refetch} = useGetTopupApproved();
   const [transactions, setTransactions] = useState<TransactionTopup[]>([]);
   const [stats, setStats] = useState<SummaryStats>(DEFAULT_STATS);
@@ -123,7 +124,7 @@ const MainTopupPage: React.FC = () => {
       <main className="h-full flex-1 overflow-hidden">
         {selectedTransaction ? (
           <TopUpDetail
-            transaction={selectedTransaction}
+            transactionId={selectedTransaction}
             onBack={() => setSelectedTransaction(null)}
             onStatusUpdate={handleStatusUpdate}
           />

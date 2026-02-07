@@ -1,175 +1,106 @@
 import React from 'react';
-import {
-  MdArrowDropDown,
-  MdAccountBalance,
-  MdCreditCard,
-  MdSyncAlt,
-  MdPayments,
-  MdVisibility,
-} from 'react-icons/md';
+import {MdVisibility} from 'react-icons/md';
 
-import {TRANSACTIONS} from './constants';
-import {Transaction} from '@/types/transactionhistory';
+interface TransactionRow {
+  id: string;
+  date: string;
+  time: string;
+  recipient: string;
+  type: string;
+  amount: number;
+  status: 'Pending' | 'Completed';
+}
 
-const TransactionTable: React.FC = () => {
-  const getStatusBadge = (status: Transaction['status']) => {
-    if (status === 'Completed') {
-      return (
-        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
-          Completed
-        </span>
-      );
-    }
+interface Props {
+  transactions: TransactionRow[];
+  loading?: boolean;
+}
+
+const TransactionTable: React.FC<Props> = ({transactions, loading}) => {
+  if (loading) {
     return (
-      <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-        Pending
-      </span>
+      <div className="rounded-xl bg-white p-6 text-center">
+        Loading transactions...
+      </div>
     );
-  };
+  }
 
-  const getTypeIcon = (type: Transaction['type']) => {
-    switch (type) {
-      case 'Deposit':
-        return <MdAccountBalance className="text-base" />;
-      case 'Payment':
-        return <MdCreditCard className="text-base" />;
-      case 'Transfer':
-        return <MdSyncAlt className="text-base" />;
-      case 'Withdrawal':
-        return <MdPayments className="text-base" />;
-      default:
-        return null;
-    }
-  };
-
-  const getAmountColor = (amount: number) => {
-    if (amount > 0) return 'text-emerald-600';
-    if (amount < -1000) return 'text-header-text'; // High negative styling if desired, usually just red or dark
-    if (amount === -250) return 'text-rose-500'; // Mimicking the specific visual
-    return 'text-header-text';
-  };
-
-  const formatAmount = (amount: number) => {
-    const sign = amount > 0 ? '+' : '-';
-    const absVal = Math.abs(amount).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    return `${sign}$${absVal}`;
-  };
+  if (!transactions.length) {
+    return (
+      <div className="rounded-xl bg-white p-6 text-center">
+        No transactions found
+      </div>
+    );
+  }
 
   return (
-    <div className="font-display flex flex-col overflow-hidden rounded-xl border border-stroke bg-white shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="border-b border-stroke bg-neutral-100">
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider">
-                <div className="group flex cursor-pointer items-center gap-1 hover:text-primary">
-                  Date & Time
-                  <MdArrowDropDown className="text-base group-hover:text-primary" />
-                </div>
-              </th>
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider">
-                Transaction ID
-              </th>
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider">
-                Recipient / Beneficiary
-              </th>
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider">
-                Type
-              </th>
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider">
-                Status
-              </th>
-              <th className="text-secondary-text whitespace-nowrap px-6 py-4 text-center text-xs font-bold uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stroke">
-            {TRANSACTIONS.map((trx) => (
-              <tr
-                key={trx.id}
-                className="hover:bg-gray-50 group transition-colors"
-              >
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className="text-header-text text-sm font-medium">
-                    {trx.date}
-                  </div>
-                  <div className="text-secondary-text text-xs">{trx.time}</div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <span className="font-mono text-secondary-text bg-gray-100 rounded px-2 py-1 text-sm">
-                    {trx.id}
-                  </span>
-                </td>
-                <td className="text-secondary-text whitespace-nowrap px-6 py-4 text-sm">
-                  {trx.recipient}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className="text-secondary-text flex items-center gap-2 text-sm">
-                    {getTypeIcon(trx.type)}
-                    {trx.type}
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-right">
-                  <span
-                    className={`text-sm font-bold ${getAmountColor(trx.amount)}`}
-                  >
-                    {formatAmount(trx.amount)}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  {getStatusBadge(trx.status)}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-center">
-                  <button
-                    className="text-gray-400 hover:bg-gray-100 rounded-full p-2 transition-colors hover:text-primary"
-                    title="View Details"
-                  >
-                    <MdVisibility className="text-[20px]" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+      <table className="w-full text-left">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-6 py-3 text-xs font-bold uppercase">Date</th>
+            {/* <th className="px-6 py-3 text-xs font-bold uppercase">
+              Transaction ID
+            </th> */}
+            <th className="px-6 py-3 text-xs font-bold uppercase">Recipient</th>
+            <th className="px-6 py-3 text-xs font-bold uppercase">Type</th>
+            <th className="px-6 py-3 text-right text-xs font-bold uppercase">
+              Amount
+            </th>
+            <th className="px-6 py-3 text-xs font-bold uppercase">Status</th>
+            {/* <th className="px-6 py-3 text-center text-xs font-bold uppercase">
+              Action
+            </th> */}
+          </tr>
+        </thead>
 
-      {/* Pagination Footer */}
-      <div className="bg-gray-50 flex items-center justify-between border-t border-stroke px-6 py-4">
-        <p className="text-secondary-text text-sm">
-          Showing <span className="text-header-text font-bold">1</span> to{' '}
-          <span className="text-header-text font-bold">4</span> of{' '}
-          <span className="text-header-text font-bold">42</span> results
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            className="border-gray-300 text-secondary-text rounded border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white disabled:opacity-50"
-            disabled
-          >
-            Previous
-          </button>
-          <div className="hidden items-center gap-1 sm:flex">
-            <button className="flex size-8 items-center justify-center rounded bg-primary text-sm font-medium text-white">
-              1
-            </button>
-            <button className="hover:bg-gray-200 text-secondary-text flex size-8 items-center justify-center rounded text-sm font-medium transition-colors">
-              2
-            </button>
-            <button className="hover:bg-gray-200 text-secondary-text flex size-8 items-center justify-center rounded text-sm font-medium transition-colors">
-              3
-            </button>
-          </div>
-          <button className="border-gray-300 text-secondary-text rounded border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white">
-            Next
-          </button>
-        </div>
-      </div>
+        <tbody className="divide-y">
+          {transactions.map((trx) => (
+            <tr key={trx.id} className="hover:bg-gray-50">
+              <td className="px-6 py-4">
+                <div className="font-medium">{trx.date}</div>
+                <div className="text-gray-500 text-xs">{trx.time}</div>
+              </td>
+
+              {/* <td className="px-6 py-4 font-mono text-xs">
+                {trx.id}
+              </td> */}
+
+              <td className="px-6 py-4">{trx.recipient}</td>
+
+              <td className="px-6 py-4">{trx.type}</td>
+
+              <td className="px-6 py-4 text-right font-bold">
+                <span
+                  className={
+                    trx.amount > 0 ? 'text-emerald-600' : 'text-rose-500'
+                  }
+                >
+                  {trx.amount > 0 ? '+' : '-'}${Math.abs(trx.amount).toFixed(2)}
+                </span>
+              </td>
+
+              <td className="px-6 py-4">
+                <span
+                  className={`rounded px-2 py-1 text-xs ${
+                    trx.status === 'Pending'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-emerald-100 text-emerald-700'
+                  }`}
+                >
+                  {trx.status}
+                </span>
+              </td>
+
+              {/* <td className="px-6 py-4 text-center">
+                <button className="rounded-full p-2 hover:bg-gray-100">
+                  <MdVisibility />
+                </button>
+              </td> */}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

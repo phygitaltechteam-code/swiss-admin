@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {useSearch} from '@tanstack/react-router';
+import {useNavigate, useSearch} from '@tanstack/react-router';
 import {useGetCustomerById} from '@/lib/react-query/client';
 import {
   MdPerson,
@@ -25,7 +25,7 @@ import {Card} from './Card';
 
 const ClientProfile: React.FC = () => {
   const [isActive, setIsActive] = useState(true);
-
+  const navigate = useNavigate();
   // Get the ID from search params
   const search = useSearch({from: '/_app/client/profile'});
   const clientId = search.id;
@@ -40,13 +40,6 @@ const ClientProfile: React.FC = () => {
   // Extract data from API response
   const clientData = apiResponse?.data || apiResponse; // Handle both response structures
   const userData = clientData?.user;
-
-  console.log('Client Profile Data:', {
-    clientId,
-    apiResponse,
-    clientData,
-    userData,
-  });
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -287,7 +280,12 @@ const ClientProfile: React.FC = () => {
                 <button className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none">
                   See History
                 </button>
-                <button className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none">
+                <button
+                  className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none"
+                  onClick={() =>
+                    navigate({to: `/client/transactionhistory/${clientId}`})
+                  }
+                >
                   View Transactions
                 </button>
 
