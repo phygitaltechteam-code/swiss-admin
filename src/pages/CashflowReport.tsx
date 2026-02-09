@@ -493,28 +493,6 @@ const CashflowReport: React.FC = () => {
             ))}
           </div> */}
 
-          {/* Chart Section */}
-          <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg border bg-white p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-gray-900 text-lg font-bold dark:text-white">
-                Cash Flow Trend
-              </h3>
-              <div className="text-gray-500 dark:text-gray-400 text-sm">
-                {timeRange === 'sixMonth' && 'Last 6 Months'}
-                {timeRange === 'oneYear' && 'Last 12 Months'}
-                {timeRange === 'ytd' && 'Year to Date'}
-              </div>
-            </div>
-            <ChartSection data={chartData} />
-            {chartData.length === 0 && (
-              <div className="flex h-64 items-center justify-center">
-                <p className="text-gray-500 dark:text-gray-400">
-                  No cash flow data available for the selected period
-                </p>
-              </div>
-            )}
-          </div>
-
           {/* Transaction Table */}
           <div className="flex flex-col gap-4">
             {/* Filters & Search */}
@@ -579,6 +557,27 @@ const CashflowReport: React.FC = () => {
                   paginationOff={false}
                 />
               </div>
+            </div>
+            {/* Chart Section */}
+            <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg border bg-white p-6 shadow-sm">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-gray-900 text-lg font-bold dark:text-white">
+                  Cash Flow Trend
+                </h3>
+                <div className="text-gray-500 dark:text-gray-400 text-sm">
+                  {timeRange === 'sixMonth' && 'Last 6 Months'}
+                  {timeRange === 'oneYear' && 'Last 12 Months'}
+                  {timeRange === 'ytd' && 'Year to Date'}
+                </div>
+              </div>
+              <ChartSection data={chartData} />
+              {chartData.length === 0 && (
+                <div className="flex h-64 items-center justify-center">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    No cash flow data available for the selected period
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

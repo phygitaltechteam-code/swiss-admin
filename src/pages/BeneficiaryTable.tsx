@@ -1,34 +1,17 @@
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {useGetBeneficiaries} from '@/lib/api/report';
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-} from 'react';
-import {FaFilePdf, FaFileCsv} from 'react-icons/fa6';
+import React, {forwardRef, useImperativeHandle, useMemo, useState} from 'react';
 import {
-  MdPrint,
-  MdPendingActions,
-  MdDomain,
-  MdGroup,
-  MdCheckCircle,
-  MdSearch,
-  MdFilterList,
-  MdDownload,
-  MdWarning,
   MdCheck,
-  MdPublic,
-  MdPerson,
-  MdEmail,
-  MdPhone,
-  MdAccountBalance,
-  MdVisibility,
+  MdCheckCircle,
   MdClose,
-  MdLock,
+  MdFilterList,
+  MdGroup,
+  MdPerson,
+  MdPublic,
+  MdSearch,
+  MdVisibility,
 } from 'react-icons/md';
-import {ExportFunctions} from './ExportFunctions';
 
 // Types for the API response
 interface User {
@@ -535,11 +518,13 @@ const BeneficiaryTable = forwardRef((props, ref) => {
           .length || 0;
       const totalForeignCount = beneficiary.foreignBeneficiaries?.length || 0;
 
+      console.log('verifiedForeignCount', apiResponse);
+
       return {
         id: beneficiary.id,
-        fullname: beneficiary.user?.fullname || 'N/A',
-        email: beneficiary.user?.email || 'N/A',
-        phoneNumber: beneficiary.user?.phoneNumber || 'N/A',
+        fullname: beneficiary.foreignBeneficiaries?.fullname || 'N/A',
+        email: beneficiary.foreignBeneficiaries?.email || 'N/A',
+        phoneNumber: beneficiary.foreignBeneficiaries?.phoneNumber || 'N/A',
         accountNumber: beneficiary.accountNumber || 'N/A',
         isActive: beneficiary.user?.isActive || false,
         isVerified: beneficiary.user?.isVerified || false,
@@ -651,7 +636,7 @@ const BeneficiaryTable = forwardRef((props, ref) => {
         change: total > 0 ? `+${Math.floor(total * 0.12)}` : '0',
         changeLabel: 'vs last month',
         icon: MdGroup,
-        color: 'bg-blue-100 text-blue-600',
+        color: 'bg-orange-100 text-orange-600',
       },
       {
         title: 'Active Users',
@@ -659,7 +644,7 @@ const BeneficiaryTable = forwardRef((props, ref) => {
         change: active > 0 ? `+${Math.floor(active * 0.08)}` : '0',
         changeLabel: 'vs last month',
         icon: MdCheckCircle,
-        color: 'bg-green-100 text-green-600',
+        color: 'bg-orange-100 text-orange-600',
       },
       {
         title: 'Verified Users',
@@ -667,7 +652,7 @@ const BeneficiaryTable = forwardRef((props, ref) => {
         change: verified > 0 ? `+${Math.floor(verified * 0.15)}` : '0',
         changeLabel: 'vs last month',
         icon: MdCheck,
-        color: 'bg-purple-100 text-purple-600',
+        color: 'bg-orange-100 text-orange-600',
       },
       {
         title: 'With Foreign Beneficiaries',

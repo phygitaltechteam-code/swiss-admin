@@ -1,13 +1,20 @@
 // AllTransaction.tsx
 import React, {useState, useMemo} from 'react';
-import {FaFilePdf, FaFileCsv} from 'react-icons/fa6';
+import {
+  FaFilePdf,
+  FaFileCsv,
+  FaChartArea,
+  FaChartLine,
+  FaHourglassHalf,
+} from 'react-icons/fa6';
 import {FiPrinter} from 'react-icons/fi';
 import StatsCards from '@/components/alltransactionreports/StatsCards';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {useGetAllTransaction} from '@/lib/react-query/alltransaction';
 import {jsPDF} from 'jspdf';
 import 'jspdf-autotable';
-import {MdSearch} from 'react-icons/md';
+import {MdPieChart, MdSearch} from 'react-icons/md';
+import {FaCheckCircle, FaTimesCircle} from 'react-icons/fa';
 
 // Define the Transaction interface based on your API response
 interface Transaction {
@@ -116,7 +123,7 @@ function AllTransaction() {
         value: statsData.totalTransactions.toString(),
         change: '+12.5%',
         changeType: 'increase',
-        icon: '📊',
+        icon: <MdPieChart />,
         trend: '+12.5',
         trendDirection: 'up',
         trendLabel: 'from last month',
@@ -127,7 +134,7 @@ function AllTransaction() {
         value: `$${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
         change: '+8.3%',
         changeType: 'increase',
-        icon: '💰',
+        icon: <FaFilePdf />,
         trend: '+8.3',
         trendDirection: 'up',
         trendLabel: 'from last month',
@@ -138,7 +145,7 @@ function AllTransaction() {
         value: statsData.successfulTransactions.toString(),
         change: '+5.2%',
         changeType: 'increase',
-        icon: '✅',
+        icon: <FaCheckCircle />,
         trend: '+5.2',
         trendDirection: 'up',
         trendLabel: 'success rate',
@@ -149,7 +156,7 @@ function AllTransaction() {
         value: statsData.pendingTransactions.toString(),
         change: '+2.1%',
         changeType: 'increase',
-        icon: '⏳',
+        icon: <FaHourglassHalf />,
         trend: '+2.1',
         trendDirection: 'up',
         trendLabel: 'awaiting processing',
@@ -160,7 +167,7 @@ function AllTransaction() {
         value: statsData.failedTransactions.toString(),
         change: '-1.8%',
         changeType: 'decrease',
-        icon: '❌',
+        icon: <FaTimesCircle />,
         trend: '-1.8',
         trendDirection: 'down',
         trendLabel: 'failure rate',
@@ -171,7 +178,7 @@ function AllTransaction() {
         value: `$${statsData.creditAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
         change: '+15.7%',
         changeType: 'increase',
-        icon: '📈',
+        icon: <FaChartLine />,
         trend: '+15.7',
         trendDirection: 'up',
         trendLabel: 'credit volume',
@@ -182,7 +189,7 @@ function AllTransaction() {
         value: `$${statsData.debitAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
         change: '+10.2%',
         changeType: 'increase',
-        icon: '📉',
+        icon: <FaChartArea />,
         trend: '+10.2',
         trendDirection: 'up',
         trendLabel: 'debit volume',

@@ -565,7 +565,7 @@ const ClientListReport: React.FC = () => {
         change: clientGrowth,
         changeLabel: 'vs last month',
         icon: MdPerson,
-        color: 'bg-blue-100 text-blue-600',
+        color: 'bg-orange-100 text-orange-600',
         trend: 'up' as const,
       },
       {
@@ -574,7 +574,7 @@ const ClientListReport: React.FC = () => {
         change: activeGrowth,
         changeLabel: 'vs last month',
         icon: MdOutlineAccountBalance,
-        color: 'bg-green-100 text-green-600',
+        color: 'bg-orange-100 text-orange-600',
         trend: 'up' as const,
       },
       {
@@ -583,7 +583,7 @@ const ClientListReport: React.FC = () => {
         change: balanceGrowth,
         changeLabel: 'vs last quarter',
         icon: MdAttachMoney,
-        color: 'bg-purple-100 text-purple-600',
+        color: 'bg-orange-100 text-orange-600',
         trend: 'up' as const,
       },
       {
@@ -592,7 +592,7 @@ const ClientListReport: React.FC = () => {
         change: activityGrowth,
         changeLabel: 'per client',
         icon: MdCalendarToday,
-        color: 'bg-yellow-100 text-yellow-600',
+        color: 'bg-orange-100 text-orange-600',
         trend: activityGrowth.startsWith('-')
           ? ('down' as const)
           : ('up' as const),
@@ -603,7 +603,7 @@ const ClientListReport: React.FC = () => {
         change: verifiedClients > 0 ? '+5%' : '+0%',
         changeLabel: 'vs last month',
         icon: MdCheckCircle,
-        color: 'bg-indigo-100 text-indigo-600',
+        color: 'bg-orange-100 text-orange-600',
         trend: 'up' as const,
       },
     ];
@@ -1003,7 +1003,7 @@ const ClientListReport: React.FC = () => {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {dynamicStats.map((stat, index) => (
               <StatCard key={index} stat={stat} />
             ))}

@@ -250,7 +250,7 @@ const BeneficiaryPage: React.FC = () => {
               className="border-gray-300 text-gray-700 hover:bg-gray-50 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
               title="Export current filtered view as PDF"
             >
-              <FaFilePdf className="text-red-500" />
+              <FaFilePdf />
               <span>Export PDF</span>
             </button>
             <button
@@ -258,7 +258,7 @@ const BeneficiaryPage: React.FC = () => {
               className="border-gray-300 text-gray-700 hover:bg-gray-50 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
               title="Export current filtered view as CSV"
             >
-              <FaFileCsv className="text-green-500" />
+              <FaFileCsv />
               <span>Export CSV</span>
             </button>
             <button

@@ -11,6 +11,8 @@ import StatsCard from '@/components/wallettopupreport/StatsCard';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {Transaction} from '@/components/wallettopupreport/types';
 import {useGetTopupApproved} from '@/lib/react-query/Topup';
+import {FaCopy, FaFilePdf, FaHourglassHalf, FaRupeeSign} from 'react-icons/fa';
+import {IoMdRadioButtonOff} from 'react-icons/io';
 //import {useGetTopupApproved} from '@/lib/react-query/topup';
 
 // PDF Export Service - Separate from React component
@@ -459,7 +461,7 @@ const WalletReport: React.FC = () => {
         trend: '8.2%',
         trendDirection: 'up',
         subtext: 'vs last month',
-        icon: '💰',
+        icon: <FaRupeeSign />,
       },
       {
         title: 'Total Requests',
@@ -467,7 +469,7 @@ const WalletReport: React.FC = () => {
         trend: '12.5%',
         trendDirection: 'up',
         subtext: 'volume increase',
-        icon: '📋',
+        icon: <FaCopy />,
       },
       {
         title: 'Most Used Method',
@@ -475,13 +477,13 @@ const WalletReport: React.FC = () => {
         subtext: mostUsedType
           ? `${Math.round((mostUsedType[1] / transactions.length) * 100)}% of total`
           : '65% of total volume',
-        icon: '🏦',
+        icon: <IoMdRadioButtonOff />,
         highlightValue: true,
       },
       {
         title: 'Pending Approval',
         value: pendingCount.toString(),
-        icon: '⏳',
+        icon: <FaHourglassHalf />,
         alert: pendingCount > 0,
       },
     ];
