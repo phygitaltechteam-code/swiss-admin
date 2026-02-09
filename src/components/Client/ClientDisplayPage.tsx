@@ -59,9 +59,9 @@ const transformApiDataToClient = (apiClient: any): Client => {
     transVolume: transVolume,
     privateBalance: privateBalance,
     tempBalance: tempBalance,
-    isActive: apiClient.user?.isActive || false,
-    isVerified: apiClient.user?.isVerified || false,
-    isRejected: apiClient.user?.isRejected || false,
+    isActive: apiClient.user?.isActive,
+    isVerified: apiClient.user?.isVerified,
+    isRejected: apiClient.user?.isRejected,
     // Additional fields from API
     address: apiClient.address,
     city: apiClient.city,
@@ -294,23 +294,34 @@ const ClientDisplay: React.FC = () => {
     {
       header: 'Status',
       accessor: 'isActive',
-      render: (item) => (
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            item.isActive
-              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-          }`}
-        >
+      render: (item) => {
+        let label = 'Inactive';
+        let style =
+          'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+        let dot = 'bg-gray-500';
+
+        if (item.isRejected) {
+          label = 'Rejected';
+          style =
+            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+          dot = 'bg-red-500';
+        } else if (item.isActive && item.isVerified) {
+          label = 'Active';
+          style =
+            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+          dot = 'bg-emerald-500';
+        }
+
+        return (
           <span
-            className={`size-1.5 rounded-full ${
-              item.isActive ? 'bg-emerald-500' : 'bg-gray-500'
-            }`}
-          ></span>
-          {item.isActive ? 'Active' : 'Inactive'}
-        </span>
-      ),
-      className: 'min-w-[100px]',
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${style}`}
+          >
+            <span className={`size-1.5 rounded-full ${dot}`}></span>
+            {label}
+          </span>
+        );
+      },
+      className: 'min-w-[120px]',
     },
   ];
 

@@ -84,7 +84,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-gray-900 font-semibold">Identity Document</h4>
-            <span className="text-gray-500 text-xs">1 of 3</span>
+            {/* <span className="text-gray-500 text-xs">1 of 3</span> */}
           </div>
           <div className="bg-gray-900 group relative flex h-48 items-center justify-center overflow-hidden rounded-lg p-4">
             {/* Background gradient */}
@@ -128,7 +128,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
         {/* Applicant Data */}
         <div>
           <h4 className="text-gray-900 mb-3 font-semibold">Applicant Data</h4>
-          <div className="space-y-3 text-sm">
+          <div className="space-y-5 text-sm">
             <DataRow label="Full Name" value={request?.user?.fullname} />
             <DataRow label="ID Number" value={request.id} font="font-mono" />
             <DataRow label="Email" value={request?.user?.email} />
@@ -143,7 +143,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
         </div>
 
         {/* Verification Checklist */}
-        <div>
+        {/* <div>
           <h4 className="text-gray-900 mb-3 font-semibold">
             Verification Checklist
           </h4>
@@ -161,7 +161,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
               checked={false}
             />
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Sticky Action Footer */}

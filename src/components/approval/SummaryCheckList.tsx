@@ -26,7 +26,7 @@ const SummaryChecklist: React.FC<props> = ({SWIFTBIC, photo}) => {
               src={photo}
             />
           </div>
-          <div className="flex-1">
+          {/* <div className="flex-1">
             <div className="mb-1 text-sm font-bold text-neutral-500">
               SWIFTBIC
             </div>
@@ -36,14 +36,14 @@ const SummaryChecklist: React.FC<props> = ({SWIFTBIC, photo}) => {
                   {SWIFTBIC}
                 </span>
               </div>
-              {/* <div>
+            <div>
                 <span className="text-gray-400">Exp:</span>{' '}
                 <span className="text-gray-700 ml-1 font-semibold">
                   12 Aug 2028
                 </span>
-              </div> */}
+              </div> 
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Checklist Items */}

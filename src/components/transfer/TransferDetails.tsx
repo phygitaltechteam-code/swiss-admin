@@ -124,6 +124,8 @@ export const TransferDetails = () => {
   }
 
   const beneficiary = transaction.beneficiaryDetails;
+  console.log('Beneficiary Details:', transaction);
+
   const status = transaction.isRejected
     ? 'Rejected'
     : !transaction.isPending
@@ -480,59 +482,106 @@ export const TransferDetails = () => {
 
             {/* Beneficiary Details Card */}
             {beneficiary && (
-              <div className="rounded-xl bg-white p-4 shadow-sm">
+              <div className="rounded-xl bg-white p-5 shadow-sm">
                 <h4 className="text-gray-900 mb-4 flex items-center gap-2 text-sm font-bold">
                   <MdPerson className="text-primary" />
-                  Beneficiary Details
+                  Full Beneficiary Information
                 </h4>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <MdLocationOn className="text-gray-400 mt-0.5 text-[16px]" />
-                    <div>
-                      <p className="text-gray-600 text-xs">Address</p>
-                      <p className="text-gray-900 text-sm font-medium">
-                        {beneficiary.address}, {beneficiary.city},{' '}
-                        {beneficiary.state}
-                      </p>
-                    </div>
+
+                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                  {/* Personal Info */}
+                  <div>
+                    <p className="text-gray-500 text-xs">Full Name</p>
+                    <p className="font-medium">{beneficiary.fullName}</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <MdPhone className="text-gray-400 mt-0.5 text-[16px]" />
-                    <div>
-                      <p className="text-gray-600 text-xs">Phone</p>
-                      <p className="text-gray-900 text-sm font-medium">
-                        {beneficiary.countryCode} {beneficiary.phoneNumber}
-                      </p>
-                    </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Relationship</p>
+                    <p className="font-medium">
+                      {beneficiary.relationship || 'N/A'}
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <MdEmail className="text-gray-400 mt-0.5 text-[16px]" />
-                    <div>
-                      <p className="text-gray-600 text-xs">Email</p>
-                      <p className="text-gray-900 text-sm font-medium">
-                        {beneficiary.email}
-                      </p>
-                    </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Email</p>
+                    <p className="font-medium">{beneficiary.email || 'N/A'}</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <MdAccountBalance className="text-gray-400 mt-0.5 text-[16px]" />
-                    <div>
-                      <p className="text-gray-600 text-xs">Account Type</p>
-                      <p className="text-gray-900 text-sm font-medium">
-                        {beneficiary.accountType}
-                      </p>
-                    </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className="font-medium">
+                      {beneficiary.countryCode} {beneficiary.phoneNumber}
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="text-gray-400 mt-0.5 w-4 text-[16px]">
-                      🌐
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs">Country</p>
-                      <p className="text-gray-900 text-sm font-medium">
-                        {beneficiary.country} / {beneficiary.bankCountry}
-                      </p>
-                    </div>
+
+                  {/* Address */}
+                  <div className="md:col-span-2">
+                    <p className="text-gray-500 text-xs">Address</p>
+                    <p className="font-medium">
+                      {beneficiary.address || 'N/A'}, {beneficiary.city},{' '}
+                      {beneficiary.state}, {beneficiary.pincode}
+                    </p>
+                  </div>
+
+                  {/* Bank Info */}
+                  <div>
+                    <p className="text-gray-500 text-xs">Bank Name</p>
+                    <p className="font-medium">{beneficiary.bankName}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Branch</p>
+                    <p className="font-medium">
+                      {beneficiary.branchName || 'N/A'}
+                    </p>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <p className="text-gray-500 text-xs">Account Number</p>
+                    <p className="font-mono bg-gray-50 w-fit rounded border px-2 py-1">
+                      {beneficiary.accountNumber}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Account Type</p>
+                    <p className="font-medium">{beneficiary.accountType}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Currency</p>
+                    <p className="font-medium">{beneficiary.currency}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">SWIFT / BIC</p>
+                    <p className="font-mono">{beneficiary.SWIFTBIC || 'N/A'}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">IFSC</p>
+                    <p className="font-mono">{beneficiary.IFSC || 'N/A'}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 text-xs">Country</p>
+                    <p className="font-medium">
+                      {beneficiary.country} / {beneficiary.bankCountry}
+                    </p>
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <p className="text-gray-500 text-xs">Verification</p>
+                    <p
+                      className={`font-bold ${
+                        beneficiary.isVerified
+                          ? 'text-green-600'
+                          : 'text-yellow-600'
+                      }`}
+                    >
+                      {beneficiary.isVerified ? 'Verified' : 'Pending'}
+                    </p>
                   </div>
                 </div>
               </div>

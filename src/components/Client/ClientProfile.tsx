@@ -234,30 +234,46 @@ const ClientProfile: React.FC = () => {
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {/* Main Status Badge */}
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${userData?.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        userData?.isRejected
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                          : userData?.isActive && userData?.isVerified
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                      }`}
                     >
                       <span
-                        className={`size-1.5 rounded-full ${userData?.isActive ? 'bg-green-500' : 'bg-gray-500'}`}
+                        className={`size-1.5 rounded-full ${
+                          userData?.isRejected
+                            ? 'bg-red-500'
+                            : userData?.isActive && userData?.isVerified
+                              ? 'bg-green-500'
+                              : 'bg-gray-500'
+                        }`}
                       ></span>
-                      {userData?.isActive ? 'Active' : 'Inactive'}
+
+                      {userData?.isRejected
+                        ? 'Rejected'
+                        : userData?.isActive && userData?.isVerified
+                          ? 'Active'
+                          : 'Inactive'}
                     </span>
-                    {userData?.isVerified && (
+
+                    {/* Verified Badge (only if verified and not rejected) */}
+                    {userData?.isVerified && !userData?.isRejected && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                         <MdCheckCircle className="text-xs" />
                         Verified
                       </span>
                     )}
-                    {userData?.isRejected && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                        <MdCancel className="text-xs" />
-                        Rejected
-                      </span>
-                    )}
-                    {clientData.rejectedReason && (
+
+                    {/* Rejected Reason */}
+                    {userData?.isRejected && clientData?.rejectedReason && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
                         <MdInfo className="text-xs" />
-                        Rejected with Reason
+                        {clientData.rejectedReason}
                       </span>
                     )}
                   </div>
@@ -288,7 +304,11 @@ const ClientProfile: React.FC = () => {
                   />
                   <div className="bg-gray-200 dark:bg-gray-700 after:border-gray-300 peer h-6 w-11 rounded-full after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30"></div>
                   <span className="text-text-light dark:text-text-dark ml-3 select-none text-sm font-medium">
-                    {userData?.isActive ? 'Active' : 'Inactive'}
+                    {userData?.isRejected
+                      ? 'Rejected'
+                      : userData?.isActive && userData?.isVerified
+                        ? 'Active'
+                        : 'Inactive'}
                   </span>
                 </label>
               </div>
@@ -626,9 +646,9 @@ const ClientProfile: React.FC = () => {
                         {/* <button className="flex-1 rounded-lg bg-white/10 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:bg-white/30">
                           Add Funds
                         </button> */}
-                        <button className="hover:bg-primary-hover flex-1 rounded-lg bg-primary py-2.5 text-xs font-medium text-white shadow-lg shadow-orange-900/20 transition-all active:bg-orange-700">
+                        {/* <button className="hover:bg-primary-hover flex-1 rounded-lg bg-primary py-2.5 text-xs font-medium text-white shadow-lg shadow-orange-900/20 transition-all active:bg-orange-700">
                           Withdraw
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   </div>

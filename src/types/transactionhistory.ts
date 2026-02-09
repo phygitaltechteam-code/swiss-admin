@@ -1,73 +1,130 @@
-// types/transactionhistory.ts
-export interface TransactionTransfer {
+// src/types/transaction-detail.ts
+
+/* ================================
+   User Type
+================================ */
+export interface User {
+  fullname: string;
+  email: string;
+  phoneNumber: string;
+  isActive: boolean;
+  dob: string | null;
+  isVerified: boolean;
+  isRejected: boolean;
+}
+
+/* ================================
+   Customer Type
+================================ */
+export interface Customer {
+  id: string;
+  userId: string;
+
+  passport: string | null;
+  aadharCard: string | null;
+  panCard: string | null;
+
+  passportNumber: string | null;
+  aadharCardNumber: string | null;
+  panCardNumber: string | null;
+
+  accountNumber: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  pincode: string;
+
+  photo: string | null;
+  securityPin: string;
+  rejectedReason: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+
+  user: User;
+}
+
+/* ================================
+   Beneficiary Type
+================================ */
+export interface Beneficiary {
+  id: string;
+  customerId: string;
+
+  fullName: string;
+  country: string;
+  currency: string;
+
+  accountNumber: string;
+  accountType: string;
+  SWIFTBIC: string;
+  IFSC: string;
+
+  bankName: string;
+  branchName: string;
+
+  address: string;
+  city: string;
+  state: string;
+  bankCountry: string;
+  pincode: string;
+
+  relationship: string;
+  email: string;
+  phoneNumber: string;
+  countryCode: string;
+
+  rejectReason: string | null;
+  isVerified: boolean;
+  isRejected: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/* ================================
+   Transaction Type
+================================ */
+export type TransactionType = 'CREDIT' | 'DEBIT';
+
+export interface TransactionDetail {
   id: string;
   walletId: string;
+
   particular: string;
   receiverId: string | null;
   senderId: string | null;
   beneficiaryId: string | null;
+
   amount: number;
   amountType: string;
   accountType: string;
-  type: 'CREDIT' | 'DEBIT';
+  type: TransactionType;
+
   rejectReason: string | null;
   isPending: boolean;
   isRejected: boolean;
+
+  // Wallet balances
+  eprivateAccount: number;
+  temporyAccount: number;
+
   createdAt: string;
   updatedAt: string;
-  fullname?: string;
-  email?: string;
-  phoneNumber?: string;
-  isActive?: boolean;
-  isVerified?: boolean;
-  dob?: string | null;
 
-  // UI specific fields
-  senderName?: string;
-  beneficiary?: string;
-  beneficiaryDetails?: {
-    id: string;
-    customerId: string;
-    fullName: string;
-    country: string;
-    currency: string;
-    accountNumber: string;
-    accountType: string;
-    SWIFTBIC: string;
-    IFSC: string;
-    bankName: string;
-    address: string;
-    city: string;
-    state: string;
-    bankCountry: string;
-    pincode: string;
-    relationship: string;
-    email: string;
-    phoneNumber: string;
-    countryCode: string;
-    rejectReason: string | null;
-    isVerified: boolean;
-    isRejected: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
-  date?: string;
-  status?: 'Pending' | 'Approved' | 'Rejected' | 'Payment Completed';
-  senderAvatar?: string;
+  // Relations
+  beneficiary?: Beneficiary | null;
+  customer?: Customer | null;
 }
 
-export interface SummaryStats {
-  totalTransactions: number;
-  totalAmount: number;
-  pendingCount: number;
-  rejectedCount: number;
-  approvedCount: number;
-}
-
-export interface ApiResponse {
+/* ================================
+   API Response Type
+================================ */
+export interface TransactionDetailResponse {
   statusCode: number;
   status: boolean;
   message: string;
-  data: TransactionTransfer[];
-  errors: null;
+  data: TransactionDetail;
+  errors: any;
 }

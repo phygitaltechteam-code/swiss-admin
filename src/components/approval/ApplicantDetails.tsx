@@ -3,9 +3,11 @@ import React from 'react';
 import {
   MdBadge,
   MdAccountBalance,
-  MdStore,
   MdOpenInNew,
   MdZoomIn,
+  MdCheckCircle,
+  MdCancel,
+  MdInfo,
 } from 'react-icons/md';
 
 const Label: React.FC<{children: React.ReactNode}> = ({children}) => (
@@ -18,16 +20,31 @@ const Value: React.FC<{children: React.ReactNode; className?: string}> = ({
   children,
   className = '',
 }) => (
-  <div className={`text-theme-header text-sm font-bold ${className}`}>
-    {children}
-  </div>
+  <div className={`text-sm font-bold text-black ${className}`}>{children}</div>
 );
 
-type props = {
+type Props = {
   customerDetails: UserRequest;
 };
 
-const ApplicantDetails: React.FC<props> = ({customerDetails}) => {
+const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
+  // -------------------- STATUS --------------------
+  const user = customerDetails?.user;
+
+  const getStatus = () => {
+    if (user?.isRejected) return 'Rejected';
+    if (user?.isActive && user?.isVerified) return 'Active';
+    return 'Inactive';
+  };
+
+  const statusColor =
+    getStatus() === 'Active'
+      ? 'bg-green-100 text-green-800'
+      : getStatus() === 'Rejected'
+        ? 'bg-red-100 text-red-800'
+        : 'bg-gray-100 text-gray-800';
+
+  // -------------------- DOCUMENTS --------------------
   const docList = [
     {
       key: 'passport',
@@ -49,137 +66,190 @@ const ApplicantDetails: React.FC<props> = ({customerDetails}) => {
     },
   ];
 
+  // -------------------- HELPERS --------------------
+  const EXCLUDE_FIELDS = [
+    'id',
+    'userId',
+    'securityPin',
+    'passport',
+    'panCard',
+    'aadharCard',
+    // 'passportNumber',
+    'panCardNumber',
+    'aadharCardNumber',
+    'photo',
+    'wallets',
+    'user',
+    '',
+  ];
+
+  const formatLabel = (key: string) =>
+    key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+
+  const formatValue = (value: any) => {
+    if (value === null || value === undefined || value === '') return '-';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (
+      typeof value === 'string' &&
+      value.includes('T') &&
+      value.includes('Z')
+    ) {
+      return new Date(value).toLocaleString();
+    }
+    return String(value);
+  };
+
+  const renderObjectDetails = (data: any) => {
+    return Object.entries(data || {})
+      .filter(([key, value]) => {
+        // Remove excluded fields
+        if (EXCLUDE_FIELDS.includes(key)) return false;
+
+        // Remove objects/arrays
+        if (typeof value === 'object' && value !== null) return false;
+
+        // ❗ Remove boolean fields
+        if (typeof value === 'boolean') return false;
+
+        return true;
+      })
+      .map(([key, value]) => (
+        <div key={key} className="rounded-sm bg-neutral-50 p-2">
+          <Label>{formatLabel(key)}</Label>
+          <Value>{formatValue(value)}</Value>
+        </div>
+      ));
+  };
+
+  // -------------------- UI --------------------
   return (
     <section className="shadow-warm flex h-full max-h-[85vh] flex-col overflow-hidden rounded-xl border border-stroke bg-white">
-      <div className="border-b border-stroke bg-white p-4">
-        <h2 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-tight text-black">
-          <MdBadge className="text-lg text-black" />
-          Applicant Details
+      {/* Header */}
+      <div className="border-b border-stroke p-4">
+        <h2 className="flex items-center justify-between text-sm font-extrabold uppercase tracking-tight">
+          <span className="flex items-center gap-2">
+            <MdBadge className="text-lg" />
+            Applicant Details
+          </span>
+
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${statusColor}`}
+          >
+            {getStatus()}
+          </span>
         </h2>
       </div>
 
       <div className="custom-scroll space-y-10 overflow-y-auto p-5">
-        {/* Account Holder Section */}
+        {/* USER BASIC */}
         <div>
-          <h3 className="mb-4 border-b border-stroke pb-2 text-[10px] font-extrabold uppercase tracking-widest text-neutral-400">
-            Account Holder Details
+          <h3 className="mb-4 border-b pb-2 text-[10px] font-extrabold uppercase tracking-widest text-neutral-400">
+            User Information
           </h3>
-          <div className="grid grid-cols-2 gap-x-10 gap-y-6">
-            <div className="col-span-2 rounded-sm bg-neutral-50 p-2">
-              <Label>Full Legal Name</Label>
-              <div className="text-xl font-extrabold text-black">
-                {customerDetails?.user?.fullname}
-              </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            {renderObjectDetails(customerDetails?.user)}
+          </div>
+
+          {customerDetails?.rejectedReason && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-orange-50 p-3 text-sm text-orange-800">
+              <MdInfo />
+              {customerDetails.rejectedReason}
+            </div>
+          )}
+        </div>
+
+        {/* CUSTOMER DETAILS */}
+        <div>
+          <h3 className="mb-4 border-b pb-2 text-[10px] font-extrabold uppercase tracking-widest text-neutral-400">
+            Customer Details
+          </h3>
+
+          <div className="grid grid-cols-2 gap-6">
+            {renderObjectDetails(customerDetails)}
+          </div>
+        </div>
+
+        {/* BANK */}
+        <div className="bg-gray-50 rounded-xl border border-stroke p-5">
+          <div className="mb-4 flex items-center gap-2 font-bold">
+            <MdAccountBalance />
+            Bank Details
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label>Account Number</Label>
+              <Value className="font-mono">
+                {customerDetails?.accountNumber || '-'}
+              </Value>
             </div>
 
-            <div className="rounded-sm bg-neutral-50 p-2">
-              <Label>Date of Birth</Label>
-              <div className="text-md font-semibold text-black">
-                {customerDetails?.user?.dob}
-              </div>
-            </div>
-
-            <div className="rounded-sm bg-neutral-50 p-2">
-              <Label>Nationality</Label>
-              <div className="text-md flex items-center gap-2 font-semibold text-black">
-                {customerDetails?.nationality}
-              </div>
-            </div>
-
-            <div className="col-span-2 rounded-sm bg-neutral-50 p-2">
-              <Label>Residential Address</Label>
-              <div className="text-md font-semibold text-black">
-                {customerDetails?.address}
-              </div>
-            </div>
-
-            <div className="rounded-sm bg-neutral-50 p-2">
-              <Label>Mobile Number</Label>
-              <div className="text-md font-semibold text-black">
-                {customerDetails?.user?.phoneNumber}
-              </div>
-            </div>
-            <div className="rounded-sm bg-neutral-50 p-2">
-              <Label>Email Address</Label>
-              <Value className="text-md break-words font-semibold text-black">
-                {customerDetails?.user?.email}
+            <div>
+              <Label>SWIFT / BIC</Label>
+              <Value className="font-mono">
+                {customerDetails?.SWIFTBIC || '-'}
               </Value>
             </div>
           </div>
         </div>
 
-        <div>
-          <div className="bg-gray-50 rounded-xl border border-stroke p-5">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="text-gray-600 border-gray-200 flex h-10 w-10 items-center justify-center rounded-lg border bg-white shadow-sm">
-                <MdAccountBalance className="text-xl" />
-              </div>
-              <div>
-                <div className="text-lg font-bold text-black">Bank Details</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div className="col-span-1 sm:col-span-2">
-                <Label>Account Number</Label>
-                <div className="font-mono inline-block rounded-lg border border-stroke bg-white px-3 py-2 text-sm font-bold tracking-widest text-black shadow-sm">
-                  {customerDetails?.accountNumber}
+        {/* WALLETS */}
+        {customerDetails?.wallets?.length > 0 && (
+          <div>
+            <h3 className="mb-4 border-b pb-2 text-[10px] font-extrabold uppercase tracking-widest text-neutral-400">
+              Wallet Details
+            </h3>
+
+            <div className="grid grid-cols-2 gap-6">
+              {customerDetails.wallets.map((wallet, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-stroke bg-neutral-50 p-3"
+                >
+                  <Label>E-Private Account</Label>
+                  <Value>{wallet.eprivateAccount}</Value>
+
+                  <Label className="mt-2">Temporary Account</Label>
+                  <Value>{wallet.temporyAccount}</Value>
                 </div>
-              </div>
-              <div>
-                <Label>SWIFT / BIC</Label>
-                <div className="font-mono text-sm font-bold text-black">
-                  {customerDetails?.SWIFTBIC}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
+        {/* DOCUMENTS */}
         {docList
           .filter((doc) => doc.image)
           .map((doc) => (
             <div key={doc.key}>
-              <h3 className="mb-6 flex items-center justify-between border-b border-stroke pb-2 text-[10px] font-bold uppercase tracking-widest text-black">
-                Supporting Documents
-                <button className="text-gray-500 flex items-center gap-1 text-[10px] font-bold uppercase transition-colors hover:text-black">
-                  View Full Res <MdOpenInNew className="text-[12px]" />
+              <h3 className="mb-4 flex justify-between border-b pb-2 text-[10px] font-bold uppercase tracking-widest">
+                {doc.label}
+                <button className="text-gray-500 flex items-center gap-1 text-[10px] hover:text-black">
+                  View Full Res <MdOpenInNew />
                 </button>
               </h3>
 
-              <div className="bg-gray-100 group relative aspect-video cursor-pointer overflow-hidden rounded-xl border-2 border-stroke shadow-inner">
+              {/* Document Number ABOVE image */}
+              {
+                <div className="mb-3 rounded-lg border border-stroke bg-neutral-50 p-3">
+                  <Label>{doc.label} Number</Label>
+                  <Value className="font-mono">{doc.number}</Value>
+                </div>
+              }
+
+              {/* Image */}
+              <div className="bg-gray-100 relative aspect-video overflow-hidden rounded-xl border">
                 <img
-                  alt={doc.label}
-                  className="h-full w-full object-contain mix-blend-multiply"
                   src={doc.image}
+                  alt={doc.label}
+                  className="h-full w-full object-contain"
                 />
-                <div className="bg-theme-header/10 group-hover:bg-theme-header/20 absolute inset-0 flex items-center justify-center opacity-0 transition-colors group-hover:opacity-100">
-                  <button className="text-theme-header rounded-full bg-white p-3 shadow-xl transition-transform hover:scale-105">
-                    <MdZoomIn className="text-2xl" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
+                  <button className="rounded-full bg-white p-3 shadow">
+                    <MdZoomIn className="text-xl" />
                   </button>
                 </div>
-              </div>
-
-              {/* Details */}
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div className="rounded-lg border border-stroke bg-white/80 p-3">
-                  <span className="mb-1 block text-[9px] font-bold uppercase text-black">
-                    Doc Type
-                  </span>
-                  <span className="text-theme-header text-xs font-bold">
-                    {doc.label}
-                  </span>
-                </div>
-
-                {doc.number && (
-                  <div className="border-gray-200 rounded-lg border bg-white/80 p-3">
-                    <span className="mb-1 block text-[9px] font-bold uppercase text-black">
-                      Doc Number
-                    </span>
-                    <span className="text-theme-header font-mono text-xs font-bold">
-                      {doc.number}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           ))}
