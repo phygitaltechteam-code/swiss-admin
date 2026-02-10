@@ -130,7 +130,6 @@ const DetailPanel: React.FC<DetailPanelProps> = ({request, className = ''}) => {
           <h4 className="text-gray-900 mb-3 font-semibold">Applicant Data</h4>
           <div className="space-y-5 text-sm">
             <DataRow label="Full Name" value={request?.user?.fullname} />
-            <DataRow label="ID Number" value={request.id} font="font-mono" />
             <DataRow label="Email" value={request?.user?.email} />
             <DataRow label="Address" value={request.address} truncate />
             {/* <DataRow label="Document Name" value={request.docName} /> */}
