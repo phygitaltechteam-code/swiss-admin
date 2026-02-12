@@ -4,5 +4,5 @@ import {COMMISSIONS} from '../../../components/comission/constant';
 import React from 'react';
 
 export const Route = createFileRoute('/_app/client/comission')({
-  component: () => <CommissionTable data={COMMISSIONS} />,
+  component: () => <CommissionTable />,
 });

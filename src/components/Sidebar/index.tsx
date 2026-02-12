@@ -96,6 +96,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/client/comission',
             icon: <MdPercent size={22} />,
           },
+
           {
             label: 'Settings',
             icon: <MdSettings size={22} />,

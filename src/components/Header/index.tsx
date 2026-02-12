@@ -5,7 +5,7 @@ import {useAuthContext} from '@/context/AuthContext';
 import {FiMenu, FiX} from 'react-icons/fi';
 import {LuSearch} from 'react-icons/lu';
 import {useNotification} from '@/lib/api/adminApi';
-import DropdownNotification from './DropdownNotification';
+// import DropdownNotification from './DropdownNotification';
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
@@ -52,7 +52,7 @@ const Header = (props: {
         </div>
         <div className="flex items-center gap-3 2xsm:gap-7">
           <ul className="flex items-center gap-2 2xsm:gap-4">
-            <DropdownNotification />
+            {/* <DropdownNotification /> */}
             {/* <DarkModeSwitcher /> */}
           </ul>
 

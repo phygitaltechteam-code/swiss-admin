@@ -13,19 +13,20 @@ import {
 } from 'recharts';
 import {ChartDataPoint, BarChartDataPoint} from '@/types/dashboard';
 import {useGetDashToUpGraph} from '@/lib/react-query/dashboard';
+import {useGetfeeChart} from '@/lib/api/dashboard';
 
-const volumeData: ChartDataPoint[] = [
-  {name: '1 Nov', volume: 4000, fees: 2400},
-  {name: '5 Nov', volume: 3000, fees: 1398},
-  {name: '10 Nov', volume: 2000, fees: 9800},
-  {name: '15 Nov', volume: 2780, fees: 3908},
-  {name: '20 Nov', volume: 1890, fees: 4800},
-  {name: '25 Nov', volume: 2390, fees: 3800},
-  {name: '30 Nov', volume: 3490, fees: 4300},
-  {name: '3 Dec', volume: 4200, fees: 4800},
-];
+// const volumeData: ChartDataPoint[] = ;
 
 export const VolumeVsFeesChart: React.FC = () => {
+  const [volumeData, setVolumeData] = useState<ChartDataPoint[]>([]);
+  const {data: volumeDatas} = useGetfeeChart();
+  useEffect(() => {
+    console.log('volumeDatas', volumeDatas);
+    if (volumeDatas) {
+      setVolumeData(volumeDatas);
+    }
+  }, [volumeDatas]);
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart

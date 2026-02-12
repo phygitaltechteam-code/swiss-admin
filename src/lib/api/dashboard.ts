@@ -119,6 +119,15 @@ export const getDashboardTopUpGrap = async (data: dashGraph) => {
     throw error;
   }
 };
+export const useGetfeeChart = () =>
+  useQuery({
+    queryKey: ['fee-chart'],
+    queryFn: async () => {
+      const response = await api.get('admin/transaction/fee/chart');
+      // console.log('GETDATATAREREREWR', response.data);
+      return response.data;
+    },
+  });
 
 export const useDashboardData = (filters: DashboardFilters) => {
   return useQuery({
