@@ -1,39 +1,63 @@
 import {useNavigate} from '@tanstack/react-router';
-import React, {useState} from 'react';
-import {MdEdit, MdDelete, MdSearch, MdExpandMore, MdAdd} from 'react-icons/md';
+import React, {useState, useMemo} from 'react';
+import {MdSearch, MdAdd} from 'react-icons/md';
 import GenericTable, {Column} from '../Forms/Table/GenericTable';
-
-interface CommissionTableProps {
-  data: Commission[];
-}
+import {useGetComissionAll} from '@/lib/react-query/commission';
 
 export interface Commission {
-  id: number;
+  id: string;
   name: string;
   description: string;
-  appliedOn: string;
-  appliedOnColor: string;
   percentage: number;
-  status: 'Active' | 'Inactive';
+  type: 'TOP_UP' | 'WITHDRAWAL' | 'TRANSFER';
+  amount: number;
 }
 
-const CommissionTable: React.FC<CommissionTableProps> = ({data}) => {
+const typeConfig: Record<string, {label: string; color: string}> = {
+  TRANSFER: {
+    label: 'Transfer',
+    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  },
+  WITHDRAWAL: {
+    label: 'Withdrawal',
+    color:
+      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  },
+  TOP_UP: {
+    label: 'Top-Up',
+    color:
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  },
+};
+
+const CommissionTable: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All Status');
 
-  // Filter data based on search and status
-  const filteredData = data.filter((item) => {
+  const {data: apiData, isLoading, isError, error} = useGetComissionAll();
+
+  const commissions: Commission[] = useMemo(() => {
+    if (!apiData) return [];
+
+    return apiData.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description || '',
+      type: item.type,
+      percentage: item.percentage,
+      amount: item.amount,
+    }));
+  }, [apiData]);
+
+  const filteredData = commissions.filter((item) => {
     const matchesSearch =
       searchQuery === '' ||
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === 'All Status' || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    return matchesSearch;
   });
 
-  // Define columns for GenericTable
   const columns: Column<Commission>[] = [
     {
       header: 'Commission Name',
@@ -49,13 +73,13 @@ const CommissionTable: React.FC<CommissionTableProps> = ({data}) => {
       className: 'min-w-[200px]',
     },
     {
-      header: 'Applied On',
-      accessor: 'appliedOn',
+      header: ' Applied On',
+      accessor: 'type',
       render: (item) => (
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${item.appliedOnColor}`}
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${typeConfig[item.type].color}`}
         >
-          {item.appliedOn}
+          {typeConfig[item.type].label}
         </span>
       ),
       className: 'min-w-[120px]',
@@ -72,42 +96,64 @@ const CommissionTable: React.FC<CommissionTableProps> = ({data}) => {
       sortable: true,
     },
     {
-      header: 'Status',
-      accessor: 'status',
-      render: (item) =>
-        item.status === 'Active' ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-            <span className="size-1.5 rounded-full bg-emerald-500"></span>
-            Active
-          </span>
-        ) : (
-          <span className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium">
-            <span className="bg-gray-500 size-1.5 rounded-full"></span>
-            Inactive
-          </span>
-        ),
-      className: 'min-w-[100px]',
+      header: 'Amount',
+      accessor: 'amount',
+      render: (item) => (
+        <span className="text-sm font-medium tabular-nums text-[#0F1535] dark:text-white">
+          {item.amount || '0'}
+        </span>
+      ),
+      className: 'min-w-[120px]',
+      sortable: true,
     },
   ];
 
   const handleEdit = (item: Commission) => {
-    console.log('Edit item:', item);
-    // Navigate to edit page or open modal
-    // navigate({ to: `/client/commission/edit/${item.id}` });
+    navigate({
+      to: '/client/addcommision',
+      search: {
+        editData: JSON.stringify({
+          commissionData: item,
+          isEditing: true,
+        }),
+      },
+    });
   };
 
-  const handleDelete = (item: Commission) => {
-    console.log('Delete item:', item);
-    // Show confirmation dialog
-    // if (window.confirm(`Delete ${item.name}?`)) {
-    //   // Delete logic here
-    // }
-  };
+  if (isLoading) {
+    return (
+      <div className="ml-0 flex min-h-screen flex-1 items-center justify-center p-6">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" />
+          <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">
+            Loading commissions...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="ml-0 flex min-h-screen flex-1 items-center justify-center p-6">
+        <div className="text-center text-red-600 dark:text-red-400">
+          <p className="text-lg font-semibold">Failed to load commissions</p>
+          <p className="mt-1 text-sm">{error?.message || 'Unknown error'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ml-0 min-h-screen flex-1 p-6 md:p-8">
       <div className="mb-6 flex flex-col gap-4">
-        {/* Title Section */}
+        {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[#0F1535] dark:text-white sm:text-3xl">
@@ -121,7 +167,7 @@ const CommissionTable: React.FC<CommissionTableProps> = ({data}) => {
 
         {/* Table Container */}
         <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#f4ece7] bg-white shadow-sm dark:border-[#3a2a20] dark:bg-[#1a120b]">
-          {/* Table Toolbar */}
+          {/* Toolbar */}
           <div className="flex flex-col justify-between gap-4 border-b border-[#f4ece7] p-4 dark:border-[#3a2a20] sm:flex-row sm:items-center sm:p-5">
             <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
               {/* Search */}
@@ -137,25 +183,9 @@ const CommissionTable: React.FC<CommissionTableProps> = ({data}) => {
                   placeholder="Search commissions by name..."
                 />
               </div>
-
-              {/* Filter */}
-              <div className="relative w-full sm:w-40">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="block w-full cursor-pointer appearance-none rounded-lg border-none bg-[#f8f7f5] py-2.5 pl-3 pr-10 text-sm text-[#0F1535] focus:ring-2 focus:ring-primary/20 dark:bg-[#2c2019] dark:text-white"
-                >
-                  <option>All Status</option>
-                  <option>Active</option>
-                  <option>Inactive</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <MdExpandMore className="text-lg text-[#9c6949]" />
-                </div>
-              </div>
             </div>
 
-            {/* Add Button */}
+            {/* Add button */}
             <button
               onClick={() => navigate({to: '/client/addcommision'})}
               className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#d96d2b] hover:shadow"
@@ -165,20 +195,27 @@ const CommissionTable: React.FC<CommissionTableProps> = ({data}) => {
             </button>
           </div>
 
-          {/* Generic Table Component */}
+          {/* Table */}
           <div className="flex-1">
-            <GenericTable
-              data={filteredData}
-              columns={columns}
-              searchAble={false}
-              action={true}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              paginationOff={true}
-              itemsPerPage={5}
-              editTooltip="Edit Commission"
-              deleteTooltip="Delete Commission"
-            />
+            {filteredData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  No commissions found.
+                </p>
+              </div>
+            ) : (
+              <GenericTable
+                data={filteredData}
+                columns={columns}
+                searchAble={false}
+                action={true}
+                onEdit={handleEdit}
+                paginationOff={true}
+                itemsPerPage={5}
+                editTooltip="Edit Commission"
+                deleteTooltip="Delete Commission"
+              />
+            )}
           </div>
         </div>
       </div>

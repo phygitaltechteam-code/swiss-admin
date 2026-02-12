@@ -381,3 +381,15 @@ export const useRejectTransfer = () => {
     },
   });
 };
+
+export const useGetAllTransactions = () => {
+  return useQuery({
+    queryKey: ['transfer-transactions'],
+    queryFn: async () => {
+      const res = await api.get('/admin/transaction');
+      return res.data;
+    },
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+};
