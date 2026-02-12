@@ -87,6 +87,11 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             icon: <MdPriceCheck size={22} />,
           },
           {
+            label: 'Top-Up Withdraw Approvals',
+            path: '/withdrawpage',
+            icon: <MdPriceCheck size={22} />,
+          },
+          {
             label: 'Reports',
             path: '/reportCenter',
             icon: <MdDescription size={22} />,

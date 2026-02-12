@@ -782,18 +782,18 @@ export const TopUpList: React.FC<TopUpListProps> = ({
   };
 
   const columns: Column<any>[] = [
-    {
-      header: 'Transaction ID',
-      accessor: 'id',
-      render: (item) => (
-        <button
-          onClick={() => onSelectTransaction(item)}
-          className="text-left text-sm font-medium text-primary hover:underline"
-        >
-          {item.id.substring(0, 8)}...
-        </button>
-      ),
-    },
+    // {
+    //   header: 'Transaction ID',
+    //   accessor: 'id',
+    //   render: (item) => (
+    //     <button
+    //       onClick={() => onSelectTransaction(item)}
+    //       className="text-left text-sm font-medium text-primary hover:underline"
+    //     >
+    //       {item.id.substring(0, 8)}...
+    //     </button>
+    //   ),
+    // },
     {
       header: 'Client',
       accessor: 'fullname',
