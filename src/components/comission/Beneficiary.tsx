@@ -267,7 +267,7 @@ const BeneficiaryContent: React.FC = () => {
                   <th className="w-12 px-6 py-4"></th>
                   <th className="px-6 py-4">Client Name</th>
                   <th className="px-6 py-4">Account Number</th>
-                  <th className="px-6 py-4">Transaction Value</th>
+                  {/* <th className="px-6 py-4">Transaction Value</th> */}
                   <th className="px-6 py-4">Total Beneficiaries</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
@@ -300,9 +300,9 @@ const BeneficiaryContent: React.FC = () => {
                         <td className="font-mono px-6 py-4 text-sm text-neutral-500">
                           {client.accountNumber}
                         </td>
-                        <td className="font-mono px-6 py-4 text-sm text-[#0F1535] dark:text-white">
+                        {/* <td className="font-mono px-6 py-4 text-sm text-[#0F1535] dark:text-white">
                           {formatCurrency(client.transactionValue)}
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 text-[#0F1535] dark:text-white">
                           {client?.foreignBeneficiaries?.length}
                         </td>

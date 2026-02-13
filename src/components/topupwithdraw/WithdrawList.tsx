@@ -509,7 +509,7 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-gray-900 text-lg font-bold">
-                Top-Up Transactions
+                Withdrawal Transactions
               </h3>
               <p className="text-gray-600 text-sm">
                 {filteredTransactions.length} transaction

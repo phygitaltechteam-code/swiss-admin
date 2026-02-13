@@ -83,7 +83,6 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
   onBack,
   onStatusUpdate,
 }) => {
-  console.log('TopUpDetail mounted with transactionId:', transactionId);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [isApproveConfirming, setIsApproveConfirming] = useState(false);
@@ -158,11 +157,6 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
     setShowRejectDialog(false);
     setRejectReason('');
   };
-  useEffect(() => {
-    if (transaction) {
-      console.log('Fetched transaction data:', transaction);
-    }
-  }, [transaction]);
 
   const handleConfirmReject = () => {
     if (!transaction || !rejectReason.trim()) {
@@ -380,7 +374,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0 flex-1">
               <h1 className="text-gray-900 truncate text-xl font-bold tracking-tight sm:text-2xl">
-                Top-Up Request Details
+                Withdrawal Request Details
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-gray-600 whitespace-nowrap">
@@ -670,7 +664,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
                         <div className="bg-gray-50 rounded-lg p-4">
                           <div className="mb-4">
                             <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Top-Up Amount
+                              Withdrawal Amount
                             </p>
                             <p className="text-gray-900 text-2xl font-bold">
                               ${transaction.amount.toLocaleString('en-US')}
@@ -698,31 +692,6 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
                                 {getAccountTypeDisplay(transaction.accountType)}
                               </span>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Timestamps */}
-                      <div>
-                        <h4 className="text-gray-700 mb-4 text-sm font-semibold">
-                          Timestamps
-                        </h4>
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Created At
-                            </p>
-                            <p className="text-gray-900 text-sm">
-                              {formatTransactionDate(transaction.createdAt)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Last Updated
-                            </p>
-                            <p className="text-gray-900 text-sm">
-                              {formatTransactionDate(transaction.updatedAt)}
-                            </p>
                           </div>
                         </div>
                       </div>
@@ -785,7 +754,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
                         ) : isApproveConfirming ? (
                           'Click again to confirm'
                         ) : (
-                          'Approve Top-Up'
+                          'Approve Withdrawal'
                         )}
                       </button>
                     </div>

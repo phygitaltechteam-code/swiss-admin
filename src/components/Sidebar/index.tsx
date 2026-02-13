@@ -14,7 +14,9 @@ import {
   MdFactCheck,
   MdPercent,
   MdPriceCheck,
+  MdSend,
   MdSettings,
+  MdWallet,
 } from 'react-icons/md';
 import {useAuthContext} from '@/context/AuthContext';
 import {FaUsers, FaUserTie} from 'react-icons/fa';
@@ -84,12 +86,12 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
           {
             label: 'Transfer Approvals',
             path: '/client/transfer-approvals',
-            icon: <MdPriceCheck size={22} />,
+            icon: <MdSend size={22} />,
           },
           {
-            label: 'Top-Up Withdraw Approvals',
+            label: 'Withdraw Approvals',
             path: '/withdrawpage',
-            icon: <MdPriceCheck size={22} />,
+            icon: <MdWallet size={22} />,
           },
           {
             label: 'Reports',
