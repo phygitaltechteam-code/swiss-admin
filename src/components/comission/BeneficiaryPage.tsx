@@ -37,6 +37,11 @@ const BeneficiaryPage: React.FC = () => {
   // State for mobile sidebar
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
+  // Get status of selected beneficiary
+  const selectedStatus = selectedBeneficiary
+    ? getRequestStatus(selectedBeneficiary)
+    : null;
+
   const reject = () => {
     if (!selectedBeneficiary?.id) {
       toast.error('Please select a beneficiary');
@@ -215,7 +220,7 @@ const BeneficiaryPage: React.FC = () => {
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary"></span>
-                {getRequestStatus(selectedBeneficiary)}
+                {selectedStatus}
               </div>
 
               {/* Mobile beneficiary selector */}
@@ -452,46 +457,48 @@ const BeneficiaryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Center - Fixed at bottom */}
-          <div className="border-t border-stroke bg-white p-4 shadow-lg lg:px-6">
-            <div className="mx-auto max-w-5xl">
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="admin-note"
-                    className="text-label-text mb-2 block flex items-center justify-between text-sm font-semibold"
-                  >
-                    Admin Note
-                  </label>
-                  <textarea
-                    id="admin-note"
-                    value={adminNote}
-                    onChange={(e) => setAdminNote(e.target.value)}
-                    placeholder="Enter rejection reason or approval notes..."
-                    className="border-gray-300 text-header-text w-full rounded-lg border p-3 text-sm shadow-sm transition-shadow duration-200 focus:border-primary focus:shadow-md focus:ring-primary"
-                    rows={2}
-                  ></textarea>
-                </div>
+          {/* Action Center - Fixed at bottom (hidden for approved/rejected) */}
+          {selectedStatus !== 'REJECTED' && (
+            <div className="border-t border-stroke bg-white p-4 shadow-lg lg:px-6">
+              <div className="mx-auto max-w-5xl">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="admin-note"
+                      className="text-label-text mb-2 flex items-center justify-between text-sm font-semibold"
+                    >
+                      Admin Note
+                    </label>
+                    <textarea
+                      id="admin-note"
+                      value={adminNote}
+                      onChange={(e) => setAdminNote(e.target.value)}
+                      placeholder="Enter rejection reason or approval notes..."
+                      className="border-gray-300 text-header-text w-full rounded-lg border p-3 text-sm shadow-sm transition-shadow duration-200 focus:border-primary focus:shadow-md focus:ring-primary"
+                      rows={2}
+                    ></textarea>
+                  </div>
 
-                <div className="flex flex-col justify-end gap-3 lg:flex-row lg:items-end">
-                  <button
-                    className="flex w-full transform items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-semibold text-white shadow-md transition-all hover:bg-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] lg:w-auto lg:px-6"
-                    onClick={() => acceptBeneficiary(selectedBeneficiary?.id)}
-                  >
-                    <CheckCircle className="h-5 w-5" />
-                    Approve Beneficiary
-                  </button>
-                  <button
-                    className="flex w-full transform items-center justify-center gap-2 rounded-lg border border-stroke bg-white px-4 py-3 font-medium text-red-600 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98] lg:w-auto lg:px-6"
-                    onClick={() => reject()}
-                  >
-                    <XCircle className="h-5 w-5" />
-                    Reject Request
-                  </button>
+                  <div className="flex flex-col justify-end gap-3 lg:flex-row lg:items-end">
+                    <button
+                      className="flex w-full transform items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-semibold text-white shadow-md transition-all hover:bg-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] lg:w-auto lg:px-6"
+                      onClick={() => acceptBeneficiary(selectedBeneficiary?.id)}
+                    >
+                      <CheckCircle className="h-5 w-5" />
+                      Approve Beneficiary
+                    </button>
+                    <button
+                      className="flex w-full transform items-center justify-center gap-2 rounded-lg border border-stroke bg-white px-4 py-3 font-medium text-red-600 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98] lg:w-auto lg:px-6"
+                      onClick={() => reject()}
+                    >
+                      <XCircle className="h-5 w-5" />
+                      Reject Request
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
       </div>
     </div>

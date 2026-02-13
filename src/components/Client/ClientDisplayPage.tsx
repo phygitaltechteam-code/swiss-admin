@@ -85,6 +85,20 @@ const formatCurrency = (amount: number) => {
     minimumFractionDigits: 2,
   }).format(amount);
 };
+const formatCompactIndian = (num: number): string => {
+  const abs = Math.abs(num);
+
+  if (abs >= 10000000) {
+    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  }
+  if (abs >= 100000) {
+    return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  }
+  if (abs >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return num.toString();
+};
 
 const ClientDisplay: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -198,7 +212,7 @@ const ClientDisplay: React.FC = () => {
             {item.accountNumber}
           </span>
           {/* Show verification status */}
-          <div className="mt-1 flex gap-2">
+          {/* <div className="mt-1 flex gap-2">
             {item.isVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 Verified
@@ -214,7 +228,7 @@ const ClientDisplay: React.FC = () => {
                 With Reason
               </span>
             )}
-          </div>
+          </div> */}
         </div>
       ),
       className: 'min-w-[200px]',
@@ -468,17 +482,19 @@ const ClientDisplay: React.FC = () => {
             </div>
             <div className="dark:bg-gray-800 dark:border-gray-700 rounded-xl border border-stroke bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                <div className="min-w-0">
+                  {' '}
+                  {/* Added min-w-0 to allow truncation */}
+                  <p className="text-gray-500 dark:text-gray-400 text-xs font-medium sm:text-sm">
                     Total Private Balance
                   </p>
-                  <p className="text-lg font-bold text-[#0F1535] dark:text-white">
-                    {formatCurrency(totalPrivateBalance)}
+                  <p className="text-base font-bold text-[#0F1535] dark:text-white sm:text-lg md:text-xl lg:text-2xl">
+                    {formatCompactIndian(totalPrivateBalance)}
                   </p>
                 </div>
-                <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
+                <div className="ml-2 shrink-0 rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
                   <svg
-                    className="h-5 w-5 text-amber-600 dark:text-amber-400"
+                    className="h-4 w-4 text-amber-600 dark:text-amber-400 sm:h-5 sm:w-5"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >

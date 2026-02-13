@@ -71,13 +71,6 @@ const MainWithdrawPage: React.FC = () => {
     }, 500);
   };
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Topup Data:', topupData);
-    console.log('Loading:', isLoading);
-    console.log('Error:', error);
-  }, [topupData, isLoading, error]);
-
   // Handle loading state
   if (isLoading) {
     return (
@@ -116,9 +109,6 @@ const MainWithdrawPage: React.FC = () => {
       </div>
     );
   }
-
-  console.log('Mapped transactions:', transactions);
-  console.log('Calculated stats:', stats);
 
   return (
     <div className="bg-gray-50 flex h-screen w-full">

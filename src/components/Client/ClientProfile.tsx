@@ -239,7 +239,7 @@ const ClientProfile: React.FC = () => {
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         userData?.isRejected
                           ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                          : userData?.isActive && userData?.isVerified
+                          : userData?.isActive
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                       }`}
@@ -248,7 +248,7 @@ const ClientProfile: React.FC = () => {
                         className={`size-1.5 rounded-full ${
                           userData?.isRejected
                             ? 'bg-red-500'
-                            : userData?.isActive && userData?.isVerified
+                            : userData?.isActive
                               ? 'bg-green-500'
                               : 'bg-gray-500'
                         }`}
@@ -256,7 +256,7 @@ const ClientProfile: React.FC = () => {
 
                       {userData?.isRejected
                         ? 'Rejected'
-                        : userData?.isActive && userData?.isVerified
+                        : userData?.isActive
                           ? 'Active'
                           : 'Inactive'}
                     </span>
@@ -281,7 +281,14 @@ const ClientProfile: React.FC = () => {
               </div>
 
               <div className="mt-4 flex w-full flex-wrap items-center gap-3 xl:mt-0 xl:w-auto">
-                <button className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none">
+                <button
+                  onClick={() =>
+                    navigate({
+                      to: `/client/beneficiaryverification/${clientId}`,
+                    })
+                  }
+                  className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none"
+                >
                   See History
                 </button>
                 <button
