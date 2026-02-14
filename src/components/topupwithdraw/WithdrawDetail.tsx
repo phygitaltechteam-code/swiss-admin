@@ -113,7 +113,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
     setIsApproveConfirming(false);
 
     // Show loading toast
-    const loadingToast = toast.loading('Approving top-up request...');
+    const loadingToast = toast.loading('Approving withdrawl request...');
 
     // Call the approve mutation
     approveTopup(transaction.id, {
@@ -122,7 +122,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
         toast.dismiss(loadingToast);
 
         // Show success message
-        toast.success(data.message || 'Top-up approved successfully!', {
+        toast.success(data.message || 'withdrawl approved successfully!', {
           duration: 3000,
         });
 
@@ -139,7 +139,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
         toast.dismiss(loadingToast);
 
         // Show error message
-        toast.error('Failed to approve top-up. Please try again.', {
+        toast.error('Failed to approve withdrawl. Please try again.', {
           duration: 4000,
         });
         console.error('Approval error:', error);
@@ -165,7 +165,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
     }
 
     // Show loading toast
-    const loadingToast = toast.loading('Rejecting top-up request...');
+    const loadingToast = toast.loading('Rejecting withdrawl request...');
 
     // Call the reject mutation with proper payload
     rejectTopup(
@@ -179,7 +179,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
           toast.dismiss(loadingToast);
 
           // Show success message
-          toast.success(data.message || 'Top-up rejected successfully!', {
+          toast.success(data.message || 'withdrawl rejected successfully!', {
             duration: 3000,
           });
 
@@ -196,7 +196,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
           toast.dismiss(loadingToast);
 
           // Show error message
-          toast.error('Failed to reject top-up. Please try again.', {
+          toast.error('Failed to reject withdrawl. Please try again.', {
             duration: 4000,
           });
           console.error('Rejection error:', error);
@@ -279,7 +279,7 @@ export const WithdrawDetail: React.FC<TopUpDetailProps> = ({
                 </div>
                 <div>
                   <h3 className="text-gray-900 text-lg font-bold">
-                    Reject Top-Up Request
+                    Reject withdrawl Request
                   </h3>
                   <p className="text-gray-600 text-sm">
                     ID: {transaction.id.substring(0, 8)}...

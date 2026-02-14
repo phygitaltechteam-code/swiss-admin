@@ -395,7 +395,12 @@ const ClientDisplay: React.FC = () => {
               <FiDownload className="text-lg" />
               Export
             </button>
-            <button className="hover:bg-primary-dark flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors">
+            <button
+              onClick={() => {
+                navigate({to: '/addclient'});
+              }}
+              className="hover:bg-primary-dark flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
+            >
               <MdAdd className="text-lg" />
               Add New Client
             </button>
