@@ -3,7 +3,6 @@ import {useNavigate, useSearch} from '@tanstack/react-router';
 import {useGetCustomerById} from '@/lib/react-query/client';
 import {
   MdPerson,
-  MdEdit,
   MdEmail,
   MdPhone,
   MdPlace,
@@ -186,23 +185,30 @@ const ClientProfile: React.FC = () => {
                 <div className="relative">
                   <div className="dark:from-gray-700 dark:to-gray-800 dark:border-gray-800 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-neutral-200 shadow-sm">
                     {clientData.photo ? (
-                      <img
-                        src={clientData.photo}
-                        alt={userData?.fullname || 'Client'}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const parent = e.currentTarget.parentElement;
-                          if (parent) {
-                            const fallbackIcon = document.createElement('div');
-                            fallbackIcon.className =
-                              'flex items-center justify-center h-full w-full';
-                            fallbackIcon.innerHTML =
-                              '<MdPerson class="text-gray-400 dark:text-gray-500 text-5xl" />';
-                            parent.appendChild(fallbackIcon);
-                          }
-                        }}
-                      />
+                      <a
+                        href={clientData.photo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src={clientData.photo}
+                          alt={userData?.fullname || 'Client'}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              const fallbackIcon =
+                                document.createElement('div');
+                              fallbackIcon.className =
+                                'flex items-center justify-center h-full w-full';
+                              fallbackIcon.innerHTML =
+                                '<MdPerson class="text-gray-400 dark:text-gray-500 text-5xl" />';
+                              parent.appendChild(fallbackIcon);
+                            }
+                          }}
+                        />
+                      </a>
                     ) : (
                       <MdPerson className="text-gray-400 dark:text-gray-500 text-5xl" />
                     )}

@@ -645,6 +645,21 @@ export const TransferDashboard = () => {
     setFilteredTransactions(filtered);
   }, [apiData, searchQuery, activeFilter, startDate, endDate]);
 
+  const formatCompactIndian = (num: number): string => {
+    const abs = Math.abs(num);
+
+    if (abs >= 10000000) {
+      return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+    }
+    if (abs >= 100000) {
+      return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+    }
+    if (abs >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
+  };
+
   // Calculate stats
   const calculateStats = () => {
     const transactions =
@@ -682,15 +697,15 @@ export const TransferDashboard = () => {
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const columns: any[] = [
-    {
-      header: 'Transaction ID',
-      accessor: 'id',
-      render: (item: TransactionTransfer) => (
-        <span className="font-mono text-gray-900 text-sm font-medium">
-          {item.id?.slice(0, 8)}...
-        </span>
-      ),
-    },
+    // {
+    //   header: 'Transaction ID',
+    //   accessor: 'id',
+    //   render: (item: TransactionTransfer) => (
+    //     <span className="font-mono text-gray-900 text-sm font-medium">
+    //       {item.id?.slice(0, 8)}...
+    //     </span>
+    //   ),
+    // },
     {
       header: 'Sender Client',
       accessor: 'senderName',
@@ -836,88 +851,150 @@ export const TransferDashboard = () => {
               Manage and review incoming transfer requests.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <GenericButton
-              onClick={() => {
-                setSearchQuery('');
-                setStartDate('');
-                setEndDate('');
-                setActiveFilter('All Requests');
-              }}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 border bg-white px-3 py-1.5 text-xs font-semibold shadow-sm sm:px-4 sm:py-2 sm:text-sm"
-            >
-              <MdFilterList className="text-[16px] text-primary sm:text-[20px]" />
-              Clear Filters
-            </GenericButton>
-            <GenericButton className="flex items-center gap-2 bg-orange-500 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-700 sm:px-4 sm:py-2 sm:text-sm">
-              <MdDownload className="text-[16px] sm:text-[20px]" />
-              Export Report
-            </GenericButton>
-          </div>
         </div>
       </div>
 
       {/* Main Content Scrollable Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-4 sm:gap-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
-            <div className="col-span-2 flex h-full flex-col justify-between rounded-xl border border-primary/20 bg-orange-50 p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
-              <div className="mb-3 flex items-start justify-between sm:mb-4">
-                <p className="text-gray-600 text-xs font-medium sm:text-sm">
-                  Total Pending Amount
-                </p>
-                <span className="rounded-lg bg-white p-1.5 text-primary shadow-sm sm:p-2">
-                  <MdPayments className="text-[18px] sm:text-[22px]" />
-                </span>
-              </div>
-              <h3 className="text-gray-900 text-xl font-bold sm:text-2xl">
-                $
-                {pendingAmount.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
-              </h3>
-              <p className="mt-1 flex items-center gap-1 text-xs font-bold text-green-600">
-                <MdTrendingUp /> Pending transfers
-              </p>
-            </div>
+          {/* === REDESIGNED STATS CARDS === */}
+          <div className="w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
+            <div className="flex min-w-max gap-3 md:grid md:min-w-0 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
+              {/* Total Pending Amount - Clickable to filter Pending */}
+              <button
+                onClick={() => setActiveFilter('Pending')}
+                className={`flex w-[260px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  activeFilter === 'Pending'
+                    ? 'border-primary/20 bg-orange-50 ring-2 ring-primary/20'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Total Pending Amount
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      ${formatCompactIndian(pendingAmount)}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <MdPayments className="text-[20px] text-primary" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-green-600">
+                  <MdTrendingUp className="mr-1 text-base" />
+                  <span>Pending transfers</span>
+                </div>
+              </button>
 
-            <StatCard
-              label="Total Transactions"
-              value={stats.totalTransactions.toString()}
-              subValue={`${filteredTransactions.length} filtered`}
-              subValueColor="text-gray-600"
-              icon={<MdToday className="text-[22px]" />}
-              iconBgColor="bg-purple-50"
-              iconColor="text-purple-600"
-            />
-            <StatCard
-              label="Pending"
-              value={stats.pendingCount.toString()}
-              subValue="Requires Action"
-              subValueColor="text-yellow-600"
-              icon={<MdHourglassEmpty className="text-[22px]" />}
-              iconBgColor="bg-yellow-50"
-              iconColor="text-yellow-600"
-            />
-            <StatCard
-              label="Approved"
-              value={stats.approvedCount.toString()}
-              subValue="Successful transfers"
-              subValueColor="text-green-600"
-              icon={<MdCheckCircle className="text-[22px]" />}
-              iconBgColor="bg-green-50"
-              iconColor="text-green-600"
-            />
-            <StatCard
-              label="Rejected"
-              value={stats.rejectedCount.toString()}
-              subValue={`${stats.totalTransactions > 0 ? Math.round((stats.rejectedCount / stats.totalTransactions) * 100) : 0}% Rejection Rate`}
-              subValueColor="text-red-600"
-              icon={<MdCancel className="text-[22px]" />}
-              iconBgColor="bg-red-50"
-              iconColor="text-red-600"
-            />
+              {/* Total Transactions - Non‑clickable overview */}
+              <div className="dark:bg-gray-800 dark:border-gray-700 flex w-[200px] flex-shrink-0 flex-col justify-between rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Total Transactions
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.totalTransactions}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
+                    <MdToday className="text-[20px] text-purple-600 dark:text-purple-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-neutral-500">
+                  <span>{filteredTransactions.length} filtered</span>
+                </div>
+              </div>
+
+              {/* Pending - Clickable */}
+              <button
+                onClick={() => setActiveFilter('Pending')}
+                className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  activeFilter === 'Pending'
+                    ? 'bg-yellow-50 ring-2 ring-yellow-200'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Pending
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.pendingCount}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-yellow-100 p-2 dark:bg-yellow-900/30">
+                    <MdHourglassEmpty className="text-[20px] text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-yellow-600">
+                  <span>Requires Action</span>
+                </div>
+              </button>
+
+              {/* Approved - Clickable */}
+              <button
+                onClick={() => setActiveFilter('Approved')}
+                className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  activeFilter === 'Approved'
+                    ? 'bg-green-50 ring-2 ring-green-200'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Approved
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.approvedCount}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
+                    <MdCheckCircle className="text-[20px] text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-green-600">
+                  <span>Successful transfers</span>
+                </div>
+              </button>
+
+              {/* Rejected - Clickable */}
+              <button
+                onClick={() => setActiveFilter('Rejected')}
+                className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  activeFilter === 'Rejected'
+                    ? 'bg-red-50 ring-2 ring-red-200'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Rejected
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.rejectedCount}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
+                    <MdCancel className="text-[20px] text-red-600 dark:text-red-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-red-600">
+                  <span>
+                    {stats.totalTransactions > 0
+                      ? `${Math.round(
+                          (stats.rejectedCount / stats.totalTransactions) * 100,
+                        )}% Rejection Rate`
+                      : '0% Rejection Rate'}
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
 
           {/* Search & Filter Bar */}

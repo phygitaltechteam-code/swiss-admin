@@ -206,6 +206,21 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
     }
   };
 
+  const formatCompactIndian = (num: number): string => {
+    const abs = Math.abs(num);
+
+    if (abs >= 10000000) {
+      return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+    }
+    if (abs >= 100000) {
+      return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+    }
+    if (abs >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
+  };
+
   const columns: Column<any>[] = [
     // {
     //   header: 'Transaction ID',
@@ -308,7 +323,20 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
   ];
 
   return (
-    <div className="flex h-full flex-col bg-[#F9FAFB]">
+    <div className="flex h-full flex-col">
+      {/* Page Header */}
+      <div className="shrink-0 px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-xl font-bold tracking-tight text-black sm:text-2xl">
+              Withdraw Approvals
+            </h1>
+            <p className="text-gray-600 text-xs font-normal sm:text-sm">
+              Manage and review incoming withdraw requests.
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Mobile Filter Toggle */}
       <div className="border-gray-200 border-b bg-white p-4 lg:hidden">
         <button
@@ -331,103 +359,147 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-8">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:gap-8">
-          {/* Stats Grid - Responsive */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
-            {/* Total Pending Amount */}
-            <button
-              onClick={() => setFilter('Pending')}
-              className={`col-span-2 flex flex-col gap-2 rounded-xl p-4 shadow-sm transition-all hover:scale-[1.02] md:col-span-2 lg:col-span-2 ${
-                filter === 'Pending'
-                  ? 'bg-orange-50 ring-2 ring-primary/20'
-                  : 'bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 text-sm font-medium">
-                  Total Pending
-                </p>
-                <div className="flex size-7 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                  <DollarSign size={18} />
+          {/* === REDESIGNED STATS CARDS === */}
+          <div className="w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
+            <div className="flex min-w-max gap-4 md:grid md:min-w-0 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
+              {/* Total Pending Amount - Clickable */}
+              <button
+                onClick={() => setFilter('Pending')}
+                className={`flex w-[280px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  filter === 'Pending'
+                    ? 'border-primary/20 bg-orange-50 ring-2 ring-primary/20'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Total Pending Amount
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      ${formatCompactIndian(stats.totalPendingAmount)}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                  </div>
                 </div>
-              </div>
-              <p className="text-gray-900 text-xl font-bold lg:text-2xl">
-                ${stats.totalPendingAmount.toLocaleString('en-US')}
-              </p>
-              <p className="text-gray-500 text-xs">Click to filter Pending</p>
-            </button>
+                <div className="mt-4 flex items-center text-sm text-green-600">
+                  <span>Pending withdrawals</span>
+                </div>
+              </button>
 
-            {/* Requests Today */}
-            <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 text-sm font-medium">Today</p>
-                <div className="flex size-7 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                  <Bell size={18} />
+              {/* Requests Today - Static */}
+              <div className="dark:bg-gray-800 dark:border-gray-700 flex w-[200px] flex-shrink-0 flex-col justify-between rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Requests Today
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.requestsToday}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
+                    <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-neutral-500">
+                  <span>Last 24 hours</span>
                 </div>
               </div>
-              <p className="text-gray-900 text-xl font-bold">
-                {stats.requestsToday}
-              </p>
+
+              {/* Pending - Clickable */}
+              <button
+                onClick={() => setFilter('Pending')}
+                className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  filter === 'Pending'
+                    ? 'bg-yellow-50 ring-2 ring-yellow-200'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Pending
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.pendingCount}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-yellow-100 p-2 dark:bg-yellow-900/30">
+                    <Hourglass className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-yellow-600">
+                  <span>Requires action</span>
+                </div>
+              </button>
+
+              {/* Approved - Clickable */}
+              <button
+                onClick={() => setFilter('Approved')}
+                className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  filter === 'Approved'
+                    ? 'bg-green-50 ring-2 ring-green-200'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Approved
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.approvedCount}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-green-600">
+                  <span>Successful withdrawals</span>
+                </div>
+              </button>
+
+              {/* Rejected - Clickable */}
+              <button
+                onClick={() => setFilter('Rejected')}
+                className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
+                  filter === 'Rejected'
+                    ? 'bg-red-50 ring-2 ring-red-200'
+                    : 'border-stroke bg-white dark:border-[#3a2a20] dark:bg-[#2c2019]'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      Rejected
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
+                      {stats.rejectedCount}
+                    </h3>
+                  </div>
+                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
+                    <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm text-red-600">
+                  <span>
+                    {stats.totalPendingAmount > 0
+                      ? `${Math.round(
+                          (stats.rejectedCount /
+                            (stats.pendingCount +
+                              stats.approvedCount +
+                              stats.rejectedCount)) *
+                            100,
+                        )}% rejection rate`
+                      : 'No data'}
+                  </span>
+                </div>
+              </button>
             </div>
-
-            {/* Pending */}
-            <button
-              onClick={() => setFilter('Pending')}
-              className={`flex flex-col gap-2 rounded-xl p-4 shadow-sm transition-all hover:scale-[1.02] ${
-                filter === 'Pending'
-                  ? 'bg-yellow-50 ring-2 ring-yellow-200'
-                  : 'bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 text-sm font-medium">Pending</p>
-                <div className="flex size-7 items-center justify-center rounded-full bg-yellow-50 text-yellow-600">
-                  <Hourglass size={18} />
-                </div>
-              </div>
-              <p className="text-gray-900 text-xl font-bold">
-                {stats.pendingCount}
-              </p>
-            </button>
-
-            {/* Approved */}
-            <button
-              onClick={() => setFilter('Approved')}
-              className={`flex flex-col gap-2 rounded-xl p-4 shadow-sm transition-all hover:scale-[1.02] ${
-                filter === 'Approved'
-                  ? 'bg-green-50 ring-2 ring-green-200'
-                  : 'bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 text-sm font-medium">Approved</p>
-                <div className="flex size-7 items-center justify-center rounded-full bg-green-50 text-green-600">
-                  <CheckCircle2 size={18} />
-                </div>
-              </div>
-              <p className="text-gray-900 text-xl font-bold">
-                {stats.approvedCount}
-              </p>
-            </button>
-
-            {/* Rejected */}
-            <button
-              onClick={() => setFilter('Rejected')}
-              className={`flex flex-col gap-2 rounded-xl p-4 shadow-sm transition-all hover:scale-[1.02] ${
-                filter === 'Rejected'
-                  ? 'bg-red-50 ring-2 ring-red-200'
-                  : 'bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 text-sm font-medium">Rejected</p>
-                <div className="flex size-7 items-center justify-center rounded-full bg-red-50 text-red-600">
-                  <XCircle size={18} />
-                </div>
-              </div>
-              <p className="text-gray-900 text-xl font-bold">
-                {stats.rejectedCount}
-              </p>
-            </button>
           </div>
 
           {/* Filters Section - Responsive */}
@@ -503,28 +575,6 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Results Summary */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-gray-900 text-lg font-bold">
-                Withdrawal Transactions
-              </h3>
-              <p className="text-gray-600 text-sm">
-                {filteredTransactions.length} transaction
-                {filteredTransactions.length !== 1 ? 's' : ''}
-                {filter !== 'All' && ` • ${filter} only`}
-                {searchQuery && ` • matching "${searchQuery}"`}
-              </p>
-            </div>
-            {(startDate || endDate) && (
-              <div className="text-gray-500 text-sm">
-                {startDate && `From: ${startDate}`}
-                {startDate && endDate && ' • '}
-                {endDate && `To: ${endDate}`}
-              </div>
-            )}
           </div>
 
           {/* Table - Mobile Responsive */}

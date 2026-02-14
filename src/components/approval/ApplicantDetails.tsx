@@ -47,17 +47,18 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
   // -------------------- DOCUMENTS --------------------
   const docList = [
     {
+      key: 'photo ',
+      label: 'Profile',
+      image: customerDetails?.photo,
+      // number: customerDetails?.panCardNumber,
+    },
+    {
       key: 'passport',
       label: 'Passport',
       image: customerDetails?.passport,
       number: customerDetails?.passportNumber,
     },
-    {
-      key: 'panCard',
-      label: 'PAN Card',
-      image: customerDetails?.panCard,
-      number: customerDetails?.panCardNumber,
-    },
+
     {
       key: 'aadharCard',
       label: 'Aadhaar Card',
@@ -225,18 +226,18 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
             <div key={doc.key}>
               <h3 className="mb-4 flex justify-between border-b pb-2 text-[10px] font-bold uppercase tracking-widest">
                 {doc.label}
-                <button className="text-gray-500 flex items-center gap-1 text-[10px] hover:text-black">
+                {/* <button className="text-gray-500 flex items-center gap-1 text-[10px] hover:text-black">
                   View Full Res <MdOpenInNew />
-                </button>
+                </button> */}
               </h3>
 
               {/* Document Number ABOVE image */}
-              {
+              {doc.number && (
                 <div className="mb-3 rounded-lg border border-stroke bg-neutral-50 p-3">
                   <Label>{doc.label} Number</Label>
                   <Value className="font-mono">{doc.number}</Value>
                 </div>
-              }
+              )}
 
               {/* Image */}
               <div className="bg-gray-100 relative aspect-video overflow-hidden rounded-xl border">

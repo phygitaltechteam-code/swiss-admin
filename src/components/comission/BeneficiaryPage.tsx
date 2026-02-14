@@ -214,7 +214,7 @@ const BeneficiaryPage: React.FC = () => {
         </aside>
 
         {/* Main Content Area */}
-        <section className="bg-gray-50/50 relative flex min-w-0 flex-1 flex-col overflow-hidden">
+        <section className="bg-gray-50/50 relative flex min-w-0 flex-1 flex-col overflow-y-auto">
           {/* Detail Header */}
           <div className="shrink-0 border-b border-stroke bg-white px-4 py-4 lg:px-8 lg:py-5">
             <div className="mb-2 flex items-center justify-between">
@@ -275,9 +275,9 @@ const BeneficiaryPage: React.FC = () => {
           </div>
 
           {/* Scrollable Content */}
-          <div className="overflow-y-auto p-4 lg:p-8">
+          <div className="p-4 lg:p-8">
             <div className="mx-auto h-full max-w-5xl">
-              <div className="flex h-full flex-col overflow-hidden rounded-xl border border-stroke bg-white shadow-sm">
+              <div className="flex h-full flex-col rounded-xl border border-stroke bg-white shadow-sm">
                 {/* Card Header */}
                 <div className="bg-gray-50 flex shrink-0 flex-col items-start justify-between gap-2 border-b border-stroke px-4 py-3 sm:flex-row sm:items-center sm:px-6 sm:py-4">
                   <h3 className="text-header-text flex items-center gap-2 text-sm font-bold uppercase tracking-wider">
@@ -300,10 +300,10 @@ const BeneficiaryPage: React.FC = () => {
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                         <div>
                           <label className="text-label-text mb-1.5 block text-[11px] font-semibold">
-                            {selectedBeneficiary?.fullName}
+                            Name
                           </label>
-                          <div className="text-header-text text-sm font-semibold">
-                            Sarah Miller
+                          <div className="text-header-text mb-1.5 block font-semibold">
+                            {selectedBeneficiary?.fullName}
                           </div>
                         </div>
                         <div>
