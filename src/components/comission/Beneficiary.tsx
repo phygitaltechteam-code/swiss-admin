@@ -1,4 +1,3 @@
-// export default BeneficiaryContent;
 import {useGetBeneficiary} from '@/lib/react-query/Beneficiary';
 import React, {useState, useMemo, useEffect} from 'react';
 import {
@@ -14,8 +13,9 @@ import {
 } from 'react-icons/md';
 import {getRequestStatus} from '../approval/methods';
 import {useNavigate} from '@tanstack/react-router';
+import {Beneficiary} from './../../types/transactionhistory';
 
-// --- Mock Data ---
+// --- Types (you can move to a shared file) ---
 export interface Beneficiary {
   id: string;
   name: string;
@@ -59,6 +59,43 @@ const BeneficiaryContent: React.FC = () => {
   >('ALL');
 
   const navigate = useNavigate();
+
+  // --- Dynamic counts for summary cards ---
+  const pendingCount = useMemo(() => {
+    if (!beneficiaries) return 0;
+    return beneficiaries.reduce((total, client) => {
+      return (
+        total +
+        (client.foreignBeneficiaries?.filter(
+          (b) => !b.isVerified && !b.isRejected,
+        ).length || 0)
+      );
+    }, 0);
+  }, [beneficiaries]);
+
+  const approvedCount = useMemo(() => {
+    if (!beneficiaries) return 0;
+    return beneficiaries.reduce((total, client) => {
+      return (
+        total +
+        (client.foreignBeneficiaries?.filter(
+          (b) => b.isVerified && !b.isRejected,
+        ).length || 0)
+      );
+    }, 0);
+  }, [beneficiaries]);
+
+  const rejectedCount = useMemo(() => {
+    if (!beneficiaries) return 0;
+    return beneficiaries.reduce((total, client) => {
+      return (
+        total +
+        (client.foreignBeneficiaries?.filter((b) => b.isRejected).length || 0)
+      );
+    }, 0);
+  }, [beneficiaries]);
+
+  // Filtering and pagination (unchanged)
   const filteredBeneficiaries = useMemo(() => {
     if (!beneficiaries) return [];
 
@@ -86,7 +123,6 @@ const BeneficiaryContent: React.FC = () => {
     startIndex + ITEMS_PER_PAGE,
   );
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, fromDate, toDate]);
@@ -138,8 +174,16 @@ const BeneficiaryContent: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-white/50 p-4 dark:bg-[#221710] md:p-8">
-      <div className="mx-auto">
-        {/* Search and Filter Section */}
+      {/* Page Header */}
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F1535] dark:text-white sm:text-3xl">
+            Beneficiary Management
+          </h1>
+        </div>
+      </div>
+      <div className="mx-auto mt-4">
+        {/* Search and Filter Section (unchanged) */}
         <div className="mb-6 flex flex-col items-end justify-between gap-4 md:flex-row md:items-center">
           <div className="relative w-full md:w-96">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -181,67 +225,71 @@ const BeneficiaryContent: React.FC = () => {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500">
-                  Pending Requests
-                </p>
-                <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
-                  24
-                </h3>
+        {/* Summary Cards - Dynamic & Responsive */}
+        <div className="mb-8 w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
+          <div className="flex min-w-max gap-6 md:grid md:min-w-0 md:grid-cols-3 md:gap-6">
+            {/* Pending Requests */}
+            <div className="flex w-[280px] flex-shrink-0 flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019] md:w-auto">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-neutral-500">
+                    Pending Requests
+                  </p>
+                  <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
+                    {pendingCount}
+                  </h3>
+                </div>
+                <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                  <MdSchedule className="text-[20px] text-primary" />
+                </div>
               </div>
-              <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
-                <MdSchedule className="text-[20px] text-primary" />
+              <div className="mt-4 flex items-center text-sm text-neutral-500">
+                <MdSchedule className="mr-1 text-base" />
+                <span>Requires review</span>
               </div>
             </div>
-            <div className="mt-4 flex items-center text-sm text-neutral-500">
-              <MdSchedule className="mr-1 text-base" />
-              <span>Requires review</span>
-            </div>
-          </div>
 
-          {/* Approved Card */}
-          <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500">
-                  Approved Requests
-                </p>
-                <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
-                  142
-                </h3>
+            {/* Approved Requests */}
+            <div className="flex w-[280px] flex-shrink-0 flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019] md:w-auto">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-neutral-500">
+                    Approved Requests
+                  </p>
+                  <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
+                    {approvedCount}
+                  </h3>
+                </div>
+                <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
+                  <MdCheckCircle className="text-[20px] text-green-600 dark:text-green-400" />
+                </div>
               </div>
-              <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-                <MdCheckCircle className="text-[20px] text-green-600 dark:text-green-400" />
+              <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
+                <MdArrowUpward className="mr-1 text-base" />
+                <span>12% increase this week</span>{' '}
               </div>
             </div>
-            <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
-              <MdArrowUpward className="mr-1 text-base" />
-              <span>12% increase this week</span>
-            </div>
-          </div>
 
-          {/* Rejected Card */}
-          <div className="flex flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500">
-                  Rejected Requests
-                </p>
-                <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
-                  18
-                </h3>
-              </div>
-              <div className="rounded-lg bg-red-100 p-2 dark:bg-red-900/30">
-                <MdBlock className="text-[20px] text-red-600 dark:text-red-400" />
+            {/* Rejected Requests */}
+            <div className="flex w-[280px] flex-shrink-0 flex-col justify-between rounded-xl border border-stroke bg-white p-6 shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019] md:w-auto">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-neutral-500">
+                    Rejected Requests
+                  </p>
+                  <h3 className="mt-2 text-3xl font-bold text-[#0F1535] dark:text-white">
+                    {rejectedCount}
+                  </h3>
+                </div>
+                <div className="rounded-lg bg-red-100 p-2 dark:bg-red-900/30">
+                  <MdBlock className="text-[20px] text-red-600 dark:text-red-400" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Client List Table */}
+        {/* Client List Table (unchanged) */}
         <div className="overflow-hidden rounded-xl border border-[#f4ece7] bg-white shadow-sm dark:border-[#3a2a20] dark:bg-[#2c2019]">
           <div className="flex items-center justify-between border-b border-[#f4ece7] px-6 py-4 dark:border-[#3a2a20]">
             <h2 className="text-lg font-semibold text-[#0F1535] dark:text-white">
@@ -259,7 +307,6 @@ const BeneficiaryContent: React.FC = () => {
             </div>
           </div>
 
-          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
@@ -267,9 +314,9 @@ const BeneficiaryContent: React.FC = () => {
                   <th className="w-12 px-6 py-4"></th>
                   <th className="px-6 py-4">Client Name</th>
                   <th className="px-6 py-4">Account Number</th>
-                  {/* <th className="px-6 py-4">Transaction Value</th> */}
                   <th className="px-6 py-4">Total Beneficiaries</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Pending Count</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -282,7 +329,6 @@ const BeneficiaryContent: React.FC = () => {
                   const status = getRequestStatus(client);
                   return (
                     <React.Fragment key={client.id}>
-                      {/* Main Row */}
                       <tr
                         className="group cursor-pointer transition-colors dark:hover:bg-[#3a2a20]/30"
                         onClick={() => toggleRow(client.id)}
@@ -300,9 +346,6 @@ const BeneficiaryContent: React.FC = () => {
                         <td className="font-mono px-6 py-4 text-sm text-neutral-500">
                           {client.accountNumber}
                         </td>
-                        {/* <td className="font-mono px-6 py-4 text-sm text-[#0F1535] dark:text-white">
-                          {formatCurrency(client.transactionValue)}
-                        </td> */}
                         <td className="px-6 py-4 text-[#0F1535] dark:text-white">
                           {client?.foreignBeneficiaries?.length}
                         </td>
@@ -322,14 +365,17 @@ const BeneficiaryContent: React.FC = () => {
                               <span className="mb-1 inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
                                 Rejected
                               </span>
-
                               <span className="mt-1 flex items-center text-xs font-medium text-red-600 dark:text-red-400">
                                 <MdReport className="mr-1 text-[14px]" />
-
                                 {client?.rejectedReason}
                               </span>
                             </div>
                           )}
+                        </td>
+                        <td className="px-6 py-4 text-[#0F1535] dark:text-white">
+                          {client.foreignBeneficiaries?.filter(
+                            (b) => !b.isVerified && !b.isRejected,
+                          ).length || 0}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
@@ -377,40 +423,66 @@ const BeneficiaryContent: React.FC = () => {
                                       Country
                                     </th>
                                     <th className="px-4 py-3 font-medium">
-                                      Currency
+                                      Status
                                     </th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#f4ece7] dark:divide-[#3a2a20]">
                                   {client?.foreignBeneficiaries?.length > 0 ? (
                                     client.foreignBeneficiaries.map(
-                                      (beneficiary) => (
-                                        <tr key={beneficiary.id}>
-                                          <td className="px-4 py-3 font-medium text-[#0F1535] dark:text-white">
-                                            {beneficiary.fullName}
-                                          </td>
-                                          <td className="font-mono px-4 py-3 text-xs text-[#0F1535] dark:text-white">
-                                            {beneficiary.accountNumber}
-                                          </td>
-                                          <td className="max-w-[150px] truncate px-4 py-3 text-neutral-500">
-                                            {beneficiary.address}
-                                          </td>
-                                          <td className="px-4 py-3 text-neutral-500">
-                                            {beneficiary.city}
-                                          </td>
-                                          <td className="px-4 py-3 text-neutral-500">
-                                            {beneficiary.state}
-                                          </td>
-                                          <td className="px-4 py-3 text-neutral-500">
-                                            {beneficiary.country}
-                                          </td>
-                                          <td className="px-4 py-3">
-                                            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                                              {beneficiary.currency}
+                                      (beneficiary) => {
+                                        // Determine status badge
+                                        let statusBadge;
+                                        if (beneficiary.isRejected) {
+                                          statusBadge = (
+                                            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                                              Rejected
                                             </span>
-                                          </td>
-                                        </tr>
-                                      ),
+                                          );
+                                        } else if (beneficiary.isVerified) {
+                                          statusBadge = (
+                                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                                              Approved
+                                            </span>
+                                          );
+                                        } else {
+                                          statusBadge = (
+                                            <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
+                                              Pending
+                                            </span>
+                                          );
+                                        }
+                                        return (
+                                          <tr key={beneficiary.id}>
+                                            <td className="px-4 py-3 font-medium text-[#0F1535] dark:text-white">
+                                              {beneficiary.fullName}
+                                            </td>
+                                            <td className="font-mono px-4 py-3 text-xs text-[#0F1535] dark:text-white">
+                                              {beneficiary.accountNumber}
+                                            </td>
+                                            <td className="max-w-[150px] truncate px-4 py-3 text-neutral-500">
+                                              {beneficiary.address}
+                                            </td>
+                                            <td className="px-4 py-3 text-neutral-500">
+                                              {beneficiary.city}
+                                            </td>
+                                            <td className="px-4 py-3 text-neutral-500">
+                                              {beneficiary.state}
+                                            </td>
+                                            <td className="px-4 py-3 text-neutral-500">
+                                              {beneficiary.country}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                              <div className="flex items-center gap-2">
+                                                {/* <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                  {beneficiary.currency}
+                                                </span> */}
+                                                {statusBadge}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      },
                                     )
                                   ) : (
                                     <tr>
@@ -435,7 +507,7 @@ const BeneficiaryContent: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination (unchanged) */}
           <div className="flex items-center justify-between border-t border-stroke px-6 py-4 dark:border-[#3a2a20]">
             <div className="text-sm text-neutral-500">
               Showing{' '}
@@ -464,7 +536,6 @@ const BeneficiaryContent: React.FC = () => {
                 Previous
               </button>
 
-              {/* Page Numbers */}
               {Array.from({length: Math.min(3, totalPages)}, (_, i) => {
                 let pageNumber;
                 if (totalPages <= 3) {

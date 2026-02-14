@@ -23,17 +23,13 @@ const RegistrationReview: React.FC = () => {
       <main className="relative flex h-screen flex-1 flex-col overflow-hidden transition-all duration-300">
         <Header status={status} />
 
-        <div className="custom-scroll flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="lg:col-span-7">
+        <div className="custom-scroll overflow-y-auto p-4 md:p-6">
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-6">
+            <div>
               <ApplicantDetails customerDetails={CustomerDetails} />
             </div>
-            <div className="flex flex-col gap-6 lg:col-span-5">
-              <SummaryChecklist
-                SWIFTBIC={CustomerDetails?.SWIFTBIC}
-                name={CustomerDetails?.user?.fullname}
-                photo={CustomerDetails?.photo}
-              />
+
+            <div className="flex flex-col gap-6">
               <DecisionActions
                 onAccept={() => acceptCustomer(id)}
                 onReject={(note: string) => rejectCustomer({id, note})}

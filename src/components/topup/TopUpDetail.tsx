@@ -1100,46 +1100,48 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
             {/* Transaction Details & Actions - Right Column */}
             <div className="flex flex-col gap-6 lg:col-span-6 xl:col-span-7">
               {/* Transaction Details Card */}
-              <div className="flex flex-1 flex-col overflow-hidden rounded-xl bg-white shadow-sm">
-                <div className="flex items-center justify-between bg-white px-6 py-4">
-                  <h3 className="text-gray-900 text-lg font-bold">
-                    Transaction Details
-                  </h3>
-                  <span className="flex items-center gap-1 rounded border border-green-100 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                    <ShieldCheck size={14} />
-                    Verified Transaction
-                  </span>
+              <div className="border-gray-200 overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md">
+                {/* Header */}
+                <div className="border-gray-100 from-gray-50 border-b bg-gradient-to-r to-white px-6 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <h3 className="text-gray-800 text-lg font-semibold">
+                      Transaction Details
+                    </h3>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 ring-1 ring-green-200">
+                      <ShieldCheck size={14} className="text-green-600" />
+                      Verified Transaction
+                    </span>
+                  </div>
                 </div>
-                <div className="flex-1 p-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    {/* Transaction Info */}
+
+                {/* Body */}
+                <div className="p-5 sm:p-6">
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* Left Column */}
                     <div className="space-y-6">
-                      <div>
-                        <h4 className="text-gray-700 mb-4 text-sm font-semibold">
+                      {/* Transaction Information */}
+                      <div className="bg-gray-50 rounded-lg p-5">
+                        <h4 className="text-gray-600 mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs text-blue-600">
+                            i
+                          </span>
                           Transaction Information
                         </h4>
                         <div className="space-y-4">
+                          {/* Uncomment if needed */}
                           {/* <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Transaction ID
-                            </p>
-                            <p className="text-gray-900 font-mono text-sm font-medium break-all">
-                              {transaction.id}
-                            </p>
-                          </div>
+                <p className="text-xs font-medium uppercase text-gray-500">Transaction ID</p>
+                <p className="mt-1 font-mono text-sm font-medium text-gray-900 break-all">{transaction.id}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-gray-500">Wallet ID</p>
+                <p className="mt-1 font-mono text-sm font-medium text-gray-900 break-all">{transaction.walletId}</p>
+              </div> */}
                           <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Wallet ID
-                            </p>
-                            <p className="text-gray-900 font-mono text-sm font-medium break-all">
-                              {transaction.walletId}
-                            </p>
-                          </div> */}
-                          <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
+                            <p className="text-gray-500 text-xs font-medium uppercase">
                               Particular
                             </p>
-                            <p className="text-gray-900 text-sm font-medium">
+                            <p className="text-gray-900 mt-1 text-base font-medium">
                               {transaction.particular}
                             </p>
                           </div>
@@ -1147,16 +1149,19 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
                       </div>
 
                       {/* Account Balances */}
-                      <div>
-                        <h4 className="text-gray-700 mb-4 text-sm font-semibold">
+                      <div className="bg-gray-50 rounded-lg p-5">
+                        <h4 className="text-gray-600 mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-100 text-xs text-purple-600">
+                            $
+                          </span>
                           Account Balances
                         </h4>
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
+                          <div className="border-gray-200 flex items-center justify-between border-b pb-2">
                             <span className="text-gray-600 text-sm">
                               Private Account
                             </span>
-                            <span className="text-gray-900 text-sm font-semibold">
+                            <span className="text-gray-900 text-base font-semibold">
                               $
                               {transaction.eprivateAccount?.toLocaleString(
                                 'en-US',
@@ -1167,7 +1172,7 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
                             <span className="text-gray-600 text-sm">
                               Temporary Account
                             </span>
-                            <span className="text-gray-900 text-sm font-semibold">
+                            <span className="text-gray-900 text-base font-semibold">
                               $
                               {transaction.temporyAccount?.toLocaleString(
                                 'en-US',
@@ -1178,89 +1183,92 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
                       </div>
                     </div>
 
-                    {/* Amount & Timestamps */}
+                    {/* Right Column */}
                     <div className="space-y-6">
-                      <div>
-                        <h4 className="text-gray-700 mb-4 text-sm font-semibold">
+                      {/* Amount Details */}
+                      <div className="bg-gray-50 rounded-lg p-5">
+                        <h4 className="text-gray-600 mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs text-green-600">
+                            $
+                          </span>
                           Amount Details
                         </h4>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <div className="mb-4">
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Top-Up Amount
-                            </p>
-                            <p className="text-gray-900 text-2xl font-bold">
+                        <div className="rounded-lg bg-white p-4 shadow-sm">
+                          <p className="text-gray-500 text-xs font-medium uppercase">
+                            Top-Up Amount
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-baseline gap-2">
+                            <span className="text-gray-900 text-3xl font-bold">
                               ${transaction.amount.toLocaleString('en-US')}
-                              <span className="text-gray-500 ml-2 text-sm">
-                                {transaction.amountType}
-                              </span>
-                            </p>
+                            </span>
+                            <span className="bg-gray-100 text-gray-600 rounded-full px-2.5 py-0.5 text-xs font-medium">
+                              {transaction.amountType}
+                            </span>
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">
-                                Transaction Type
-                              </span>
-                              <span
-                                className={`font-medium ${transaction.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}
+                          <div className="mt-4 grid grid-cols-2 gap-3">
+                            <div className="bg-gray-100 rounded-md p-3">
+                              <p className="text-gray-500 text-xs">Type</p>
+                              <p
+                                className={`mt-1 text-sm font-semibold ${transaction.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}
                               >
                                 {transaction.type}
-                              </span>
+                              </p>
                             </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">
+                            <div className="bg-gray-100 rounded-md p-3">
+                              <p className="text-gray-500 text-xs">
                                 Account Type
-                              </span>
-                              <span className="font-medium">
+                              </p>
+                              <p className="text-gray-800 mt-1 text-sm font-semibold">
                                 {getAccountTypeDisplay(transaction.accountType)}
-                              </span>
+                              </p>
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Timestamps */}
-                      <div>
-                        <h4 className="text-gray-700 mb-4 text-sm font-semibold">
+                      {/* <div className="bg-gray-50 rounded-lg p-5">
+                        <h4 className="text-gray-600 mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs text-amber-600">
+                            ⏱
+                          </span>
                           Timestamps
                         </h4>
                         <div className="space-y-3">
-                          <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
-                              Created At
-                            </p>
-                            <p className="text-gray-900 text-sm">
+                          <div className="border-gray-200 flex items-center justify-between border-b pb-2">
+                            <span className="text-gray-500 text-sm">
+                              Created
+                            </span>
+                            <span className="text-gray-800 text-sm font-medium">
                               {formatTransactionDate(transaction.createdAt)}
-                            </p>
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500 text-sm">
                               Last Updated
-                            </p>
-                            <p className="text-gray-900 text-sm">
+                            </span>
+                            <span className="text-gray-800 text-sm font-medium">
                               {formatTransactionDate(transaction.updatedAt)}
-                            </p>
+                            </span>
                           </div>
                         </div>
-                      </div>
+                      </div> */}
 
-                      {/* Rejection Reason (if rejected) */}
+                      {/* Rejection Reason */}
                       {transaction.isRejected && transaction.rejectReason && (
-                        <div className="mt-6">
-                          <div className="rounded-lg bg-red-50 p-4">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle
-                                size={20}
-                                className="mt-0.5 text-red-500"
-                              />
-                              <div>
-                                <p className="text-sm font-semibold text-red-800">
-                                  Rejection Reason
-                                </p>
-                                <p className="mt-1 text-sm text-red-700">
-                                  {transaction.rejectReason}
-                                </p>
-                              </div>
+                        <div className="rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle
+                              size={20}
+                              className="mt-0.5 flex-shrink-0 text-red-500"
+                            />
+                            <div>
+                              <p className="text-sm font-semibold text-red-800">
+                                Rejection Reason
+                              </p>
+                              <p className="mt-1 text-sm text-red-700">
+                                {transaction.rejectReason}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -1270,46 +1278,53 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons - Only show for pending transactions */}
+              {/* Action Buttons (only for pending transactions) */}
               {transaction.isPending && !transaction.isRejected && (
-                <div className="mt-4">
-                  <div className="rounded-xl bg-white p-6 shadow-sm">
-                    <h4 className="text-gray-900 mb-4 text-lg font-bold">
-                      Review Actions
-                    </h4>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <button
-                        onClick={handleOpenRejectDialog}
-                        disabled={isActionInProgress}
-                        className="border-gray-300 text-gray-700 flex h-12 items-center justify-center rounded-lg border bg-white font-bold shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                      >
+                <div className="border-gray-200 rounded-xl border bg-white p-6 shadow-sm transition-all hover:shadow-md">
+                  <h4 className="text-gray-800 mb-5 text-lg font-semibold">
+                    Review Actions
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <button
+                      onClick={handleOpenRejectDialog}
+                      disabled={isActionInProgress}
+                      className="border-gray-300 text-gray-700 inline-flex h-12 items-center justify-center rounded-lg border-2 bg-white px-4 font-semibold shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-lg">✕</span>
                         Reject Request
-                      </button>
-                      <button
-                        onClick={handleApprove}
-                        disabled={isActionInProgress}
-                        className={`flex h-12 items-center justify-center rounded-lg font-bold text-white shadow-md transition-all ${
-                          isApproveConfirming
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-green-600 hover:bg-green-700'
-                        } disabled:opacity-50`}
-                      >
-                        {isApproving ? (
-                          <>
-                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                            Approving...
-                          </>
-                        ) : isApproveConfirming ? (
-                          'Click again to confirm'
-                        ) : (
-                          'Approve Top-Up'
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-gray-500 mt-4 text-center text-sm">
-                      Review all information before taking action
-                    </p>
+                      </span>
+                    </button>
+                    <button
+                      onClick={handleApprove}
+                      disabled={isActionInProgress}
+                      className={`inline-flex h-12 items-center justify-center rounded-lg px-4 font-semibold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
+                        isApproveConfirming
+                          ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                          : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                      }`}
+                    >
+                      {isApproving ? (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                          Approving...
+                        </>
+                      ) : isApproveConfirming ? (
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">⚠️</span>
+                          Click again to confirm
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">✓</span>
+                          Approve Top-Up
+                        </span>
+                      )}
+                    </button>
                   </div>
+                  <p className="border-gray-100 text-gray-500 mt-5 border-t pt-4 text-center text-sm">
+                    Review all information before taking action
+                  </p>
                 </div>
               )}
             </div>

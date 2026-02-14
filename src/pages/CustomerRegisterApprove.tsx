@@ -52,7 +52,7 @@ const CustomerRegisterApprove: React.FC = () => {
 
         {/* Right Panel (Details) - Hidden on smaller than xl screens usually, but we'll adapt */}
         <div className="hidden xl:block">
-          <DetailPanel request={selectedRequest} />
+          {/* <DetailPanel request={selectedRequest} /> */}
         </div>
       </div>
     </div>

@@ -144,7 +144,7 @@ const MainPageClient = () => {
     formData.append('securityPin', personalData.securityPin.trim() || '');
     // formData.append('SWIFTBIC', personalData.swiftBicCode || '');
     formData.append('role', 'CUSTOMER');
-    formData.append('documentNumber', '');
+    // formData.append('documentNumber', '');
     if (kycDocument.type === 'Passport') {
       formData.append('documentType', 'Passport');
       formData.append('documentNumber', kycDocument.number.toUpperCase());
