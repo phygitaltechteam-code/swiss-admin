@@ -108,7 +108,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             label: 'Settings',
             icon: <MdSettings size={22} />,
             subRoutes: [
-              {label: 'View Profile', path: '/manager/profile'},
+              {label: 'Change Password', path: '/changepassword'},
               {label: 'Logout', onClick: () => handleSignOut()},
             ],
           },
