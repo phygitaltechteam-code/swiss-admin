@@ -26,7 +26,7 @@ const BeneficiaryPage: React.FC = () => {
   const {id} = Route.useParams();
   const navigate = useNavigate();
   const [adminNote, setAdminNote] = useState('');
-  const {data: beneficiaries} = useGetBeneficiaryByCustomer(id);
+  const {data: beneficiaries, isLoading} = useGetBeneficiaryByCustomer(id);
   const status = getRequestStatus(beneficiaries?.user);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<any | null>(
     null,
@@ -60,9 +60,87 @@ const BeneficiaryPage: React.FC = () => {
   };
 
   useEffect(() => {
-    setSelectedBeneficiary(beneficiaries?.foreignBeneficiaries[0]);
+    // Auto-select the first beneficiary when data loads
+    if (beneficiaries?.foreignBeneficiaries?.length) {
+      setSelectedBeneficiary(beneficiaries.foreignBeneficiaries[0]);
+    }
   }, [beneficiaries]);
 
+  // Calculate total assets dynamically from the data
+  // Here we use the count of foreign beneficiaries as a placeholder.
+  // Replace with actual asset total from your API when available.
+  const totalAssets = beneficiaries?.foreignBeneficiaries?.length || 0;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="bg-background-light font-sans flex h-screen flex-col overflow-hidden text-slate-800">
+        <header className="z-30 flex h-16 shrink-0 items-center justify-between bg-white px-4 lg:px-6">
+          <div className="flex items-center gap-4">
+            <div className="mr-2 flex items-center gap-2 lg:mr-4">
+              <div className="rounded-lg bg-primary/10 p-1.5">
+                <MdArrowBack className="text-gray-500 text-lg" />
+              </div>
+              <h1 className="text-header-text text-sm font-bold tracking-tight lg:text-lg">
+                Verification Hub
+              </h1>
+            </div>
+          </div>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="text-gray-600 mt-4">Loading beneficiary data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state – no beneficiaries found
+  if (!beneficiaries?.foreignBeneficiaries?.length) {
+    return (
+      <div className="bg-background-light font-sans flex h-screen flex-col overflow-hidden text-slate-800">
+        <header className="z-30 flex h-16 shrink-0 items-center justify-between bg-white px-4 lg:px-6">
+          <div className="flex items-center gap-4">
+            <div className="mr-2 flex items-center gap-2 lg:mr-4">
+              <div
+                className="cursor-pointer rounded-lg bg-primary/10 p-1.5"
+                onClick={() => navigate({to: '/client/beneficiary'})}
+              >
+                <MdArrowBack className="text-gray-500 text-lg" />
+              </div>
+              <h1 className="text-header-text text-sm font-bold tracking-tight lg:text-lg">
+                Verification Hub
+              </h1>
+            </div>
+          </div>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="max-w-md text-center">
+            <div className="bg-gray-100 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full p-4">
+              <User className="text-gray-400 h-8 w-8" />
+            </div>
+            <h2 className="text-gray-800 mb-2 text-xl font-semibold">
+              No Beneficiary History
+            </h2>
+            <p className="text-gray-500 mb-6">
+              This client has not added any beneficiaries yet. When they do,
+              their requests will appear here.
+            </p>
+            <button
+              onClick={() => navigate({to: '/client/beneficiary'})}
+              className="rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/90"
+            >
+              Back to Clients
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main render with beneficiaries
   return (
     <div className="bg-background-light font-sans flex h-screen flex-col overflow-hidden text-slate-800">
       {/* --- Header --- */}
@@ -70,12 +148,11 @@ const BeneficiaryPage: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="mr-2 flex items-center gap-2 lg:mr-4">
             <div
-              className="rounded-lg bg-primary/10 p-1.5"
+              className="cursor-pointer rounded-lg bg-primary/10 p-1.5"
               onClick={() => navigate({to: '/client/beneficiary'})}
             >
               <MdArrowBack className="text-gray-500 text-lg" />
             </div>
-
             <h1 className="text-header-text text-sm font-bold tracking-tight lg:text-lg">
               Verification Hub
             </h1>
@@ -123,7 +200,10 @@ const BeneficiaryPage: React.FC = () => {
                 <p className="text-label-text mb-0.5 text-[10px]">
                   Total Assets
                 </p>
-                <p className="text-header-text font-semibold">$142,500.00</p>
+                <p className="text-header-text font-semibold">
+                  ${totalAssets.toFixed(2)}{' '}
+                  {/* Dynamic value using count of beneficiaries */}
+                </p>
               </div>
             </div>
           </div>
@@ -134,7 +214,7 @@ const BeneficiaryPage: React.FC = () => {
               Recent Beneficiaries
             </h3>
             <div className="space-y-1">
-              {beneficiaries?.foreignBeneficiaries.map((b) => {
+              {beneficiaries.foreignBeneficiaries.map((b) => {
                 const benestatus = getRequestStatus(b);
 
                 return (
@@ -213,7 +293,7 @@ const BeneficiaryPage: React.FC = () => {
           )}
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main Content Area (unchanged) */}
         <section className="bg-gray-50/50 relative flex min-w-0 flex-1 flex-col overflow-y-auto">
           {/* Detail Header */}
           <div className="shrink-0 border-b border-stroke bg-white px-4 py-4 lg:px-8 lg:py-5">
@@ -228,15 +308,14 @@ const BeneficiaryPage: React.FC = () => {
                 <select
                   value={selectedBeneficiary?.id || ''}
                   onChange={(e) => {
-                    const beneficiary =
-                      beneficiaries?.foreignBeneficiaries.find(
-                        (b) => b.id === e.target.value,
-                      );
+                    const beneficiary = beneficiaries.foreignBeneficiaries.find(
+                      (b) => b.id === e.target.value,
+                    );
                     if (beneficiary) setSelectedBeneficiary(beneficiary);
                   }}
                   className="rounded border border-stroke bg-white px-3 py-1.5 text-sm"
                 >
-                  {beneficiaries?.foreignBeneficiaries.map((b) => (
+                  {beneficiaries.foreignBeneficiaries.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.fullName}
                     </option>

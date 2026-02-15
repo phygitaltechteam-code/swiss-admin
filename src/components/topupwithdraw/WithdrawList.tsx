@@ -380,8 +380,8 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                       ${formatCompactIndian(stats.totalPendingAmount)}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
-                    <DollarSign className="h-5 w-5 text-primary" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-green-600">
@@ -400,8 +400,8 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                       {stats.requestsToday}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
-                    <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <Bell className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-neutral-500">
@@ -427,8 +427,8 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                       {stats.pendingCount}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-yellow-100 p-2 dark:bg-yellow-900/30">
-                    <Hourglass className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <Hourglass className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-yellow-600">
@@ -454,8 +454,8 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                       {stats.approvedCount}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <CheckCircle2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-green-600">
@@ -481,8 +481,8 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                       {stats.rejectedCount}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
-                    <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <XCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-red-600">
