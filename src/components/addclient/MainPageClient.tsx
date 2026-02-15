@@ -93,7 +93,7 @@ const MainPageClient = () => {
     onSuccess: (data) => {
       console.log('Registration successful:', data);
       navigate({
-        to: '/client/displayclient',
+        to: '/Approval/customerregisterapprove',
       });
     },
 
@@ -101,12 +101,12 @@ const MainPageClient = () => {
       const message = error.response?.data?.message || 'Login failed';
       if (message === 'Pending') {
         navigate({
-          to: '/client/displayclient',
+          to: '/Approval/customerregisterapprove',
         });
       }
       if (message === 'Rejected') {
         navigate({
-          to: '/client/displayclient',
+          to: '/Approval/customerregisterapprove',
         });
       }
     }, // Added missing comma and closing brace

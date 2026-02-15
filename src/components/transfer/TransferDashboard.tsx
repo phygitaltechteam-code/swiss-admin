@@ -878,8 +878,8 @@ export const TransferDashboard = () => {
                       ${formatCompactIndian(pendingAmount)}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
-                    <MdPayments className="text-[20px] text-primary" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <MdPayments className="text-[20px] text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-green-600">
@@ -899,8 +899,8 @@ export const TransferDashboard = () => {
                       {stats.totalTransactions}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
-                    <MdToday className="text-[20px] text-purple-600 dark:text-purple-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <MdToday className="text-[20px] text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-neutral-500">
@@ -926,8 +926,8 @@ export const TransferDashboard = () => {
                       {stats.pendingCount}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-yellow-100 p-2 dark:bg-yellow-900/30">
-                    <MdHourglassEmpty className="text-[20px] text-yellow-600 dark:text-yellow-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <MdHourglassEmpty className="text-[20px] text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-yellow-600">
@@ -953,8 +953,8 @@ export const TransferDashboard = () => {
                       {stats.approvedCount}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
-                    <MdCheckCircle className="text-[20px] text-green-600 dark:text-green-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <MdCheckCircle className="text-[20px] text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-green-600">
@@ -980,8 +980,8 @@ export const TransferDashboard = () => {
                       {stats.rejectedCount}
                     </h3>
                   </div>
-                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
-                    <MdCancel className="text-[20px] text-red-600 dark:text-red-400" />
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <MdCancel className="text-[20px] text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-red-600">

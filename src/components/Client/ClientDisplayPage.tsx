@@ -423,9 +423,9 @@ const ClientDisplay: React.FC = () => {
                       {clientsData.length}
                     </p>
                   </div>
-                  <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <svg
-                      className="h-5 w-5 text-blue-600 dark:text-blue-400"
+                      className="h-5 w-5 text-orange-600 dark:text-orange-400"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -450,9 +450,9 @@ const ClientDisplay: React.FC = () => {
                       {activeClients}
                     </p>
                   </div>
-                  <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <svg
-                      className="h-5 w-5 text-green-600 dark:text-green-400"
+                      className="h-5 w-5 text-orange-600 dark:text-orange-400"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -477,9 +477,9 @@ const ClientDisplay: React.FC = () => {
                       {verifiedClients}
                     </p>
                   </div>
-                  <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <svg
-                      className="h-5 w-5 text-purple-600 dark:text-purple-400"
+                      className="h-5 w-5 text-orange-600 dark:text-orange-400"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -504,9 +504,9 @@ const ClientDisplay: React.FC = () => {
                       {formatCompactIndian(totalPrivateBalance)}
                     </p>
                   </div>
-                  <div className="ml-2 shrink-0 rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
+                  <div className="ml-2 shrink-0 rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <svg
-                      className="h-4 w-4 text-amber-600 dark:text-amber-400 sm:h-5 sm:w-5"
+                      className="h-4 w-4 text-orange-600 dark:text-orange-400 sm:h-5 sm:w-5"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -532,9 +532,9 @@ const ClientDisplay: React.FC = () => {
                       {totalTransactions}
                     </p>
                   </div>
-                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
+                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <svg
-                      className="h-5 w-5 text-red-600 dark:text-red-400"
+                      className="h-5 w-5 text-orange-600 dark:text-orange-400"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
