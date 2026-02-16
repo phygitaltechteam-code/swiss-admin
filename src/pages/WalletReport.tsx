@@ -10,7 +10,7 @@ import {
 import StatsCard from '@/components/wallettopupreport/StatsCard';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {Transaction} from '@/components/wallettopupreport/types';
-import {useGetTopupApproved} from '@/lib/react-query/Topup';
+import {useGetTopup} from '@/lib/react-query/Topup';
 import {FaCopy, FaFilePdf, FaHourglassHalf, FaRupeeSign} from 'react-icons/fa';
 import {IoMdRadioButtonOff} from 'react-icons/io';
 //import {useGetTopupApproved} from '@/lib/react-query/topup';
@@ -352,7 +352,7 @@ const WalletReport: React.FC = () => {
   const [exportProgress, setExportProgress] = useState(0);
 
   // Use the React Query hook to fetch topup data
-  const {data: apiResponse, isLoading, isError, error} = useGetTopupApproved();
+  const {data: apiResponse, isLoading, isError, error} = useGetTopup();
 
   // Extract data from API response
   const apiData = useMemo(() => {
@@ -719,17 +719,6 @@ const WalletReport: React.FC = () => {
       sortable: true,
     },
     {
-      header: 'Request ID',
-      accessor: 'requestId',
-      render: (item: Transaction) => (
-        <span className="font-mono text-sm text-primary dark:text-orange-400">
-          {item.requestId || item.id || 'N/A'}
-        </span>
-      ),
-      className: 'min-w-[120px]',
-      sortable: true,
-    },
-    {
       header: 'Client Name',
       accessor: 'clientName',
       render: (item: Transaction) => (
@@ -771,40 +760,40 @@ const WalletReport: React.FC = () => {
       className: 'min-w-[100px] text-right',
       sortable: true,
     },
-    {
-      header: 'Payment Proof',
-      accessor: 'paymentProof',
-      render: (item: Transaction) => {
-        const getProofIcon = (type: string) => {
-          switch (type) {
-            case 'View':
-              return <span className="mr-1">📎</span>;
-            case 'Image':
-              return <span className="mr-1">🖼️</span>;
-            case 'PDF':
-              return <span className="mr-1">📄</span>;
-            case 'Missing':
-              return <span className="mr-1">❌</span>;
-            default:
-              return null;
-          }
-        };
+    // {
+    //   header: 'Payment Proof',
+    //   accessor: 'paymentProof',
+    //   render: (item: Transaction) => {
+    //     const getProofIcon = (type: string) => {
+    //       switch (type) {
+    //         case 'View':
+    //           return <span className="mr-1">📎</span>;
+    //         case 'Image':
+    //           return <span className="mr-1">🖼️</span>;
+    //         case 'PDF':
+    //           return <span className="mr-1">📄</span>;
+    //         case 'Missing':
+    //           return <span className="mr-1">❌</span>;
+    //         default:
+    //           return null;
+    //       }
+    //     };
 
-        return (
-          <span
-            className={`inline-flex items-center gap-1 text-sm font-medium ${
-              (item.paymentProof?.type || 'View') === 'Missing'
-                ? 'text-gray-400 dark:text-gray-500'
-                : 'cursor-pointer text-primary hover:text-blue-600 dark:text-orange-400'
-            }`}
-          >
-            {getProofIcon(item.paymentProof?.type || 'View')}
-            {item.paymentProof?.label || 'View'}
-          </span>
-        );
-      },
-      className: 'min-w-[120px]',
-    },
+    //     return (
+    //       <span
+    //         className={`inline-flex items-center gap-1 text-sm font-medium ${
+    //           (item.paymentProof?.type || 'View') === 'Missing'
+    //             ? 'text-gray-400 dark:text-gray-500'
+    //             : 'cursor-pointer text-primary hover:text-blue-600 dark:text-orange-400'
+    //         }`}
+    //       >
+    //         {getProofIcon(item.paymentProof?.type || 'View')}
+    //         {item.paymentProof?.label || 'View'}
+    //       </span>
+    //     );
+    //   },
+    //   className: 'min-w-[120px]',
+    // },
     {
       header: 'Status',
       accessor: 'status',
