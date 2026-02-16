@@ -1,6 +1,10 @@
 import React, {useState} from 'react';
 import {useNavigate, useSearch} from '@tanstack/react-router';
-import {useGetCustomerById} from '@/lib/react-query/client';
+import {
+  useGetCustomerById,
+  useActivateCustomer,
+} from '@/lib/react-query/client';
+import toast from 'react-hot-toast';
 import {
   MdPerson,
   MdEmail,
@@ -23,9 +27,7 @@ import {
 import {Card} from './Card';
 
 const ClientProfile: React.FC = () => {
-  const [isActive, setIsActive] = useState(true);
   const navigate = useNavigate();
-  // Get the ID from search params
   const search = useSearch({from: '/_app/client/profile'});
   const clientId = search.id;
 
@@ -34,10 +36,14 @@ const ClientProfile: React.FC = () => {
     isLoading,
     isError,
     error,
+    refetch,
   } = useGetCustomerById(clientId || '');
 
-  // Extract data from API response
-  const clientData = apiResponse?.data || apiResponse; // Handle both response structures
+  // Single mutation for toggling active status
+  const activateMutation = useActivateCustomer();
+
+  // Extract data
+  const clientData = apiResponse?.data || apiResponse;
   const userData = clientData?.user;
 
   const walletData = clientData?.wallets?.[0] || {};
@@ -54,12 +60,11 @@ const ClientProfile: React.FC = () => {
         month: 'short',
         day: 'numeric',
       });
-    } catch (e) {
+    } catch {
       return 'N/A';
     }
   };
 
-  // Format date of birth
   const formatDOB = (dobString: string) => {
     if (!dobString) return 'N/A';
     try {
@@ -69,12 +74,11 @@ const ClientProfile: React.FC = () => {
         month: 'short',
         day: 'numeric',
       });
-    } catch (e) {
+    } catch {
       return 'N/A';
     }
   };
 
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -83,17 +87,34 @@ const ClientProfile: React.FC = () => {
     }).format(amount);
   };
 
-  // Handle back button click
   const handleBackClick = () => {
-    window.history.back();
+    navigate({to: '/client/displayclient'});
   };
 
-  // Handle copy to clipboard
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      // You can add a toast notification here
-      console.log('Copied to clipboard:', text);
+      toast.success('Copied to clipboard');
     });
+  };
+
+  // Single toggle handler – calls the same mutation for both on/off
+  const handleStatusToggle = async (checked: boolean) => {
+    if (!clientId) return;
+
+    // If trying to activate but user is rejected, prevent action
+    if (checked && userData?.isRejected) {
+      toast.error('Cannot activate a rejected account.');
+      return;
+    }
+
+    try {
+      // Call the toggle mutation (assumed to flip the active status)
+      await activateMutation.mutateAsync(clientId);
+      toast.success(checked ? 'Account activated' : 'Account deactivated');
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update status');
+    }
   };
 
   // Loading state
@@ -114,7 +135,6 @@ const ClientProfile: React.FC = () => {
     );
   }
 
-  // Error state or no client ID
   if (isError || !clientData || !clientId) {
     return (
       <div className="dark:bg-background-dark text-text-light dark:text-text-dark flex overflow-hidden bg-white/50">
@@ -134,16 +154,6 @@ const ClientProfile: React.FC = () => {
                     : error?.message ||
                       'Client not found or error loading data.'}
                 </p>
-                <div className="mt-4 text-sm">
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    Debug Info:
-                  </p>
-                  <p className="font-mono bg-gray-100 dark:bg-gray-800 rounded p-2 text-xs">
-                    Client ID: {clientId || 'Not provided'}
-                    <br />
-                    Error: {error?.message || 'None'}
-                  </p>
-                </div>
                 <button
                   onClick={handleBackClick}
                   className="mt-6 flex items-center gap-2 text-sm text-primary hover:underline"
@@ -158,6 +168,10 @@ const ClientProfile: React.FC = () => {
       </div>
     );
   }
+
+  const isActive = userData?.isActive || false;
+  const isRejected = userData?.isRejected || false;
+  const isVerified = userData?.isVerified || false;
 
   return (
     <div className="dark:bg-background-dark text-text-light dark:text-text-dark flex overflow-hidden bg-white/50">
@@ -214,7 +228,9 @@ const ClientProfile: React.FC = () => {
                     )}
                   </div>
                   <div
-                    className={`dark:border-gray-800 absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white ${userData?.isActive ? 'bg-green-500' : 'bg-gray-400'}`}
+                    className={`dark:border-gray-800 absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white ${
+                      isActive ? 'bg-green-500' : 'bg-gray-400'
+                    }`}
                   ></div>
                 </div>
 
@@ -240,43 +256,39 @@ const ClientProfile: React.FC = () => {
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {/* Main Status Badge */}
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        userData?.isRejected
+                        isRejected
                           ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                          : userData?.isActive
+                          : isActive
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                       }`}
                     >
                       <span
                         className={`size-1.5 rounded-full ${
-                          userData?.isRejected
+                          isRejected
                             ? 'bg-red-500'
-                            : userData?.isActive
+                            : isActive
                               ? 'bg-green-500'
                               : 'bg-gray-500'
                         }`}
                       ></span>
-
-                      {userData?.isRejected
+                      {isRejected
                         ? 'Rejected'
-                        : userData?.isActive
+                        : isActive
                           ? 'Active'
                           : 'Inactive'}
                     </span>
 
-                    {/* Verified Badge (only if verified and not rejected) */}
-                    {userData?.isVerified && !userData?.isRejected && (
+                    {isVerified && !isRejected && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                         <MdCheckCircle className="text-xs" />
                         Verified
                       </span>
                     )}
 
-                    {/* Rejected Reason */}
-                    {userData?.isRejected && clientData?.rejectedReason && (
+                    {isRejected && clientData?.rejectedReason && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
                         <MdInfo className="text-xs" />
                         {clientData.rejectedReason}
@@ -308,20 +320,24 @@ const ClientProfile: React.FC = () => {
 
                 <div className="bg-border-light dark:bg-border-dark mx-1 hidden h-8 w-px xl:block"></div>
 
+                {/* Status Toggle - Single mutation */}
                 <label className="relative ml-auto inline-flex cursor-pointer items-center xl:ml-0">
                   <input
                     type="checkbox"
-                    checked={userData?.isActive || false}
-                    onChange={(e) => setIsActive(e.target.checked)}
+                    checked={isActive && !isRejected} // Show active only if not rejected
+                    onChange={(e) => handleStatusToggle(e.target.checked)}
                     className="peer sr-only"
+                    disabled={isRejected || activateMutation.isLoading}
                   />
-                  <div className="bg-gray-200 dark:bg-gray-700 after:border-gray-300 peer h-6 w-11 rounded-full after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30"></div>
+                  <div className="bg-gray-200 dark:bg-gray-700 after:border-gray-300 peer h-6 w-11 rounded-full after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"></div>
                   <span className="text-text-light dark:text-text-dark ml-3 select-none text-sm font-medium">
-                    {userData?.isRejected
+                    {isRejected
                       ? 'Rejected'
-                      : userData?.isActive && userData?.isVerified
-                        ? 'Active'
-                        : 'Inactive'}
+                      : activateMutation.isLoading
+                        ? 'Updating...'
+                        : isActive
+                          ? 'Active'
+                          : 'Inactive'}
                   </span>
                 </label>
               </div>
@@ -333,15 +349,7 @@ const ClientProfile: React.FC = () => {
             {/* Left Column (2/3) */}
             <div className="space-y-6 lg:col-span-2">
               {/* Personal Info */}
-              <Card
-                title="Personal & Contact Information"
-                // action={
-                //   <button className="hover:text-primary-hover flex items-center gap-1 text-sm font-medium text-primary transition-colors">
-                //     <MdEdit className="text-sm" />
-                //     Edit Details
-                //   </button>
-                // }
-              >
+              <Card title="Personal & Contact Information">
                 <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
                   <div>
                     <label className="text-subtext-light dark:text-subtext-dark mb-1.5 block text-xs font-semibold uppercase tracking-wider">
@@ -649,19 +657,7 @@ const ClientProfile: React.FC = () => {
                         <span className="rounded bg-green-400/10 p-0.5">
                           <MdArrowUpward className="text-sm" />
                         </span>
-                        <span>
-                          {/* You can add transaction count here if available */}
-                          Account Balance
-                        </span>
-                      </div>
-
-                      <div className="flex gap-3">
-                        {/* <button className="flex-1 rounded-lg bg-white/10 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:bg-white/30">
-                          Add Funds
-                        </button> */}
-                        {/* <button className="hover:bg-primary-hover flex-1 rounded-lg bg-primary py-2.5 text-xs font-medium text-white shadow-lg shadow-orange-900/20 transition-all active:bg-orange-700">
-                          Withdraw
-                        </button> */}
+                        <span>Account Balance</span>
                       </div>
                     </div>
                   </div>
@@ -701,45 +697,6 @@ const ClientProfile: React.FC = () => {
                       </button>
                     </div>
                   </div>
-
-                  {/* Activity Summary */}
-                  {/* Remove or update this section since we don't have transaction data in the response */}
-                  {/*
-                  <div className="dark:bg-gray-800/50 dark:border-border-dark rounded-2xl border border-stroke bg-white p-5 shadow-sm">
-                    <h4 className="text-text-light dark:text-text-dark mb-4 text-sm font-semibold">
-                      Transaction Summary
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-subtext-light dark:text-subtext-dark text-sm">
-                          Total Transactions
-                        </span>
-                        <span className="text-text-light dark:text-text-dark text-sm font-medium">
-                          {clientData.totalTransactions || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-subtext-light dark:text-subtext-dark text-sm">
-                          Transaction Volume
-                        </span>
-                        <span className="text-text-light dark:text-text-dark text-sm font-medium">
-                          {formatCurrency(clientData.transactionVolume || 0)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-subtext-light dark:text-subtext-dark text-sm">
-                          Average Transaction
-                        </span>
-                        <span className="text-text-light dark:text-text-dark text-sm font-medium">
-                          {formatCurrency(
-                            (clientData.transactionVolume || 0) /
-                            Math.max(clientData.totalTransactions || 1, 1)
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  */}
 
                   {/* Alert Box for Rejected Status */}
                   {clientData.rejectedReason && (

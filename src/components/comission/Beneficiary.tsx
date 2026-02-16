@@ -240,7 +240,7 @@ const BeneficiaryContent: React.FC = () => {
                   </h3>
                 </div>
                 <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
-                  <MdSchedule className="text-[20px] text-primary" />
+                  <MdSchedule className="text-[20px] text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
               <div className="mt-4 flex items-center text-sm text-neutral-500">
@@ -260,13 +260,13 @@ const BeneficiaryContent: React.FC = () => {
                     {approvedCount}
                   </h3>
                 </div>
-                <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-                  <MdCheckCircle className="text-[20px] text-green-600 dark:text-green-400" />
+                <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                  <MdCheckCircle className="text-[20px] text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
               <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
                 <MdArrowUpward className="mr-1 text-base" />
-                <span>12% increase this week</span>{' '}
+                <span>12% increase this week</span>
               </div>
             </div>
 
@@ -281,8 +281,8 @@ const BeneficiaryContent: React.FC = () => {
                     {rejectedCount}
                   </h3>
                 </div>
-                <div className="rounded-lg bg-red-100 p-2 dark:bg-red-900/30">
-                  <MdBlock className="text-[20px] text-red-600 dark:text-red-400" />
+                <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                  <MdBlock className="text-[20px] text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </div>
@@ -295,7 +295,7 @@ const BeneficiaryContent: React.FC = () => {
             <h2 className="text-lg font-semibold text-[#0F1535] dark:text-white">
               Client List
             </h2>
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
               <button className="flex items-center gap-2 rounded-md border border-[#f4ece7] px-3 py-1.5 text-sm text-[#0F1535] transition-colors hover:bg-[#f8f7f5] dark:border-[#3a2a20] dark:text-white dark:hover:bg-[#3a2a20]">
                 <MdFilterList className="text-base" />
                 Filter
@@ -304,7 +304,7 @@ const BeneficiaryContent: React.FC = () => {
                 <MdFileDownload className="text-base" />
                 Export
               </button>
-            </div>
+            </div> */}
           </div>
 
           <div className="overflow-x-auto">
