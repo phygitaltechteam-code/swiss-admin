@@ -55,168 +55,147 @@ const BeneficiaryPage: React.FC = () => {
   };
 
   const handlePrint = () => {
-    // This will trigger print preview in a new tab
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('Please allow popups to print');
+    // Get filtered data from the table ref
+    const filteredData = tableRef.current?.getFilteredData() || [];
+    if (filteredData.length === 0) {
+      alert('No data to print. Adjust your filters and try again.');
       return;
     }
 
-    // Get the table container content
-    const tableContainer = document.getElementById(
-      'beneficiary-table-container',
-    );
-    if (!tableContainer) {
-      alert('No content to print');
-      return;
-    }
+    // Compute stats from the filtered data
+    const total = filteredData.length;
+    const active = filteredData.filter((item) => item.user?.isActive).length;
+    const verified = filteredData.filter((item) => item.isVerified).length;
+    const rejected = filteredData.filter((item) => item.isRejected).length;
+    const pending = total - verified - rejected;
+    const withForeign = filteredData.filter(
+      (item) => (item.foreignBeneficiariesCount || 0) > 0,
+    ).length;
 
-    // Clone the table container
-    const printContent = tableContainer.cloneNode(true) as HTMLElement;
+    // Helper for status text
+    const getStatusText = (item: (typeof filteredData)[0]) => {
+      if (item.isRejected) return 'Rejected';
+      if (item.isVerified) return 'Approved';
+      return 'Pending';
+    };
 
-    // Remove export buttons from cloned content
-    const buttons = printContent.querySelectorAll('button');
-    buttons.forEach((button) => {
-      if (
-        button.textContent?.includes('Export') ||
-        button.textContent?.includes('Print') ||
-        button.textContent?.includes('Lock')
-      ) {
-        button.remove();
-      }
+    // Build table rows
+    const tableRows = filteredData
+      .map(
+        (item, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${idx + 1}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.fullName || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.clientName || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.email || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.phoneNumber || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.bankName || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.accountNumber || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.bankCountry || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${getStatusText(item)}</td>
+      </tr>
+    `,
+      )
+      .join('');
+
+    // Current date/time
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
     });
 
-    // Create print-friendly HTML
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Beneficiary Report</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 20px;
-              font-size: 12px;
-            }
-            
-            .print-header {
-              text-align: center;
-              margin-bottom: 20px;
-              border-bottom: 2px solid #000;
-              padding-bottom: 10px;
-            }
-            
-            .print-title {
-              font-size: 20px;
-              font-weight: bold;
-              margin: 0 0 5px 0;
-            }
-            
-            .print-subtitle {
-              font-size: 14px;
-              color: #666;
-              margin: 0 0 10px 0;
-            }
-            
-            .print-info {
-              font-size: 11px;
-              color: #999;
-            }
-            
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 10px 0;
-            }
-            
-            th {
-              background: #f2f2f2;
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: left;
-              font-weight: bold;
-            }
-            
-            td {
-              border: 1px solid #ddd;
-              padding: 6px;
-            }
-            
-            tr:nth-child(even) {
-              background: #f9f9f9;
-            }
-            
-            .print-footer {
-              margin-top: 30px;
-              padding-top: 10px;
-              border-top: 1px solid #ddd;
-              text-align: center;
-              font-size: 10px;
-              color: #999;
-            }
-            
-            .no-print {
-              display: none !important;
-            }
-            
-            @media print {
-              @page {
-                margin: 0.5cm;
-              }
-              
-              body {
-                margin: 0;
-                font-size: 10px;
-                padding: 10px;
-              }
-              
-              .print-header {
-                margin-bottom: 15px;
-                padding-bottom: 5px;
-              }
-              
-              .print-title {
-                font-size: 18px;
-              }
-              
-              th, td {
-                padding: 4px;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-header">
-            <h1 class="print-title">Beneficiary Management Report</h1>
-            <div class="print-subtitle">Current Filtered View</div>
-            <div class="print-info">
-              Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}<br>
-              Total Records: ${printContent.querySelectorAll('table tbody tr').length}
-            </div>
+    // Build the full HTML document
+    const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Beneficiary Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+          h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
+          .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+          .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
+          .stat-title { font-size: 14px; color: #4b5563; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          .filter-summary { background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th { background: #ff7207; color: white; padding: 8px; text-align: left; }
+          td {  padding: 6px; }
+          .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
+          @media print {
+            body { margin: 0.5in; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Beneficiary Report</h1>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Generated: ${dateStr} ${timeStr}</span>
+            <span>Total records: ${total}</span>
           </div>
-          
-          ${printContent.innerHTML}
-          
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() {
-                window.close();
-              }, 100);
-            };
-            
-            // Fallback for print dialog cancellation
-            window.onafterprint = function() {
-              setTimeout(function() {
-                window.close();
-              }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
+        </div>
 
+
+
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Beneficiary</th>
+              <th>Linked Client</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Bank</th>
+              <th>Account</th>
+              <th>Country</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Printed from Beneficiary Management System
+        </div>
+      </body>
+    </html>
+  `;
+
+    // Open print window
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800,scrollbars=yes',
+    );
+    if (!printWindow) {
+      alert('Popup blocked. Please allow popups to print.');
+      return;
+    }
+
+    printWindow.document.write(printContent);
     printWindow.document.close();
+    printWindow.focus();
+
+    // Trigger print after content loads
+    printWindow.onload = () => {
+      printWindow.print();
+      // Optionally close after printing (some browsers may need a delay)
+      printWindow.onafterprint = () => printWindow.close();
+    };
   };
 
   const handleLockPin = () => {
@@ -245,7 +224,7 @@ const BeneficiaryPage: React.FC = () => {
 
           {/* Export Buttons at Top */}
           <div className="flex flex-wrap gap-3">
-            <button
+            {/* <button
               onClick={handleExportPDF}
               className="border-gray-300 text-gray-700 hover:bg-gray-50 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
               title="Export current filtered view as PDF"
@@ -268,15 +247,15 @@ const BeneficiaryPage: React.FC = () => {
             >
               <MdDownload />
               <span>Export All</span>
-            </button>
+            </button> */}
 
             <button
               onClick={handlePrint}
               className="hover:bg-primary-dark flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-colors"
               title="Print current filtered view"
             >
-              <MdPrint />
-              <span>Print</span>
+              <MdPrint className="text-lg" />
+              Print
             </button>
           </div>
         </div>

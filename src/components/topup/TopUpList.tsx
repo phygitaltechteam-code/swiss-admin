@@ -101,8 +101,6 @@ const getAccountTypeDisplay = (type: string) => {
       return 'E Private Account';
     case 'E_TEMPORARYACCOUNT':
       return 'Temporary Account';
-    case 'E_STANDARDACCOUNT':
-      return 'Standard Account';
     default:
       return type.replace('E_', '').replace('ACCOUNT', ' Account');
   }
@@ -208,12 +206,12 @@ export const TopUpList: React.FC<TopUpListProps> = ({
             <Briefcase size={18} />
           </div>
         );
-      case 'E_STANDARDACCOUNT':
-        return (
-          <div className="flex size-8 items-center justify-center rounded bg-green-50 text-green-600">
-            <ShieldCheck size={18} />
-          </div>
-        );
+      // case 'E_STANDARDACCOUNT':
+      //   return (
+      //     <div className="flex size-8 items-center justify-center rounded bg-green-50 text-green-600">
+      //       <ShieldCheck size={18} />
+      //     </div>
+      //   );
       default:
         return (
           <div className="bg-gray-50 text-gray-600 flex size-8 items-center justify-center rounded">
@@ -225,12 +223,21 @@ export const TopUpList: React.FC<TopUpListProps> = ({
 
   const columns: Column<any>[] = [
     {
+      header: 'Date & Time',
+      accessor: 'createdAt',
+      render: (item) => (
+        <span className="text-gray-500 text-sm">
+          {formatTransactionDate(item.createdAt)}
+        </span>
+      ),
+    },
+    {
       header: 'Client',
       accessor: 'fullname',
       render: (item) => (
         <div
           className="flex flex-col"
-          onClick={() => onSelectTransaction(item)}
+          onClick={() => onSelectTransaction(item.id)}
         >
           <span className="text-gray-900 text-sm font-semibold">
             {item.fullname}
@@ -264,15 +271,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
         </span>
       ),
     },
-    {
-      header: 'Date & Time',
-      accessor: 'createdAt',
-      render: (item) => (
-        <span className="text-gray-500 text-sm">
-          {formatTransactionDate(item.createdAt)}
-        </span>
-      ),
-    },
+
     {
       header: 'Status',
       accessor: 'isPending',
