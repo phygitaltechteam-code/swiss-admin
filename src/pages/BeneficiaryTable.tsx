@@ -15,10 +15,9 @@ import {
 
 // Types for the API response
 interface User {
-  fullname: string;
+  fullName: string;
   email: string;
   phoneNumber: string;
-  isActive: boolean;
   dob: string | null;
   isVerified: boolean;
   isRejected: boolean;
@@ -56,7 +55,18 @@ interface Beneficiary {
   id: string;
   accountNumber: string;
   rejectedReason: string | null;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  bankCountry: string;
+  bankName: string;
+  currency: string;
   user: User;
+  customer: {
+    user: {
+      fullname: string;
+    };
+  };
   foreignBeneficiaries: ForeignBeneficiary[];
 }
 
@@ -82,7 +92,7 @@ const ForeignBeneficiariesModal: React.FC<ForeignBeneficiariesModalProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 text-xl font-bold">
-                Foreign Beneficiaries for {beneficiary.fullname}
+                Foreign Beneficiaries for {beneficiary.fullName}
               </h3>
               <p className="text-gray-600 text-sm">
                 Account: {beneficiary.accountNumber} • Total:{' '}
@@ -511,27 +521,28 @@ const BeneficiaryTable = forwardRef((props, ref) => {
     if (!apiResponse || apiResponse.length === 0) {
       return [];
     }
-
+    console.log('verifiedForeignCount', apiResponse);
     const transformedData = apiResponse.map((beneficiary: Beneficiary) => {
       const verifiedForeignCount =
         beneficiary.foreignBeneficiaries?.filter((fb) => fb.isVerified)
           .length || 0;
       const totalForeignCount = beneficiary.foreignBeneficiaries?.length || 0;
 
-      console.log('verifiedForeignCount', apiResponse);
-
       return {
         id: beneficiary.id,
-        fullname: beneficiary.foreignBeneficiaries?.fullname || 'N/A',
-        email: beneficiary.foreignBeneficiaries?.email || 'N/A',
-        phoneNumber: beneficiary.foreignBeneficiaries?.phoneNumber || 'N/A',
+        fullName: beneficiary?.fullName || 'N/A',
+        email: beneficiary?.email || 'N/A',
+        bankName: beneficiary?.bankName || 'N/A',
+        phoneNumber: beneficiary?.phoneNumber || 'N/A',
+        currency: beneficiary.currency || 'N/A',
         accountNumber: beneficiary.accountNumber || 'N/A',
-        isActive: beneficiary.user?.isActive || false,
+        bankCountry: beneficiary.bankCountry || 'N/A',
         isVerified: beneficiary.user?.isVerified || false,
         isRejected: beneficiary.user?.isRejected || false,
         rejectedReason: beneficiary.rejectedReason || '',
         foreignBeneficiariesCount: totalForeignCount,
         verifiedForeignCount: verifiedForeignCount,
+        clientName: beneficiary.customer.user.fullname || 'N/A',
         user: beneficiary.user,
         foreignBeneficiaries: beneficiary.foreignBeneficiaries || [],
       };
@@ -551,7 +562,7 @@ const BeneficiaryTable = forwardRef((props, ref) => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matches =
-          item.fullname?.toLowerCase().includes(query) ||
+          item.fullName?.toLowerCase().includes(query) ||
           item.email?.toLowerCase().includes(query) ||
           item.accountNumber?.toLowerCase().includes(query) ||
           item.phoneNumber?.toLowerCase().includes(query);
@@ -675,7 +686,7 @@ const BeneficiaryTable = forwardRef((props, ref) => {
   const columns: Column<(typeof tableData)[0]>[] = [
     {
       header: 'Beneficiary Details',
-      accessor: 'fullname',
+      accessor: 'fullName',
       render: (item) => (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -684,7 +695,27 @@ const BeneficiaryTable = forwardRef((props, ref) => {
             </div>
             <div>
               <span className="text-gray-900 text-sm font-semibold">
-                {item.fullname || 'N/A'}
+                {item.fullName || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+      ),
+      className: 'min-w-[200px]',
+      sortable: true,
+    },
+    {
+      header: 'Linked Client',
+      accessor: 'clientName',
+      render: (item) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <MdPerson className="text-sm text-primary" />
+            </div>
+            <div>
+              <span className="text-gray-900 text-sm font-semibold">
+                {item.clientName || 'N/A'}
               </span>
             </div>
           </div>
@@ -728,7 +759,24 @@ const BeneficiaryTable = forwardRef((props, ref) => {
       sortable: true,
     },
     {
-      header: 'Account Information',
+      header: 'Bank name',
+      accessor: 'bankName',
+      render: (item) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div>
+              <span className="text-gray-900 text-sm font-medium">
+                {item.bankName || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+      ),
+      className: 'min-w-[180px]',
+      sortable: true,
+    },
+    {
+      header: 'Account Number',
       accessor: 'accountNumber',
       render: (item) => (
         <div className="flex flex-col gap-1">
@@ -745,35 +793,63 @@ const BeneficiaryTable = forwardRef((props, ref) => {
       sortable: true,
     },
     {
+      header: 'Country',
+      accessor: 'bankCountry',
+      render: (item) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div>
+              <span className="text-gray-900 text-sm font-medium">
+                {item.bankCountry || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+      ),
+      className: 'min-w-[180px]',
+      sortable: true,
+    },
+    // {
+    //   header: 'Currency',
+    //   accessor: 'currency',
+    //   render: (item) => (
+    //     <div className="flex flex-col gap-1">
+    //       <div className="flex items-center gap-2">
+    //         <div>
+    //           <span className="text-gray-900 text-sm font-medium">
+    //             {item.currency || 'N/A'}
+    //           </span>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   ),
+    //   className: 'min-w-[180px]',
+    //   sortable: true,
+    // },
+    {
       header: 'Status',
       accessor: 'isActive',
       render: (item) => {
-        // Determine overall status
         let statusText = '';
         let statusColor = '';
         let bgColor = '';
-        let iconColor = '';
+        let dotColor = '';
 
         if (item.isRejected) {
           statusText = 'Rejected';
           statusColor = 'text-red-800';
           bgColor = 'bg-red-50';
-          iconColor = 'bg-red-500';
-        } else if (item.isVerified && item.isActive) {
-          statusText = 'Verified & Active';
+          dotColor = 'bg-red-500';
+        } else if (item.isVerified) {
+          statusText = 'Approved';
           statusColor = 'text-green-800';
           bgColor = 'bg-green-50';
-          iconColor = 'bg-green-500';
-        } else if (item.isActive) {
-          statusText = 'Active';
-          statusColor = 'text-blue-800';
-          bgColor = 'bg-blue-50';
-          iconColor = 'bg-blue-500';
-        } else if (!item.isActive) {
-          statusText = 'Inactive';
-          statusColor = 'text-gray-800';
-          bgColor = 'bg-gray-50';
-          iconColor = 'bg-gray-500';
+          dotColor = 'bg-green-500';
+        } else {
+          statusText = 'Pending';
+          statusColor = 'text-yellow-800';
+          bgColor = 'bg-yellow-50';
+          dotColor = 'bg-yellow-500';
         }
 
         return (
@@ -781,76 +857,21 @@ const BeneficiaryTable = forwardRef((props, ref) => {
             <div
               className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 ${bgColor}`}
             >
-              <span className={`h-2 w-2 rounded-full ${iconColor}`} />
+              <span className={`h-2 w-2 rounded-full ${dotColor}`} />
               <span className={`text-sm font-medium ${statusColor}`}>
                 {statusText}
               </span>
             </div>
-
             {item.isRejected && item.rejectedReason && (
               <div className="mt-1 max-w-[150px] text-xs text-red-600">
                 <span className="font-medium">Reason:</span>{' '}
                 {item.rejectedReason}
               </div>
             )}
-
-            <div className="mt-1 flex flex-wrap gap-1">
-              {item.isVerified ? (
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
-                  Verified
-                </span>
-              ) : (
-                <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">
-                  Pending
-                </span>
-              )}
-            </div>
           </div>
         );
       },
       className: 'min-w-[160px]',
-    },
-    {
-      header: 'Foreign Beneficiaries',
-      accessor: 'foreignBeneficiariesCount',
-      render: (item) => (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col">
-              <span className="text-gray-900 text-sm font-bold">
-                {item.foreignBeneficiariesCount}
-              </span>
-            </div>
-          </div>
-        </div>
-      ),
-      className: 'min-w-[200px]',
-      sortable: true,
-    },
-    {
-      header: 'Actions',
-      accessor: 'id',
-      render: (item) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleViewForeignBeneficiaries(item)}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-              item.foreignBeneficiariesCount > 0
-                ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                : 'bg-gray-50 text-gray-500 cursor-not-allowed'
-            }`}
-            title={
-              item.foreignBeneficiariesCount > 0
-                ? 'View Foreign Beneficiaries'
-                : 'No Foreign Beneficiaries'
-            }
-            disabled={item.foreignBeneficiariesCount === 0}
-          >
-            <MdVisibility className="text-lg" />
-          </button>
-        </div>
-      ),
-      className: 'min-w-[150px]',
     },
   ];
 

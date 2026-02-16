@@ -12,6 +12,8 @@ import {ChartData} from '../types';
 
 interface ChartSectionProps {
   data: ChartData[];
+  activeTimeRange: 'sixMonth' | 'oneYear' | 'ytd';
+  onTimeRangeChange: (range: 'sixMonth' | 'oneYear' | 'ytd') => void;
 }
 
 const CustomTooltip = ({active, payload, label}: any) => {
@@ -31,7 +33,11 @@ const CustomTooltip = ({active, payload, label}: any) => {
   return null;
 };
 
-const ChartSection: React.FC<ChartSectionProps> = ({data}) => {
+const ChartSection: React.FC<ChartSectionProps> = ({
+  data,
+  activeTimeRange,
+  onTimeRangeChange,
+}) => {
   return (
     <div className="dark:bg-dark-surface dark:border-gray-800 rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -39,13 +45,34 @@ const ChartSection: React.FC<ChartSectionProps> = ({data}) => {
           Monthly Inflow vs Outflow
         </h3>
         <div className="dark:bg-gray-800 flex items-center rounded-lg bg-[#f0f2f4] p-1">
-          <button className="dark:bg-dark-surface rounded-md bg-white px-3 py-1.5 text-xs font-bold text-primary shadow-sm transition-all">
+          <button
+            onClick={() => onTimeRangeChange('sixMonth')}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+              activeTimeRange === 'sixMonth'
+                ? 'dark:bg-dark-surface bg-white text-primary shadow-sm'
+                : 'hover:text-text-main dark:text-gray-400 text-[#6B7280] dark:hover:text-white'
+            }`}
+          >
             6 Months
           </button>
-          <button className="dark:text-gray-400 hover:text-text-main px-3 py-1.5 text-xs font-medium text-[#6B7280] transition-colors dark:hover:text-white">
+          <button
+            onClick={() => onTimeRangeChange('ytd')}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+              activeTimeRange === 'ytd'
+                ? 'dark:bg-dark-surface bg-white text-primary shadow-sm'
+                : 'hover:text-text-main dark:text-gray-400 text-[#6B7280] dark:hover:text-white'
+            }`}
+          >
             YTD
           </button>
-          <button className="dark:text-gray-400 hover:text-text-main px-3 py-1.5 text-xs font-medium text-[#6B7280] transition-colors dark:hover:text-white">
+          <button
+            onClick={() => onTimeRangeChange('oneYear')}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+              activeTimeRange === 'oneYear'
+                ? 'dark:bg-dark-surface bg-white text-primary shadow-sm'
+                : 'hover:text-text-main dark:text-gray-400 text-[#6B7280] dark:hover:text-white'
+            }`}
+          >
             1 Year
           </button>
         </div>

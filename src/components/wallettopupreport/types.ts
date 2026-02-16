@@ -7,7 +7,7 @@ export interface Transaction {
   clientName: string;
   clientInitials: string;
   clientColor: string; // Tailwind color class for bg
-  accountType: 'E-Private' | 'Temp' | 'Corporate';
+  accountType: string;
   amount: number;
   date: string;
   paymentProof: {

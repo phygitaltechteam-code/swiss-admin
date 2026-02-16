@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {
   MdPictureAsPdf,
   MdPrint,
@@ -105,18 +105,17 @@ const CashflowReport: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'sixMonth' | 'oneYear' | 'ytd'>(
     'sixMonth',
   );
-  const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [stats, setStats] = useState<StatData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-  const [flowData, setFlowData] = useState<ApiResponse>(fallbackData);
-  // const [flowData, setFlowData] = useState<ApiResponse>(fallbackData);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  // Try to get data from the hook, but have fallback in case it fails
-  const {data: hookResult} = useGetFlowRange();
-  const {data: transactionResult} = useGettransaction();
 
-  // Format currency for display
+  const {
+    data: hookResult,
+    isLoading: isFlowLoading,
+    isError: isFlowError,
+  } = useGetFlowRange();
+  const {data: transactionResult, isLoading: isTxLoading} = useGettransaction();
+
+  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -125,32 +124,28 @@ const CashflowReport: React.FC = () => {
     }).format(amount);
   };
 
-  // Process data for chart and stats
-  useEffect(() => {
-    try {
-      setIsLoading(true);
-      if (hookResult) {
-        console.log('Hook Result:', hookResult);
-        setFlowData(hookResult as unknown as ApiResponse);
-      }
+  // Derive chart data and stats directly from hookResult
+  const {chartData, stats} = useMemo(() => {
+    // Default empty state
+    let chartData: ChartData[] = [];
+    let stats: StatData[] = [];
 
-      // Use the data from hook or fallback
-      const selectedData = flowData.data[timeRange];
+    if (hookResult?.data) {
+      const flowData = hookResult.data as ApiResponse['data'];
+      const selectedData = flowData[timeRange] || [];
 
-      // Transform data for chart - only show non-zero months for better visualization
-      const filteredData = selectedData.filter(
+      // Filter out zero months for cleaner chart (optional)
+      const nonZeroData = selectedData.filter(
         (item) => item.inflow > 0 || item.outFlow > 0,
       );
 
-      const transformedChartData: ChartData[] = filteredData.map((item) => ({
-        month: item.month.split(' ')[0], // Get short month name
+      chartData = nonZeroData.map((item) => ({
+        month: item.month.split(' ')[0], // short month name
         inflow: item.inflow,
         outflow: item.outFlow,
       }));
 
-      setChartData(transformedChartData);
-
-      // Calculate stats from the selected data
+      // Calculate stats (same logic as before, using selectedData or nonZeroData)
       const totalInflow = selectedData.reduce(
         (sum, item) => sum + item.inflow,
         0,
@@ -161,50 +156,37 @@ const CashflowReport: React.FC = () => {
       );
       const netCashFlow = totalInflow - totalOutflow;
 
-      // Calculate average inflow/outflow for non-zero months
-      const nonZeroMonths = selectedData.filter(
+      const activeMonths = selectedData.filter(
         (item) => item.inflow > 0 || item.outFlow > 0,
       );
-      const avgInflow =
-        nonZeroMonths.length > 0
-          ? nonZeroMonths.reduce((sum, item) => sum + item.inflow, 0) /
-            nonZeroMonths.length
-          : 0;
-      const avgOutflow =
-        nonZeroMonths.length > 0
-          ? nonZeroMonths.reduce((sum, item) => sum + item.outFlow, 0) /
-            nonZeroMonths.length
-          : 0;
+      const avgInflow = activeMonths.length
+        ? activeMonths.reduce((sum, item) => sum + item.inflow, 0) /
+          activeMonths.length
+        : 0;
+      const avgOutflow = activeMonths.length
+        ? activeMonths.reduce((sum, item) => sum + item.outFlow, 0) /
+          activeMonths.length
+        : 0;
 
-      // For change calculations, compare with previous non-zero period if available
-      let inflowChange = 0;
-      let outflowChange = 0;
-
-      if (nonZeroMonths.length > 1) {
-        const previousMonth = nonZeroMonths[nonZeroMonths.length - 2];
-        const currentMonth = nonZeroMonths[nonZeroMonths.length - 1];
-
-        inflowChange =
-          previousMonth.inflow > 0
-            ? ((currentMonth.inflow - previousMonth.inflow) /
-                previousMonth.inflow) *
-              100
-            : currentMonth.inflow > 0
-              ? 100
-              : 0;
-
-        outflowChange =
-          previousMonth.outFlow > 0
-            ? ((currentMonth.outFlow - previousMonth.outFlow) /
-                previousMonth.outFlow) *
-              100
-            : currentMonth.outFlow > 0
-              ? 100
-              : 0;
+      // Simple change calculation (you can enhance as needed)
+      let inflowChange = 0,
+        outflowChange = 0;
+      if (activeMonths.length > 1) {
+        const prev = activeMonths[activeMonths.length - 2];
+        const curr = activeMonths[activeMonths.length - 1];
+        inflowChange = prev.inflow
+          ? ((curr.inflow - prev.inflow) / prev.inflow) * 100
+          : curr.inflow
+            ? 100
+            : 0;
+        outflowChange = prev.outFlow
+          ? ((curr.outFlow - prev.outFlow) / prev.outFlow) * 100
+          : curr.outFlow
+            ? 100
+            : 0;
       }
 
-      // Update stats
-      const updatedStats: StatData[] = [
+      stats = [
         {
           label: 'Total Inflow',
           value: totalInflow,
@@ -218,7 +200,7 @@ const CashflowReport: React.FC = () => {
           value: totalOutflow,
           change: outflowChange,
           changeLabel: 'vs previous period',
-          isPositive: outflowChange <= 0, // Lower outflow is positive
+          isPositive: outflowChange <= 0,
           type: 'outflow',
         },
         {
@@ -239,43 +221,45 @@ const CashflowReport: React.FC = () => {
           type: 'closing',
         },
       ];
-
-      setStats(updatedStats);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error processing cash flow data:', error);
-      setIsError(true);
-      setIsLoading(false);
     }
-  }, [flowData, timeRange, hookResult]);
+
+    return {chartData, stats};
+  }, [hookResult, timeRange]);
+
+  // Transform transactions
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   useEffect(() => {
-    if (transactionResult) {
+    if (transactionResult?.data) {
       setTransactions(transformTransactions(transactionResult.data));
     }
   }, [transactionResult]);
 
-  // Filter transactions based on search and filters
-  const filteredTransactions = transactions.filter((transaction) => {
-    // Search filter
+  // Set loading/error states
+  useEffect(() => {
+    if (!isFlowLoading && !isTxLoading) {
+      setIsLoading(false);
+    }
+    if (isFlowError) {
+      setIsError(true);
+    }
+  }, [isFlowLoading, isTxLoading, isFlowError]);
+
+  // Filter transactions
+  const filteredTransactions = transactions.filter((t) => {
     if (
       searchQuery &&
-      !transaction.description
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) &&
-      !transaction.category.toLowerCase().includes(searchQuery.toLowerCase())
+      !t.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !t.category.toLowerCase().includes(searchQuery.toLowerCase())
     ) {
       return false;
     }
-
-    // Category filter
     if (
       categoryFilter &&
       categoryFilter !== 'All Categories' &&
-      transaction.category !== categoryFilter
+      t.category !== categoryFilter
     ) {
       return false;
     }
-
     return true;
   });
 
@@ -558,6 +542,7 @@ const CashflowReport: React.FC = () => {
                 />
               </div>
             </div>
+
             {/* Chart Section */}
             <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg border bg-white p-6 shadow-sm">
               <div className="mb-6 flex items-center justify-between">
@@ -570,7 +555,11 @@ const CashflowReport: React.FC = () => {
                   {timeRange === 'ytd' && 'Year to Date'}
                 </div>
               </div>
-              <ChartSection data={chartData} />
+              <ChartSection
+                data={chartData}
+                activeTimeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+              />
               {chartData.length === 0 && (
                 <div className="flex h-64 items-center justify-center">
                   <p className="text-gray-500 dark:text-gray-400">

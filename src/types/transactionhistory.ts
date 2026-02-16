@@ -128,3 +128,47 @@ export interface TransactionDetailResponse {
   data: TransactionDetail;
   errors: any;
 }
+
+/* ================================
+   Transaction Topup Type
+================================ */
+export interface TransactionTopup {
+  id: string;
+  transactionId: string;
+  clientName: string;
+  clientId: string;
+  accountType: string;
+  amount: number;
+  date: string;
+  rawDate: Date;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  avatarUrl: string;
+  trustScore: number;
+  receiptUrl: string;
+  referenceNo: string;
+  paymentMethod: string;
+  accountNo: string;
+  email?: string;
+  phoneNumber?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  fullname?: string;
+  walletId?: string;
+  amountType?: string;
+  type?: 'CREDIT' | 'DEBIT';
+  isPending?: boolean;
+  isRejected?: boolean;
+  createdAt?: string;
+}
+
+/* ================================
+   Summary Stats Type
+================================ */
+export interface SummaryStats {
+  totalPendingAmount: number;
+  totalPendingGrowth: number;
+  requestsToday: number;
+  pendingCount: number;
+  approvedCount: number;
+  rejectedCount: number;
+}

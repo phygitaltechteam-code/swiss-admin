@@ -67,7 +67,7 @@ const generateReferenceNo = (transactionId: string): string => {
 const generateAccountType = (apiTx: any): string => {
   if (apiTx.accountType === 'E_PRIVATEACCOUNT') return 'E Private';
   if (apiTx.accountType === 'TEMPORARY_ACCOUNT') return 'Temporarily';
-  return 'Standard';
+  return 'Temporary';
 };
 
 // Map API transaction to TransactionTopup
