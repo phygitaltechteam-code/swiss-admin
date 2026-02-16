@@ -336,9 +336,6 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
 
     return (
       <p className="mt-1 text-xs font-medium text-red-500 dark:text-red-400">
-        <span className="material-symbols-outlined mr-1 align-middle text-[12px]">
-          error
-        </span>
         {message}
       </p>
     );
