@@ -61,7 +61,39 @@ type RejectTopupPayload = {
   id: string; // This matches what the API expects in the URL parameter
   note: string; // This matches what the API expects in the body
 };
+export const useGetTopup = () => {
+  return useQuery({
+    queryKey: ['topup-transactions-all'],
+    queryFn: async () => {
+      const response = await api.get(`/admin/transaction/topup`);
+      // console.log('GET Client', response.data);
 
+      const apiData = response.data.data || response.data;
+      let transactionsArray: ApiTransaction[] = [];
+
+      if (Array.isArray(apiData)) {
+        transactionsArray = apiData;
+      } else if (apiData.transactions && Array.isArray(apiData.transactions)) {
+        transactionsArray = apiData.transactions;
+      } else {
+        transactionsArray = findTransactionsInResponse(response.data);
+      }
+
+      console.log('Extracted transactions:', transactionsArray);
+
+      const mappedTransactions = transactionsArray.map(
+        mapApiToTransactionTopup,
+      );
+      const stats = calculateSummaryStats(mappedTransactions);
+
+      return {
+        transactions: mappedTransactions,
+        stats: stats,
+        rawData: response.data,
+      };
+    },
+  });
+};
 export const useGetTopupApproved = () => {
   return useQuery({
     queryKey: ['topup-transactions'],
