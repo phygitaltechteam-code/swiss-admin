@@ -218,7 +218,7 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
   const user = customer?.user;
   const status = getStatusDisplay();
   const canTakeAction = transaction.isPending && !transaction.isRejected;
-  const proofImageUrl = transaction.proof;
+  const proofImageUrl = transaction?.customer?.aadharCard;
 
   return (
     <div className="bg-background-light flex h-full flex-col">
@@ -327,19 +327,13 @@ export const TopUpDetail: React.FC<TopUpDetailProps> = ({
             </div>
             <div className="shadow-soft group relative min-h-[300px] overflow-hidden rounded-xl border border-stroke bg-white md:min-h-[500px] lg:min-h-[600px]">
               <div className="bg-gray-100 absolute inset-0 flex items-center justify-center">
-                {proofImageUrl ? (
-                  <img
-                    id="proofImage"
-                    src={proofImageUrl}
-                    alt="Proof of Payment"
-                    className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105 md:p-8"
-                    style={{transform: `scale(${proofZoom})`}}
-                  />
-                ) : (
-                  <div className="text-gray-400">
-                    No proof document uploaded
-                  </div>
-                )}
+                <img
+                  id="proofImage"
+                  src={proofImageUrl}
+                  alt="Proof of Payment"
+                  className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105 md:p-8"
+                  style={{transform: `scale(${proofZoom})`}}
+                />
               </div>
             </div>
           </div>
