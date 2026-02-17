@@ -27,6 +27,9 @@ const RequestList: React.FC<RequestListProps> = ({
   const [toDate, setToDate] = React.useState<string>('');
   const [search, setSearch] = React.useState('');
 
+  // State to control showing all items or just a few
+  const [showAll, setShowAll] = React.useState(false);
+
   const filteredRequests = React.useMemo(() => {
     let data = requests;
 
@@ -47,14 +50,14 @@ const RequestList: React.FC<RequestListProps> = ({
       data = data.filter((r) => new Date(r.createdAt) <= to);
     }
 
-    // 🔍 search filter
+    // search filter
     if (search.trim()) {
       const q = search.toLowerCase();
 
       data = data.filter(
         (r) =>
-          r?.user?.fullname?.toLowerCase().includes(q) || // example
-          r?.user?.email?.toLowerCase().includes(q) || // example
+          r?.user?.fullname?.toLowerCase().includes(q) ||
+          r?.user?.email?.toLowerCase().includes(q) ||
           r.id?.toString().includes(q),
       );
     }
@@ -62,13 +65,16 @@ const RequestList: React.FC<RequestListProps> = ({
     return data;
   }, [requests, activeFilter, fromDate, toDate, search]);
 
+  // Determine how many items to show
+  const visibleRequests = showAll
+    ? filteredRequests
+    : filteredRequests.slice(0, 4);
+  const hasMore = filteredRequests.length > 4;
+
   return (
     <div className="h-full flex-1 overflow-y-auto p-4 md:p-8">
       <div className="mb-8 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
         <div>
-          <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
-            Admin Console
-          </p>
           <h1 className="mt-1 text-2xl font-bold text-black md:text-3xl">
             Verification Dashboard
           </h1>
@@ -112,7 +118,10 @@ const RequestList: React.FC<RequestListProps> = ({
           label="All Requests"
           count={requests.length}
           active={activeFilter === 'ALL'}
-          onClick={() => setActiveFilter('ALL')}
+          onClick={() => {
+            setActiveFilter('ALL');
+            setShowAll(false); // reset view when filter changes
+          }}
         />
 
         <FilterButton
@@ -122,7 +131,10 @@ const RequestList: React.FC<RequestListProps> = ({
           }
           variant="orange"
           active={activeFilter === 'PENDING'}
-          onClick={() => setActiveFilter('PENDING')}
+          onClick={() => {
+            setActiveFilter('PENDING');
+            setShowAll(false);
+          }}
         />
 
         <FilterButton
@@ -132,7 +144,10 @@ const RequestList: React.FC<RequestListProps> = ({
           }
           variant="green"
           active={activeFilter === 'APPROVED'}
-          onClick={() => setActiveFilter('APPROVED')}
+          onClick={() => {
+            setActiveFilter('APPROVED');
+            setShowAll(false);
+          }}
         />
 
         <FilterButton
@@ -142,13 +157,16 @@ const RequestList: React.FC<RequestListProps> = ({
           }
           variant="red"
           active={activeFilter === 'REJECTED'}
-          onClick={() => setActiveFilter('REJECTED')}
+          onClick={() => {
+            setActiveFilter('REJECTED');
+            setShowAll(false);
+          }}
         />
       </div>
 
       <div className="mb-8">
         <div className="grid gap-4">
-          {filteredRequests?.map((req) => (
+          {visibleRequests.map((req) => (
             <RequestCard
               key={req.id}
               request={req}
@@ -161,20 +179,23 @@ const RequestList: React.FC<RequestListProps> = ({
         </div>
       </div>
 
-      <div className="mt-8 flex justify-center pb-16">
-        <a
-          href="#"
-          className="inline-flex items-center gap-2 font-semibold text-primary transition-colors hover:text-orange-700"
-        >
-          View All History
-          <MdArrowForward />
-        </a>
-      </div>
+      {/* Show More / Show All link */}
+      {hasMore && (
+        <div className="mt-8 flex justify-center pb-16">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="inline-flex items-center gap-2 font-semibold text-primary transition-colors hover:text-orange-700"
+          >
+            {showAll ? 'Show Less' : 'View All History'}
+            <MdArrowForward className={showAll ? 'rotate-180 transform' : ''} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-// Sub-components for cleaner code
+// FilterButton remains unchanged...
 interface FilterButtonProps {
   label: string;
   count: number;

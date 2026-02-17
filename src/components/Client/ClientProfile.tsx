@@ -23,13 +23,27 @@ import {
   MdCheckCircle,
   MdCancel,
   MdArrowBack,
+  MdClose,
 } from 'react-icons/md';
 import {Card} from './Card';
+import {Beneficiary} from './../../types/transactionhistory';
 
 const ClientProfile: React.FC = () => {
   const navigate = useNavigate();
   const search = useSearch({from: '/_app/client/profile'});
   const clientId = search.id;
+  const [modalImage, setModalImage] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openImageModal = (imageUrl: string) => {
+    setModalImage(imageUrl);
+    setIsModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setIsModalOpen(false);
+    setModalImage(null);
+  };
 
   const {
     data: apiResponse,
@@ -199,10 +213,9 @@ const ClientProfile: React.FC = () => {
                 <div className="relative">
                   <div className="dark:from-gray-700 dark:to-gray-800 dark:border-gray-800 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-neutral-200 shadow-sm">
                     {clientData.photo ? (
-                      <a
-                        href={clientData.photo}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => openImageModal(clientData.photo)}
+                        className="block h-full w-full"
                       >
                         <img
                           src={clientData.photo}
@@ -222,7 +235,7 @@ const ClientProfile: React.FC = () => {
                             }
                           }}
                         />
-                      </a>
+                      </button>
                     ) : (
                       <MdPerson className="text-gray-400 dark:text-gray-500 text-5xl" />
                     )}
@@ -307,7 +320,7 @@ const ClientProfile: React.FC = () => {
                   }
                   className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none"
                 >
-                  See History
+                  See Beneficiary
                 </button>
                 <button
                   className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none"
@@ -471,14 +484,12 @@ const ClientProfile: React.FC = () => {
                             {clientData.passportNumber || 'Document uploaded'}
                           </p>
                         </div>
-                        <a
-                          href={clientData.passport}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => openImageModal(clientData.passport)}
                           className="px-2 text-sm font-medium text-primary hover:underline"
                         >
                           View
-                        </a>
+                        </button>
                       </div>
                     )}
 
@@ -495,14 +506,12 @@ const ClientProfile: React.FC = () => {
                             {clientData.aadharCardNumber || 'Document uploaded'}
                           </p>
                         </div>
-                        <a
-                          href={clientData.aadharCard}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => openImageModal(clientData.aadharCard)}
                           className="px-2 text-sm font-medium text-primary hover:underline"
                         >
                           View
-                        </a>
+                        </button>
                       </div>
                     )}
 
@@ -519,14 +528,12 @@ const ClientProfile: React.FC = () => {
                             {clientData.panCardNumber || 'Document uploaded'}
                           </p>
                         </div>
-                        <a
-                          href={clientData.panCard}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => openImageModal(clientData.panCard)}
                           className="px-2 text-sm font-medium text-primary hover:underline"
                         >
                           View
-                        </a>
+                        </button>
                       </div>
                     )}
 
@@ -692,9 +699,6 @@ const ClientProfile: React.FC = () => {
                       <span className="text-subtext-light dark:text-subtext-dark text-xs font-medium">
                         Last activity: {formatDate(clientData.updatedAt)}
                       </span>
-                      <button className="text-xs font-semibold text-primary hover:underline">
-                        View details
-                      </button>
                     </div>
                   </div>
 
@@ -718,6 +722,34 @@ const ClientProfile: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Image Modal - placed at the end to overlay everything */}
+      {isModalOpen && modalImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={closeImageModal}
+        >
+          <div
+            className="dark:bg-gray-900 relative max-h-[90vh] max-w-[90vw] rounded-lg bg-white p-1 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeImageModal}
+              className="text-gray-800 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 absolute -right-3 -top-3 rounded-full bg-white p-1 shadow-lg dark:text-white"
+            >
+              <MdClose className="h-5 w-5" />
+            </button>
+            <img
+              src={modalImage}
+              alt="Document preview"
+              className="max-h-[85vh] max-w-full rounded object-contain"
+              onError={(e) => {
+                e.currentTarget.src = '/fallback-image.png'; // optional fallback
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

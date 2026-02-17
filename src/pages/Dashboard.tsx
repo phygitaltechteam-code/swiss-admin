@@ -15,14 +15,13 @@ import {
 } from 'lucide-react';
 import StatsCard from '@/components/Dashboard/StatsCards';
 import {
-  TopUpsVsTransfersChart,
   VolumeVsFeesChart,
+  TopUpsVsTransfersChart,
 } from '@/components/Dashboard/Charts';
 import {useAuthContext} from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import GenericButton from '@/components/Forms/Buttons/GenericButton';
-import {buildDashboardFilters, useDashboardData} from '@/lib/api/dashboard';
-import {useGetDashToUpGraph} from '@/lib/react-query/dashboard';
+import {buildDashboardFilters, useDashboardData} from '@/lib/api/dashboard'; // adjust import path as needed
 
 const Dashboard: React.FC = () => {
   const {user} = useAuthContext();
@@ -33,6 +32,7 @@ const Dashboard: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customDateRange, setCustomDateRange] = useState({start: '', end: ''});
   const datePickerRef = useRef<HTMLDivElement>(null);
+
   const filters = buildDashboardFilters(
     selectedPeriod,
     selectedPeriod === 'custom' ? customDateRange : undefined,
@@ -57,7 +57,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Handle custom date range change
   const handleCustomDateChange = (type: 'start' | 'end', value: string) => {
     setCustomDateRange((prev) => ({
       ...prev,
@@ -65,7 +64,6 @@ const Dashboard: React.FC = () => {
     }));
   };
 
-  // Apply custom filter
   const handleApplyCustomFilter = () => {
     if (customDateRange.start && customDateRange.end) {
       setShowDatePicker(false);
@@ -106,7 +104,7 @@ const Dashboard: React.FC = () => {
     return `$${formatNumber(amount)}`;
   };
 
-  // Set default custom dates
+  // Set default custom dates when switching to custom
   useEffect(() => {
     if (
       selectedPeriod === 'custom' &&
@@ -189,31 +187,6 @@ const Dashboard: React.FC = () => {
     totalTransfers: 20,
   };
 
-  // Sample chart data
-  const sampleVolumeVsFees = {
-    volume: [30, 45, 35, 55, 40, 60, 50],
-    fees: [5, 7, 4, 8, 6, 9, 7],
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  };
-
-  // const sampleTopupsVsTransfers = {
-  //   topups: [65, 59, 80, 81, 56, 55, 40],
-  //   transfers: [28, 48, 40, 19, 86, 27, 90],
-  //   labels: [
-  //     'Week 1',
-  //     'Week 2',
-  //     'Week 3',
-  //     'Week 4',
-  //     'Week 5',
-  //     'Week 6',
-  //     'Week 7',
-  //   ],
-  // };
-
-  // Responsive breakpoints
-  const isMobile = window.innerWidth < 640;
-  const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
-
   return (
     <div className="font-body min-h-screen w-full bg-white/50 text-neutral-500">
       <main className="relative flex min-h-screen w-full flex-col">
@@ -255,7 +228,7 @@ const Dashboard: React.FC = () => {
                     <span className="hidden sm:inline">Refresh</span>
                   </button>
 
-                  {/* Period Selector - Responsive */}
+                  {/* Period Selector */}
                   <div className="relative" ref={datePickerRef}>
                     <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-stroke bg-white p-1 shadow-sm">
                       <button
@@ -305,15 +278,9 @@ const Dashboard: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Custom Date Range Picker - Dropdown on mobile, inline on desktop */}
+                    {/* Custom Date Range Picker */}
                     {selectedPeriod === 'custom' && showDatePicker && (
-                      <div
-                        className={`${
-                          isMobile || isTablet
-                            ? 'absolute right-0 top-full z-40 mt-2 w-full min-w-[300px] sm:w-auto'
-                            : 'mt-4 w-full'
-                        } border-gray-200 rounded-lg border bg-white p-4 shadow-lg`}
-                      >
+                      <div className="border-gray-200 absolute right-0 top-full z-40 mt-2 w-full min-w-[300px] rounded-lg border bg-white p-4 shadow-lg sm:w-auto">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                           <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                             <label className="text-gray-700 text-sm font-medium sm:w-12">
@@ -357,78 +324,70 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Stats Grid - Responsive */}
+              {/* Stats Grid */}
               <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <StatsCard
                   title="Total Clients"
                   value={formatNumber(data.customers)}
-                  change={`${changePercentages.customers}%`}
+                  // change={`${changePercentages.customers}%`}
                   isPositive={changePercentages.customers >= 0}
                   icon={Users}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Transactions"
                   value={formatNumber(data.transactions)}
-                  change={`${changePercentages.transactions}%`}
+                  // change={`${changePercentages.transactions}%`}
                   isPositive={changePercentages.transactions >= 0}
                   icon={Receipt}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Fees Collected"
                   value={formatCurrency(data.fees)}
-                  change={`${changePercentages.fees}%`}
+                  // change={`${changePercentages.fees}%`}
                   isPositive={changePercentages.fees >= 0}
                   icon={DollarSign}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Tx Amount"
                   value={formatCurrency(data.txAmount)}
-                  change={`${changePercentages.txAmount}%`}
+                  // change={`${changePercentages.txAmount}%`}
                   isPositive={changePercentages.txAmount >= 0}
                   icon={BarChart3}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Total Reserves"
                   value={formatCurrency(data.Total_reserves)}
-                  change={`${changePercentages.Total_reserves}%`}
+                  // change={`${changePercentages.Total_reserves}%`}
                   isPositive={changePercentages.Total_reserves >= 0}
                   icon={PiggyBank}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Beneficiaries"
                   value={formatNumber(data.beneficiary)}
-                  change={`${changePercentages.beneficiary}%`}
+                  // change={`${changePercentages.beneficiary}%`}
                   isPositive={changePercentages.beneficiary >= 0}
                   icon={Users2}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Total Top-ups"
                   value={formatCurrency(data.totalTopups)}
-                  change={`${changePercentages.totalTopups}%`}
+                  // change={`${changePercentages.totalTopups}%`}
                   isPositive={changePercentages.totalTopups >= 0}
                   icon={CreditCard}
-                  compact={isMobile}
                 />
                 <StatsCard
                   title="Total Transfers"
                   value={formatCurrency(data.totalTransfers)}
-                  change={`${changePercentages.totalTransfers}%`}
+                  // change={`${changePercentages.totalTransfers}%`}
                   isPositive={changePercentages.totalTransfers >= 0}
                   icon={Send}
-                  compact={isMobile}
                 />
               </div>
 
-              {/* Charts Section - Responsive */}
+              {/* Charts Section */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                {/* Large Chart */}
-                <div className="flex h-[350px] flex-col rounded-xl bg-white p-4 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] sm:h-[400px] sm:p-6 lg:col-span-1 lg:col-span-2 xl:col-span-2">
+                {/* Large Chart - Volume vs Fees */}
+                <div className="flex h-[350px] flex-col rounded-xl bg-white p-4 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] sm:h-[400px] sm:p-6 lg:col-span-2">
                   <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h3 className="font-display text-lg font-bold text-black sm:text-xl">
@@ -442,14 +401,9 @@ const Dashboard: React.FC = () => {
                       <MoreVertical className="h-5 w-5" />
                     </button>
                   </div>
-
                   <div className="min-h-0 flex-1">
-                    <VolumeVsFeesChart
-                      data={sampleVolumeVsFees}
-                      responsive={true}
-                    />
+                    <VolumeVsFeesChart />
                   </div>
-
                   <div className="mt-4 flex flex-wrap justify-center gap-4 sm:gap-6">
                     <div className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full bg-primary"></span>
@@ -466,7 +420,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Small Chart */}
+                {/* Small Chart - Top-ups vs Transfers */}
                 <div className="flex h-[350px] flex-col rounded-xl bg-white p-4 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] sm:h-[400px] sm:p-6 lg:col-span-1">
                   <div className="mb-4">
                     <h3 className="font-display text-lg font-bold text-black sm:text-xl">
@@ -476,14 +430,9 @@ const Dashboard: React.FC = () => {
                       Weekly breakdown.
                     </p>
                   </div>
-
                   <div className="min-h-0 flex-1">
-                    <TopUpsVsTransfersChart
-                    // data={sampleTopupsVsTransfers}
-                    // responsive={true}
-                    />
+                    <TopUpsVsTransfersChart />
                   </div>
-
                   <div className="mt-4 flex flex-wrap justify-center gap-4 sm:gap-6">
                     <div className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full bg-black"></span>
@@ -505,7 +454,7 @@ const Dashboard: React.FC = () => {
         </div>
       </main>
 
-      {/* Mobile Overlay for Sidebar */}
+      {/* Mobile Overlay for Sidebar (if needed) */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/20 lg:hidden"

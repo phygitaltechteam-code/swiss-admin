@@ -580,124 +580,154 @@ const WalletReport: React.FC = () => {
     }
   };
 
-  // Handle print
   const handlePrint = () => {
-    const printContent = document.getElementById('wallet-report-content');
-    const printWindow = window.open('', '_blank');
-    if (printWindow && printContent) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Wallet Top-Up Report</title>
-            <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-              body { font-family: 'Inter', sans-serif; margin: 20px; background: #fff; color: #000; }
-              .print-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
-              .print-header h1 { color: #0F1535; margin: 0; font-size: 28px; font-weight: 700; }
-              .print-header p { color: #6B7280; margin: 5px 0 0; font-size: 14px; }
-              .print-meta { display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 13px; }
-              .print-stats { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb; }
-              .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-              .stat-item { background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-              th { background-color: #f8fafc; color: #6B7280; font-weight: 600; text-transform: uppercase; padding: 12px 15px; text-align: left; border-bottom: 2px solid #e5e7eb; }
-              td { padding: 12px 15px; border-bottom: 1px solid #e5e7eb; }
-              .client-avatar { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; margin-right: 8px; font-weight: bold; font-size: 12px; }
-              .account-badge { display: inline-block; padding: 3px 10px; border-radius: 50px; background: #fff3e0; color: #f57c00; font-size: 11px; font-weight: 600; }
-              .status { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
-              .status-completed { background: #d1fae5; color: #065f46; }
-              .status-pending { background: #fef3c7; color: #92400e; }
-              .status-rejected { background: #fee2e2; color: #991b1b; }
-              .proof-link { color: #f5813d; text-decoration: none; }
-              .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6B7280; font-size: 12px; }
-              @media print {
-                body { margin: 0; padding: 20px; }
-                button { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="print-header">
-              <h1>Wallet Top-Up Report</h1>
-              <p>Detailed log of all wallet funding requests, payment proofs, and verification status</p>
-              <p>Generated on ${new Date().toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
-            </div>
-            
-            <div class="print-meta">
-              <div>
-                <strong>Date Range:</strong> ${filters.dateRange || 'All dates'}<br>
-                <strong>Account Type:</strong> ${filters.accountType}<br>
-                <strong>Status:</strong> ${filters.status}
-              </div>
-              <div>
-                <strong>Total Records:</strong> ${filteredData.length}<br>
-                <strong>Total Amount:</strong> $${filteredData.reduce((sum, t) => sum + (t.amount || 0), 0).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>
-                <strong>Pending Approvals:</strong> ${filteredData.filter((t) => t.status === 'Pending').length}
-              </div>
-            </div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Request ID</th>
-                  <th>Client Name</th>
-                  <th>Account Type</th>
-                  <th>Amount</th>
-                  <th>Payment Proof</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${filteredData
-                  .map((transaction) => {
-                    // Extract color classes
-                    const bgColor = transaction.clientColor.split(' ')[0];
-                    const textColor =
-                      transaction.clientColor.split(' ')[1] || '#000';
-
-                    return `
-                    <tr>
-                      <td><strong>${transaction.date || 'N/A'}</strong></td>
-                      <td style="font-family: monospace; color: #f5813d;">${transaction.requestId || 'N/A'}</td>
-                      <td>
-                        <div style="display: flex; align-items: center;">
-                          <div class="client-avatar" style="background: ${bgColor}; color: ${textColor};">${transaction.clientInitials}</div>
-                          ${transaction.clientName || 'Unknown Client'}
-                        </div>
-                      </td>
-                      <td><span class="account-badge">${transaction.accountType || 'N/A'}</span></td>
-                      <td><strong>$${(transaction.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
-                      <td>
-                        <a href="#" class="proof-link" onclick="return false;">
-                          ${transaction.paymentProof?.label || 'View'}
-                        </a>
-                      </td>
-                      <td>
-                        <span class="status status-${(transaction.status || '').toLowerCase()}">
-                          ${transaction.status || 'Pending'}
-                        </span>
-                      </td>
-                    </tr>
-                  `;
-                  })
-                  .join('')}
-              </tbody>
-            </table>
-            
-            <div class="footer">
-              <p>Report generated by Admin Panel • Confidential Financial Data</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
+    if (filteredData.length === 0) {
+      alert('No data to print. Adjust your filters and try again.');
+      return;
     }
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    // Helper to get status text and colour (same as in table column)
+    const getStatusClass = (status: string) => {
+      const s = status?.toLowerCase() || 'pending';
+      if (s === 'completed' || s === 'approved') return 'status-completed';
+      if (s === 'pending') return 'status-pending';
+      if (s === 'rejected' || s === 'declined') return 'status-rejected';
+      return 'status-pending';
+    };
+
+    // Build table rows
+    const tableRows = filteredData
+      .map(
+        (item, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.date || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace; color: #f5813d;">${item.requestId || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div style="display: flex; align-items: center;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; margin-right: 8px; font-weight: bold; font-size: 11px; background: ${item.clientColor?.split(' ')[0] || '#e5e7eb'}; color: ${item.clientColor?.split(' ')[1] || '#000'};">${item.clientInitials || '??'}</div>
+            <span>${item.clientName || 'Unknown Client'}</span>
+          </div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;"><span class="account-badge">${item.accountType || 'N/A'}</span></td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
+          <strong>$${(item.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="color: #f5813d; text-decoration: none;">${item.paymentProof?.label || 'View'}</span>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span class="status ${getStatusClass(item.status)}">${item.status || 'Pending'}</span>
+        </td>
+      </tr>
+    `,
+      )
+      .join('');
+
+    const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Wallet Top-Up Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+          h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
+          .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+          .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
+          .stat-title { font-size: 14px; color: #4b5563; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th { background: #ff7207; color: white; padding: 8px; text-align: left; }
+          td { padding: 6px; border: 1px solid #e5e7eb; }
+          .status { display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+          .status-completed { background: #d1fae5; color: #065f46; }
+          .status-pending { background: #fef3c7; color: #92400e; }
+          .status-rejected { background: #fee2e2; color: #991b1b; }
+          .account-badge { display: inline-block; padding: 3px 10px; border-radius: 50px; background: #fff3e0; color: #f57c00; font-size: 11px; font-weight: 600; }
+          .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
+          @media print {
+            body { margin: 0.5in; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Wallet Top-Up Report</h1>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Generated: ${dateStr} ${timeStr}</span>
+            <span>Total records: ${filteredData.length}</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          ${calculatedStats
+            .map(
+              (stat) => `
+            <div class="stat-card">
+              <div class="stat-title">${stat.title}</div>
+              <div class="stat-value">${stat.value}</div>
+              ${stat.subtext ? `<div style="font-size: 11px; color: #6b7280; margin-top: 4px;">${stat.subtext}</div>` : ''}
+            </div>
+          `,
+            )
+            .join('')}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Request ID</th>
+              <th>Client Name</th>
+              <th>Account Type</th>
+              <th>Amount</th>
+              <th>Payment Proof</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Printed from Wallet Management System
+        </div>
+      </body>
+    </html>
+  `;
+
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800,scrollbars=yes',
+    );
+    if (!printWindow) {
+      alert('Popup blocked. Please allow popups to print.');
+      return;
+    }
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+    };
   };
 
   // Handle filter changes

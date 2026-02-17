@@ -9,17 +9,13 @@ import {
   MdAdd,
   MdRotateRight,
   MdOpenInFull,
-  MdPanTool,
   MdReceiptLong,
   MdCheckCircle,
   MdCheck,
   MdArrowBack,
   MdPerson,
-  MdLocationOn,
-  MdPhone,
-  MdEmail,
-  MdAccountBalance,
   MdError,
+  MdPanTool,
 } from 'react-icons/md';
 import GenericButton from '../Forms/Buttons/GenericButton';
 import {
@@ -28,17 +24,17 @@ import {
   useRejectTransfer,
 } from '@/lib/react-query/transfer';
 import toast from 'react-hot-toast';
+import {ArrowLeft} from 'lucide-react';
 
 export const TransferDetails = () => {
   const navigate = useNavigate();
-  const search = useSearch({strict: false});
+  const search = useSearch({strict: false}) as any;
   const transactionId = search.transactionId as string;
 
-  const [zoomLevel, setZoomLevel] = useState(1);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectReason, setShowRejectReason] = useState(false);
+  const [proofZoom, setProofZoom] = useState(1);
 
-  // Use the new hook for getting a single transfer
   const {
     data: transaction,
     isLoading,
@@ -49,27 +45,21 @@ export const TransferDetails = () => {
   const approveTransfer = useApproveTransfer();
   const rejectTransfer = useRejectTransfer();
 
-  const handleZoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 0.1, 2));
+  const handleProofZoomIn = () =>
+    setProofZoom((prev) => Math.min(prev + 0.25, 3));
+  const handleProofZoomOut = () =>
+    setProofZoom((prev) => Math.max(prev - 0.25, 0.5));
+  const handleProofZoomReset = () => setProofZoom(1);
+  const handleProofFullScreen = () => {
+    const img = document.getElementById('aadharCard');
+    if (img && img.requestFullscreen) img.requestFullscreen();
   };
 
-  const handleZoomOut = () => {
-    setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
-  };
-
-  const handleResetZoom = () => {
-    setZoomLevel(1);
-  };
-
-  const handleReject = () => {
-    setShowRejectReason(true);
-  };
-
+  const handleReject = () => setShowRejectReason(true);
   const handleApprove = () => {
     if (!transaction) return;
     approveTransfer.mutate(transaction.id);
   };
-
   const handleSubmitRejection = () => {
     if (!rejectReason.trim()) {
       toast.error('Please provide a rejection reason');
@@ -82,9 +72,9 @@ export const TransferDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="bg-background-light flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-primary motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent" />
           <p className="text-gray-600 mt-2">Loading transaction details...</p>
         </div>
       </div>
@@ -93,7 +83,7 @@ export const TransferDetails = () => {
 
   if (error || !transaction) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="bg-background-light flex h-full items-center justify-center p-4">
         <div className="text-center">
           <div className="mb-4 text-4xl text-red-500">⚠️</div>
           <h3 className="text-gray-900 mb-2 text-lg font-semibold">
@@ -113,7 +103,7 @@ export const TransferDetails = () => {
             </GenericButton>
             <GenericButton
               onClick={() => refetch()}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 border bg-white px-4 py-2 font-bold"
+              className="border-gray-300 text-gray-700 flex items-center gap-2 border bg-white px-4 py-2 font-bold hover:bg-gray-2"
             >
               <MdRotateRight /> Try Again
             </GenericButton>
@@ -124,40 +114,33 @@ export const TransferDetails = () => {
   }
 
   const beneficiary = transaction.beneficiaryDetails;
-  console.log('Beneficiary Details:', transaction);
-
+  const customer = transaction.customer;
   const status = transaction.isRejected
     ? 'Rejected'
     : !transaction.isPending
       ? 'Approved'
       : 'Pending';
-
   const canTakeAction = transaction.isPending && !transaction.isRejected;
 
   return (
-    <div className="bg-gray-50 flex h-full flex-col">
-      {/* Detail Header */}
-      <div className="shrink-0 bg-white px-8 py-6">
+    <div className="bg-background-light flex h-full flex-col">
+      {/* Header */}
+      <div className="shrink-0 border-b border-stroke bg-white px-4 py-4 md:px-6 md:py-5 lg:px-8 lg:py-6">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <button
-            type="button"
             onClick={() => navigate({to: '/client/transfer-approvals'})}
-            className="text-gray-600 flex items-center gap-1 text-xs font-bold uppercase tracking-wide transition-colors hover:text-primary"
+            className="text-gray-600 flex items-center text-sm font-medium transition-colors hover:text-primary"
           >
-            <MdArrowBack className="text-[16px]" />
-            Back to Transfers
+            <ArrowLeft size={16} className="mr-1" />
+            Transfers
           </button>
-          <MdChevronRight className="text-gray-600 text-[16px]" />
-          <span className="text-gray-900 text-xs font-bold uppercase tracking-wide">
-            Review {transaction.id?.slice(0, 8)}...
-          </span>
         </div>
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-gray-900 text-3xl font-extrabold tracking-tight">
-              Transfer Request #{transaction.id?.slice(0, 8)}...
+          <div>
+            <h1 className="text-gray-900 truncate text-xl font-bold tracking-tight sm:text-2xl">
+              Transfer Request
             </h1>
-            <div className="text-gray-600 flex items-center gap-3">
+            <div className="text-secondary-text mt-2 flex items-center gap-3">
               <span className="text-sm font-medium">
                 {new Date(transaction.createdAt).toLocaleDateString('en-US', {
                   year: 'numeric',
@@ -167,444 +150,292 @@ export const TransferDetails = () => {
                   minute: '2-digit',
                 })}
               </span>
-              <span className="bg-gray-300 h-1 w-1 rounded-full"></span>
-              <span className="border-gray-200 bg-gray-50 text-gray-900 flex items-center gap-1.5 rounded border px-2 py-0.5 text-sm font-medium">
-                <MdFingerprint className="text-[14px]" />
-                {transaction.id?.slice(-8)}
-              </span>
-              <span className="bg-gray-300 h-1 w-1 rounded-full"></span>
-              <span className="text-gray-600 text-sm">
-                {transaction.particular}
-              </span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <span
               className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-bold ${
                 status === 'Pending'
-                  ? 'border-yellow-300 bg-yellow-50 text-yellow-700'
+                  ? 'border-yellow-200 bg-yellow-50 text-yellow-700'
                   : status === 'Approved'
-                    ? 'border-green-300 bg-green-50 text-green-700'
-                    : 'border-red-300 bg-red-50 text-red-700'
+                    ? 'border-green-200 bg-green-50 text-green-700'
+                    : 'border-red-200 bg-red-50 text-red-700'
               }`}
             >
-              <span className="relative flex h-2 w-2">
-                <span
-                  className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
-                    status === 'Pending'
-                      ? 'bg-yellow-400'
-                      : status === 'Approved'
-                        ? 'bg-green-400'
-                        : 'bg-red-400'
-                  }`}
-                ></span>
-                <span
-                  className={`relative inline-flex h-2 w-2 rounded-full ${
-                    status === 'Pending'
-                      ? 'bg-yellow-600'
-                      : status === 'Approved'
-                        ? 'bg-green-600'
-                        : 'bg-red-600'
-                  }`}
-                ></span>
-              </span>
+              <MdCheckCircle className="text-[18px]" />
               {status}
             </span>
-            <button className="border-gray-200 text-gray-600 rounded-lg border bg-white p-2.5 shadow-sm transition-all hover:border-primary hover:text-primary">
+            <button className="text-secondary-text rounded-lg border border-stroke bg-white p-2.5 shadow-sm transition-all hover:border-primary hover:text-primary">
               <MdMoreHoriz className="text-[20px]" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Detail Content */}
-      <div className="bg-gray-50 flex-1 overflow-y-auto p-6">
-        <div className="mx-auto grid h-full min-h-[600px] max-w-[1600px] grid-cols-1 gap-6 xl:grid-cols-12">
-          {/* Left Column: Documentation */}
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+          {/* Left column: Image */}
           <div className="flex flex-col gap-4 xl:col-span-7">
             <div className="flex items-center justify-between">
-              <h3 className="text-gray-900 flex items-center gap-2 text-lg font-bold">
-                <MdDescription className="text-primary" />
-                Transaction Information
+              <h3 className="text-header-text flex items-center gap-2 text-lg font-bold">
+                <MdDescription className="text-secondary-text" />
+                Supporting Documentation
               </h3>
-              <div className="border-gray-200 flex gap-1 rounded-lg border bg-white p-1 shadow-sm">
+              <div className="flex gap-1 rounded-lg border border-stroke bg-white p-1 shadow-sm">
                 <button
-                  onClick={handleZoomOut}
-                  className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                  onClick={handleProofZoomOut}
+                  className="hover:bg-gray-100 text-secondary-text hover:text-header-text rounded p-1.5 transition-colors"
                   title="Zoom Out"
                 >
                   <MdRemove className="text-[20px]" />
                 </button>
                 <button
-                  onClick={handleZoomIn}
-                  className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                  onClick={handleProofZoomIn}
+                  className="hover:bg-gray-100 text-secondary-text hover:text-header-text rounded p-1.5 transition-colors"
                   title="Zoom In"
                 >
                   <MdAdd className="text-[20px]" />
                 </button>
-                <div className="bg-gray-200 my-1 w-[1px]"></div>
+                <div className="bg-border-subtle my-1 w-[1px]" />
                 <button
-                  onClick={handleResetZoom}
-                  className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                  onClick={handleProofZoomReset}
+                  className="hover:bg-gray-100 text-secondary-text hover:text-header-text rounded p-1.5 transition-colors"
                   title="Reset Zoom"
                 >
                   <MdRotateRight className="text-[20px]" />
                 </button>
                 <button
-                  className="text-gray-600 hover:bg-gray-50 rounded p-1.5 transition-colors hover:text-primary"
+                  onClick={handleProofFullScreen}
+                  className="hover:bg-gray-100 text-secondary-text hover:text-header-text rounded p-1.5 transition-colors"
                   title="Full Screen"
                 >
                   <MdOpenInFull className="text-[20px]" />
                 </button>
               </div>
             </div>
-
-            <div className="border-gray-200 group relative min-h-[500px] flex-1 overflow-hidden rounded-xl border bg-white shadow-sm">
-              <div className="bg-gray-50 absolute inset-0 flex items-center justify-center p-8">
-                <div className="max-w-2xl text-center">
-                  <div className="text-gray-400 mb-4 text-6xl">🏦</div>
-                  <h4 className="text-gray-700 mb-2 text-lg font-semibold">
-                    Transfer Receipt
-                  </h4>
-                  <p className="text-gray-500 mb-6 text-sm">
-                    Supporting documentation will appear here when available
-                  </p>
-                  <div className="border-gray-200 inline-block rounded-lg border bg-white p-6 text-left shadow-sm">
-                    <div className="mb-4">
-                      <p className="text-gray-600 text-xs font-medium uppercase">
-                        Transaction ID
-                      </p>
-                      <p className="font-mono text-gray-900 font-bold">
-                        {transaction.id}
-                      </p>
-                    </div>
-                    <div className="mb-4">
-                      <p className="text-gray-600 text-xs font-medium uppercase">
-                        Amount
-                      </p>
-                      <p className="text-gray-900 text-2xl font-bold">
-                        {transaction.amountType === 'USD' ? '$' : ''}
-                        {transaction.amount.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
-                        <span className="text-gray-600 ml-2 text-sm font-normal">
-                          {transaction.amountType}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="mb-4">
-                      <p className="text-gray-600 text-xs font-medium uppercase">
-                        Type
-                      </p>
-                      <p className="text-gray-900 font-medium">
-                        {transaction.particular}
-                      </p>
-                    </div>
-                    <div className="mb-4">
-                      <p className="text-gray-600 text-xs font-medium uppercase">
-                        Account Type
-                      </p>
-                      <p className="text-gray-900 font-medium">
-                        {transaction.accountType}
-                      </p>
-                    </div>
-                    <div className="border-gray-200 border-t pt-4">
-                      <p className="text-gray-600 text-xs font-medium uppercase">
-                        Status
-                      </p>
-                      <div
-                        className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
-                          status === 'Pending'
-                            ? 'bg-yellow-50 text-yellow-700'
-                            : status === 'Approved'
-                              ? 'bg-green-50 text-green-700'
-                              : 'bg-red-50 text-red-700'
-                        }`}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            status === 'Pending'
-                              ? 'bg-yellow-500'
-                              : status === 'Approved'
-                                ? 'bg-green-500'
-                                : 'bg-red-500'
-                          }`}
-                        ></span>
-                        {status}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div className="shadow-soft group relative min-h-[300px] overflow-hidden rounded-xl border border-stroke bg-white md:min-h-[500px] lg:min-h-[600px]">
+              <div className="bg-gray-100 absolute inset-0 flex items-center justify-center">
+                {customer?.aadharCard ? (
+                  <img
+                    id="aadharCard"
+                    src={customer.aadharCard}
+                    alt="Aadhar Card"
+                    className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105 md:p-8"
+                    style={{transform: `scale(${proofZoom})`}}
+                  />
+                ) : (
+                  <div className="text-gray-400">No Aadhar card uploaded</div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column: Data & Actions */}
+          {/* Right column: Details & Actions */}
           <div className="flex flex-col gap-6 xl:col-span-5">
-            {/* Transaction Info Card */}
-            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-              <div className="flex items-center justify-between bg-white px-6 py-4">
-                <h3 className="text-gray-900 flex items-center gap-2 font-bold">
+            <div className="shadow-soft overflow-hidden rounded-xl border border-stroke bg-white">
+              <div className="flex items-center justify-between border-b border-stroke bg-white px-4 py-3 md:px-6 md:py-4">
+                <h3 className="text-header-text flex items-center gap-2 font-bold">
                   <MdReceiptLong className="text-[20px] text-primary" />
-                  Transaction Details
+                  Transaction Data
                 </h3>
-                <span
-                  className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-bold ${
-                    transaction.isVerified
-                      ? 'border-green-200 bg-green-100 text-green-700'
-                      : 'border-red-200 bg-red-100 text-red-700'
-                  }`}
-                >
+                <span className="inline-flex items-center gap-1 rounded border border-green-200 bg-green-50 px-2 py-1 text-xs font-bold text-green-700">
                   <MdCheckCircle className="text-[14px]" />
-                  {transaction.isVerified ? 'Verified' : 'Unverified'}
+                  System Match
                 </span>
               </div>
-              <div className="space-y-6 p-6">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide">
-                      Sender
-                    </p>
-                    <p className="text-gray-900 text-base font-bold">
-                      {transaction.fullname || 'Unknown'}
-                    </p>
-                    {transaction.email && (
-                      <p className="text-gray-500 text-sm">
-                        {transaction.email}
-                      </p>
-                    )}
-                    {transaction.phoneNumber && (
-                      <p className="text-gray-500 text-sm">
-                        {transaction.phoneNumber}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide">
-                      Beneficiary
-                    </p>
-                    <p className="text-gray-900 text-base font-bold">
-                      {beneficiary?.fullName || 'Unknown'}
-                    </p>
-                    {beneficiary?.email && (
-                      <p className="text-gray-500 text-sm">
-                        {beneficiary.email}
-                      </p>
-                    )}
-                    {beneficiary?.phoneNumber && (
-                      <p className="text-gray-500 text-sm">
-                        {beneficiary.countryCode} {beneficiary.phoneNumber}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide">
-                      Bank
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600 text-[10px] font-bold text-white">
-                        {beneficiary?.bankName?.charAt(0) || 'B'}
+
+              <div className="p-4 md:p-6">
+                <form className="space-y-6">
+                  {/* Identity Details */}
+                  <div>
+                    <h4 className="text-header-text mb-3 border-b border-stroke pb-1 text-xs font-extrabold uppercase tracking-wider">
+                      1. Identity Details
+                    </h4>
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Full Legal Name
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.fullName || 'N/A'}
+                        </div>
                       </div>
                       <div>
-                        <p className="text-gray-900 text-base font-medium">
-                          {beneficiary?.bankName || 'Unknown Bank'}
-                        </p>
-                        {beneficiary?.IFSC && (
-                          <p className="text-gray-500 text-xs">
-                            IFSC: {beneficiary.IFSC}
-                          </p>
-                        )}
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Relationship
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.relationship || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Email Address
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center truncate rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.email || 'N/A'}
+                        </div>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Mobile Number
+                        </label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-2 text-sm font-medium sm:w-28">
+                            {beneficiary?.countryCode || ''}
+                          </div>
+                          <div className="text-header-text flex h-9 flex-1 items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                            {beneficiary?.phoneNumber || 'N/A'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide">
-                      Account Number
-                    </p>
-                    <p className="font-mono border-gray-200 bg-gray-50 text-gray-900 w-fit break-all rounded border px-2 py-1 text-sm font-medium">
-                      {beneficiary?.accountNumber || 'N/A'}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide">
-                      SWIFT/BIC
-                    </p>
-                    <p className="font-mono border-gray-200 bg-gray-50 text-gray-900 w-fit break-all rounded border px-2 py-1 text-sm font-medium">
-                      {beneficiary?.SWIFTBIC || 'N/A'}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide">
-                      Country
-                    </p>
-                    <p className="text-gray-900 text-base font-medium">
-                      {beneficiary?.bankCountry ||
-                        beneficiary?.country ||
-                        'N/A'}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="space-y-3 pt-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-gray-600 text-sm font-medium">
-                      Gross Amount
-                    </p>
-                    <p className="text-gray-900 text-base font-medium">
-                      {transaction.amountType === 'USD' ? '$' : ''}
-                      {(transaction.amount || 0).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
+                  {/* Address Details */}
+                  <div>
+                    <h4 className="text-header-text mb-3 border-b border-stroke pb-1 text-xs font-extrabold uppercase tracking-wider">
+                      2. Address Details
+                    </h4>
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Address Line 1
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.address || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          City
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.city || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          State / Prov.
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.state || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          ZIP / Postal
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.pincode || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Country
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.country || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-gray-600 text-sm font-medium">
-                      Currency
-                    </p>
-                    <p className="text-gray-900 text-base font-medium">
-                      {transaction.amountType}
-                    </p>
+
+                  {/* Bank Details */}
+                  <div>
+                    <h4 className="text-header-text mb-3 border-b border-stroke pb-1 text-xs font-extrabold uppercase tracking-wider">
+                      3. Bank Details
+                    </h4>
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Bank Country
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.bankCountry || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Currency
+                        </label>
+                        <div className="bg-gray-100 text-header-text flex h-9 w-full items-center rounded border border-stroke px-3 text-sm font-bold">
+                          {transaction.amountType}
+                        </div>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Account / IBAN
+                        </label>
+                        <div className="font-mono text-header-text flex h-9 w-full items-center break-all rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.accountNumber || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Account Type
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.accountType || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          SWIFT / BIC
+                        </label>
+                        <div className="font-mono text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.SWIFTBIC || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Routing / IFSC
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.IFSC || 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Bank Name
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.bankName || 'N/A'}
+                        </div>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-secondary-text mb-1 block text-xs font-bold">
+                          Branch Name
+                        </label>
+                        <div className="text-header-text flex h-9 w-full items-center rounded border border-stroke bg-gray-2 px-3 text-sm font-medium">
+                          {beneficiary?.branchName || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="border-gray-200 flex items-center justify-between border-t border-dashed pt-3">
-                    <p className="text-gray-900 text-base font-bold">
-                      Total Transfer
-                    </p>
-                    <p className="text-gray-900 text-2xl font-extrabold">
-                      {transaction.amountType === 'USD' ? '$' : ''}
-                      {(transaction.amount || 0).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                </div>
+
+                  {/* Rejection Reason (if any) */}
+                  {transaction.rejectReason && (
+                    <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+                      <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-red-900">
+                        <MdError className="text-red-600" />
+                        Rejection Reason
+                      </h4>
+                      <p className="text-sm text-red-800">
+                        {transaction.rejectReason}
+                      </p>
+                    </div>
+                  )}
+                </form>
               </div>
             </div>
-
-            {/* Beneficiary Details Card */}
-            {beneficiary && (
-              <div className="rounded-xl bg-white p-5 shadow-sm">
-                <h4 className="text-gray-900 mb-4 flex items-center gap-2 text-sm font-bold">
-                  <MdPerson className="text-primary" />
-                  Full Beneficiary Information
-                </h4>
-
-                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                  {/* Personal Info */}
-                  <div>
-                    <p className="text-gray-500 text-xs">Full Name</p>
-                    <p className="font-medium">{beneficiary.fullName}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Relationship</p>
-                    <p className="font-medium">
-                      {beneficiary.relationship || 'N/A'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Email</p>
-                    <p className="font-medium">{beneficiary.email || 'N/A'}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Phone</p>
-                    <p className="font-medium">
-                      {beneficiary.countryCode} {beneficiary.phoneNumber}
-                    </p>
-                  </div>
-
-                  {/* Address */}
-                  <div className="md:col-span-2">
-                    <p className="text-gray-500 text-xs">Address</p>
-                    <p className="font-medium">
-                      {beneficiary.address || 'N/A'}, {beneficiary.city},{' '}
-                      {beneficiary.state}, {beneficiary.pincode}
-                    </p>
-                  </div>
-
-                  {/* Bank Info */}
-                  <div>
-                    <p className="text-gray-500 text-xs">Bank Name</p>
-                    <p className="font-medium">{beneficiary.bankName}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Branch</p>
-                    <p className="font-medium">
-                      {beneficiary.branchName || 'N/A'}
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <p className="text-gray-500 text-xs">Account Number</p>
-                    <p className="font-mono bg-gray-50 w-fit rounded border px-2 py-1">
-                      {beneficiary.accountNumber}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Account Type</p>
-                    <p className="font-medium">{beneficiary.accountType}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Currency</p>
-                    <p className="font-medium">{beneficiary.currency}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">SWIFT / BIC</p>
-                    <p className="font-mono">{beneficiary.SWIFTBIC || 'N/A'}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">IFSC</p>
-                    <p className="font-mono">{beneficiary.IFSC || 'N/A'}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-500 text-xs">Country</p>
-                    <p className="font-medium">
-                      {beneficiary.country} / {beneficiary.bankCountry}
-                    </p>
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <p className="text-gray-500 text-xs">Verification</p>
-                    <p
-                      className={`font-bold ${
-                        beneficiary.isVerified
-                          ? 'text-green-600'
-                          : 'text-yellow-600'
-                      }`}
-                    >
-                      {beneficiary.isVerified ? 'Verified' : 'Pending'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Rejection Reason Display */}
-            {transaction.rejectReason && (
-              <div className="rounded-xl border border-red-100 bg-red-50 p-4">
-                <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-red-900">
-                  <MdError className="text-red-600" />
-                  Rejection Reason
-                </h4>
-                <p className="text-sm text-red-800">
-                  {transaction.rejectReason}
-                </p>
-              </div>
-            )}
 
             {/* Actions */}
             {canTakeAction ? (
               <div className="mt-auto flex flex-col gap-4 pt-4">
-                {showRejectReason && (
-                  <div className="mb-4 rounded-xl border border-red-100 bg-red-50 p-4">
+                {showRejectReason ? (
+                  <div className="rounded-xl border border-red-100 bg-red-50 p-4">
                     <label className="mb-2 block text-sm font-bold text-red-900">
                       Rejection Reason <span className="text-red-600">*</span>
                     </label>
@@ -618,7 +449,7 @@ export const TransferDetails = () => {
                     <div className="mt-3 flex justify-end gap-2">
                       <GenericButton
                         onClick={() => setShowRejectReason(false)}
-                        className="border-gray-300 text-gray-700 hover:bg-gray-50 border bg-white px-4 py-2"
+                        className="border-gray-300 text-gray-700 border bg-white px-4 py-2 hover:bg-gray-2"
                         disabled={rejectTransfer.isPending}
                       >
                         Cancel
@@ -634,42 +465,39 @@ export const TransferDetails = () => {
                       </GenericButton>
                     </div>
                   </div>
-                )}
-
-                {!showRejectReason && (
+                ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <GenericButton
-                        onClick={handleReject}
-                        className="border-gray-300 text-gray-700 flex h-12 items-center justify-center border bg-white font-bold hover:border-red-300 hover:bg-red-50 hover:text-red-600"
-                        disabled={approveTransfer.isPending}
-                      >
-                        Reject Request
-                      </GenericButton>
-                      <GenericButton
-                        onClick={handleApprove}
-                        className="flex h-12 items-center justify-center gap-2 bg-primary font-bold text-white shadow-md shadow-orange-500/10 hover:bg-orange-700"
-                        disabled={approveTransfer.isPending}
-                      >
-                        {approveTransfer.isPending ? (
-                          'Processing...'
-                        ) : (
-                          <>
-                            <MdCheck className="text-[20px]" />
-                            Approve Transfer
-                          </>
-                        )}
-                      </GenericButton>
-                    </div>
-                    <p className="text-gray-600 px-4 text-center text-xs leading-relaxed">
-                      By approving, funds will be released to the beneficiary
-                      immediately. This action is logged and cannot be undone.
+                    <button
+                      onClick={handleApprove}
+                      disabled={approveTransfer.isPending}
+                      className="hover:bg-primary-hover flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary font-bold text-white shadow-md shadow-orange-500/10 transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {approveTransfer.isPending ? (
+                        'Processing...'
+                      ) : (
+                        <>
+                          <MdCheck className="text-[20px]" />
+                          Complete Transfer
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleReject}
+                      disabled={approveTransfer.isPending}
+                      className="text-secondary-text flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <MdError className="text-[16px]" />
+                      Reject Transfer
+                    </button>
+                    <p className="text-secondary-text px-4 text-center text-xs leading-relaxed">
+                      By completing, funds will be released to the recipient
+                      bank immediately. This action is logged.
                     </p>
                   </>
                 )}
               </div>
             ) : (
-              <div className="border-gray-200 bg-gray-50 mt-auto rounded-xl border p-4">
+              <div className="border-gray-200 mt-auto rounded-xl border bg-gray-2 p-4">
                 <p className="text-gray-600 text-center text-sm">
                   {status === 'Approved'
                     ? 'This transfer has already been approved.'

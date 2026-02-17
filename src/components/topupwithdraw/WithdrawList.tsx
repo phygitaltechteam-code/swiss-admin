@@ -22,6 +22,7 @@ import {
 import GenericButton from '../Forms/Buttons/GenericButton';
 import GenericTable, {Column} from '../Forms/Table/GenericTable';
 import toast from 'react-hot-toast';
+import {MdTrendingUp} from 'react-icons/md';
 
 interface TopUpListProps {
   transactions: any;
@@ -235,6 +236,15 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
     //   ),
     // },
     {
+      header: 'Date & Time',
+      accessor: 'createdAt',
+      render: (item) => (
+        <span className="text-gray-500 text-sm">
+          {formatTransactionDate(item.createdAt)}
+        </span>
+      ),
+    },
+    {
       header: 'Client',
       accessor: 'fullname',
       render: (item) => (
@@ -274,15 +284,7 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
         </span>
       ),
     },
-    {
-      header: 'Date & Time',
-      accessor: 'createdAt',
-      render: (item) => (
-        <span className="text-gray-500 text-sm">
-          {formatTransactionDate(item.createdAt)}
-        </span>
-      ),
-    },
+
     {
       header: 'Status',
       accessor: 'isPending',
@@ -298,7 +300,7 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
               console.log(' Viewing details for transaction:', item);
               onSelectTransaction(item.id);
             }}
-            className="border-gray-200 text-gray-500 flex size-9 items-center justify-center rounded-lg border transition-colors hover:border-primary/50 hover:bg-white hover:text-primary"
+            className="inline-flex items-center justify-center rounded p-1 hover:text-primary dark:hover:text-secondary"
             title="View Details"
           >
             <Eye size={18} />
@@ -384,8 +386,9 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                     <DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-sm text-green-600">
-                  <span>Pending withdrawals</span>
+                <div className="mt-2 flex items-center text-xs text-neutral-500">
+                  <MdTrendingUp className="mr-1 text-green-600" />
+                  <span className="text-green-600">Pending Withdrawals</span>
                 </div>
               </button>
 
@@ -403,9 +406,6 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                   <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <Bell className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
-                </div>
-                <div className="mt-4 flex items-center text-sm text-neutral-500">
-                  <span>Last 24 hours</span>
                 </div>
               </div>
 
@@ -431,9 +431,6 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                     <Hourglass className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-sm text-yellow-600">
-                  <span>Requires action</span>
-                </div>
               </button>
 
               {/* Approved - Clickable */}
@@ -458,9 +455,6 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                     <CheckCircle2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-sm text-green-600">
-                  <span>Successful withdrawals</span>
-                </div>
               </button>
 
               {/* Rejected - Clickable */}
@@ -484,19 +478,6 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                   <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
                     <XCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
-                </div>
-                <div className="mt-4 flex items-center text-sm text-red-600">
-                  <span>
-                    {stats.totalPendingAmount > 0
-                      ? `${Math.round(
-                          (stats.rejectedCount /
-                            (stats.pendingCount +
-                              stats.approvedCount +
-                              stats.rejectedCount)) *
-                            100,
-                        )}% rejection rate`
-                      : 'No data'}
-                  </span>
                 </div>
               </button>
             </div>
