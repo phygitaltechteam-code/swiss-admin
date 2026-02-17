@@ -4,8 +4,8 @@ import React from 'react';
 const StatsCard: React.FC<StatCardProps> = ({
   title,
   value,
-  change,
-  isPositive,
+  // change,
+  // isPositive,
   icon: Icon,
 }) => {
   return (
@@ -14,12 +14,12 @@ const StatsCard: React.FC<StatCardProps> = ({
         <div className="rounded-lg bg-primary/10 p-2">
           <Icon className="h-6 w-6 text-primary" />
         </div>
-        <span
+        {/* <span
           className={`rounded-full px-2 py-1 text-xs font-bold ${isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'} `}
         >
           {isPositive ? '+' : ''}
           {change}
-        </span>
+        </span> */}
       </div>
       <div className="mt-4">
         <p className="text-sm font-medium text-neutral-500">{title}</p>

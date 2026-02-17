@@ -4,7 +4,7 @@ import {
   DashboardStats,
 } from '@/components/Dashboard/types';
 import {api} from '@/utils/axios';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 
 import toast from 'react-hot-toast';
 
@@ -47,6 +47,22 @@ export const buildDashboardFilters = (
   }
 
   return apiFilters;
+};
+
+export const useGetDashToUpGraph = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: dashGraph) => getDashboardTopUpGrap(data),
+
+    onSuccess: () => {
+      // toast.success('fech data sucessfully!');
+      queryClient.invalidateQueries({queryKey: ['top-up-graph']});
+    },
+    onError: () => {
+      // toast.error('Failed To get data!');
+    },
+  });
 };
 
 export const getDashboardData = async (
@@ -133,13 +149,5 @@ export const useDashboardData = (filters: DashboardFilters) => {
   return useQuery({
     queryKey: ['dashboard', filters],
     queryFn: () => getDashboardData(filters),
-    onError: (error: any) => {
-      console.error('Dashboard query error:', error);
-    },
-    retry: 1,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    // Keep previous data while fetching new data
-    keepPreviousData: true,
   });
 };

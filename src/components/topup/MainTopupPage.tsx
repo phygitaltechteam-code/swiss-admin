@@ -89,7 +89,6 @@ const MainTopupPage: React.FC = () => {
     );
   }
 
-  // Handle error state
   if (error) {
     return (
       <div className="bg-gray-50 flex h-screen w-full items-center justify-center">
@@ -115,9 +114,6 @@ const MainTopupPage: React.FC = () => {
       </div>
     );
   }
-
-  console.log('Mapped transactions:', transactions);
-  console.log('Calculated stats:', stats);
 
   return (
     <div className="bg-gray-50 flex h-screen w-full">

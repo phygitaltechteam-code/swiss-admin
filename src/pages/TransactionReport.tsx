@@ -204,69 +204,172 @@ const TransactionReport: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  // Inside TransactionReport.tsx, replace the existing handlePrint function with this:
 
-    const rowsHtml = filteredData
+  const handlePrint = () => {
+    if (filteredData.length === 0) {
+      alert('No data to print. Adjust your filters and try again.');
+      return;
+    }
+
+    // Compute additional stats
+    const totalAmount = filteredData.reduce((sum, tx) => sum + tx.amount, 0);
+    const transactionCount = filteredData.length;
+
+    // Current date/time
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    // Build filter summary text
+    const filterParts = [];
+    if (filters.type !== 'All Types') filterParts.push(`Type: ${filters.type}`);
+    if (filters.search) filterParts.push(`Search: "${filters.search}"`);
+    const filterSummary = filterParts.length
+      ? filterParts.join(' • ')
+      : 'No filters applied';
+
+    // Build table rows with alternating background
+    const tableRows = filteredData
       .map(
-        (tx) => `
-        <tr>
-          <td>${tx.date}</td>
-          <td style="font-family: monospace;">${tx.transactionId}</td>
-          <td><strong>${tx.clientName}</strong></td>
-          <td><span class="badge">${tx.transactionType}</span></td>
-          <td>$${tx.amount.toFixed(2)}</td>
-          <td>${tx.feeType}</td>
-          <td style="color: #f5813d; font-weight: bold;">$${tx.totalFeeCharged.toFixed(2)}</td>
-        </tr>
-      `,
+        (tx, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${idx + 1}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${tx.date}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace;">${tx.transactionId}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>${tx.clientName}</strong></td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; background: ${
+            tx.transactionType === 'Top-up'
+              ? '#d1fae5'
+              : tx.transactionType === 'Sent Money'
+                ? '#fef3c7'
+                : '#dbeafe'
+          }; color: ${
+            tx.transactionType === 'Top-up'
+              ? '#065f46'
+              : tx.transactionType === 'Sent Money'
+                ? '#92400e'
+                : '#1e40af'
+          };">${tx.transactionType}</span>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
+          <strong>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">${tx.feeType}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #f5813d;">
+          $${tx.totalFeeCharged.toFixed(2)}
+        </td>
+      </tr>
+    `,
       )
       .join('');
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Transaction Fee Report</title>
-          <style>
-            body { font-family: 'Inter', sans-serif; margin: 20px; }
-            .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
-            .stat-card { background: #f8fafc; padding: 20px; border-radius: 8px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f1f5f9; padding: 12px; text-align: left; }
-            td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-            .badge { background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-          </style>
-        </head>
-        <body>
+    const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Transaction Fee Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+          h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
+          .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .header-row { display: flex; justify-content: space-between; align-items: center; }
+          .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+          .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
+          .stat-title { font-size: 14px; color: #4b5563; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          .filter-summary { background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background: #ff7207; color: white; padding: 8px; text-align: left; }
+          td { padding: 6px; border: 1px solid #e5e7eb; }
+          .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
+          @media print {
+            body { margin: 0.5in; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
           <h1>Transaction Fee Report</h1>
-          <p>Generated on ${new Date().toLocaleDateString()}</p>
-          <div class="stats">
-            <div class="stat-card">
-              <div style="color: #64748b;">Total Fees Collected</div>
-              <div style="font-size: 28px; font-weight: 700;">$${totalFees.toFixed(2)}</div>
-            </div>
-            <div class="stat-card">
-              <div style="color: #64748b;">Average Fee per Transaction</div>
-              <div style="font-size: 28px; font-weight: 700;">$${averageFee.toFixed(2)}</div>
-            </div>
+          <div class="header-row">
+            <span>Generated: ${dateStr} ${timeStr}</span>
+            <span>Total transactions: ${transactionCount}</span>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th><th>Tx ID</th><th>Client</th><th>Type</th><th>Amount</th><th>Fee Type</th><th>Fee</th>
-              </tr>
-            </thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
-        </body>
-      </html>
-    `);
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-title">Total Fees Collected</div>
+            <div class="stat-value">$${totalFees.toFixed(2)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Average Fee per Transaction</div>
+            <div class="stat-value">$${averageFee.toFixed(2)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Transaction Amount</div>
+            <div class="stat-value">$${totalAmount.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div class="filter-summary">
+          <strong>Applied filters:</strong> ${filterSummary}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Transaction ID</th>
+              <th>Client Name</th>
+              <th>Type</th>
+              <th>Amount (USD)</th>
+              <th>Fee Type</th>
+              <th>Fee Charged (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Printed from Transaction Management System
+        </div>
+      </body>
+    </html>
+  `;
+
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800,scrollbars=yes',
+    );
+    if (!printWindow) {
+      alert('Popup blocked. Please allow popups to print.');
+      return;
+    }
+
+    printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
-  };
 
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+    }, 250);
+  };
   // ---------- TABLE COLUMNS ----------
   const columns: Column<DisplayTransaction>[] = [
     {

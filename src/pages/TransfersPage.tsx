@@ -356,230 +356,197 @@ const TransfersPage: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // Handle print with responsive styling
-  const handlePrint = () => {
-    const printContent = document.getElementById('transfer-report-content');
-    const printWindow = window.open('', '_blank');
-    if (printWindow && printContent) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Transfers Report</title>
-            <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-              * { box-sizing: border-box; }
-              body { 
-                font-family: 'Inter', sans-serif; 
-                margin: 0; 
-                padding: 20px; 
-                background: #fff; 
-                color: #000; 
-                font-size: 12px;
-              }
-              .print-header { 
-                text-align: center; 
-                margin-bottom: 20px; 
-                padding-bottom: 15px; 
-                border-bottom: 2px solid #f0f0f0; 
-              }
-              .print-header h1 { 
-                color: #0F1535; 
-                margin: 0 0 5px 0; 
-                font-size: 22px; 
-                font-weight: 700; 
-              }
-              .print-header p { 
-                color: #6B7280; 
-                margin: 2px 0; 
-                font-size: 11px; 
-              }
-              .print-meta { 
-                display: flex; 
-                flex-direction: column;
-                gap: 10px;
-                margin: 15px 0; 
-                padding: 12px; 
-                background: #f8fafc; 
-                border-radius: 6px; 
-                font-size: 11px; 
-              }
-              .meta-row {
-                display: flex;
-                justify-content: space-between;
-              }
-              .print-stats { 
-                background: #f9fafb; 
-                padding: 15px; 
-                border-radius: 6px; 
-                margin: 15px 0; 
-                border: 1px solid #e5e7eb; 
-              }
-              .print-stats h3 { 
-                margin: 0 0 10px 0; 
-                color: #0F1535; 
-                font-size: 14px; 
-                font-weight: 600; 
-              }
-              .stats-grid { 
-                display: grid; 
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-                gap: 10px; 
-              }
-              .stat-item { 
-                background: #fff; 
-                padding: 10px; 
-                border-radius: 4px; 
-                border: 1px solid #e5e7eb; 
-              }
-              .stat-item p { margin: 0; }
-              .stat-label { 
-                font-size: 10px; 
-                color: #6B7280; 
-                margin-bottom: 3px; 
-              }
-              .stat-value { 
-                font-size: 18px; 
-                font-weight: 700; 
-                color: #0F1535; 
-              }
-              table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                margin-top: 15px; 
-                font-size: 10px; 
-              }
-              th { 
-                background-color: #f8fafc; 
-                color: #6B7280; 
-                font-weight: 600; 
-                text-transform: uppercase; 
-                letter-spacing: 0.05em; 
-                padding: 8px 10px; 
-                text-align: left; 
-                border-bottom: 2px solid #e5e7eb; 
-                font-size: 9px;
-              }
-              td { 
-                padding: 8px 10px; 
-                border-bottom: 1px solid #e5e7eb; 
-                vertical-align: top;
-              }
-              .status { 
-                display: inline-block; 
-                padding: 2px 8px; 
-                border-radius: 50px; 
-                font-size: 9px; 
-                font-weight: 600; 
-              }
-              .status-completed { background: #d1fae5; color: #065f46; }
-              .status-pending { background: #fef3c7; color: #92400e; }
-              .status-failed { background: #fee2e2; color: #991b1b; }
-              .status-review { background: #dbeafe; color: #1e40af; }
-              .footer { 
-                margin-top: 20px; 
-                padding-top: 15px; 
-                border-top: 1px solid #e5e7eb; 
-                text-align: center; 
-                color: #6B7280; 
-                font-size: 10px; 
-              }
-              @media print {
-                @page { margin: 0.5cm; }
-                body { padding: 10px; }
-                button { display: none; }
-                .print-header h1 { font-size: 18px; }
-                th { font-size: 8px; padding: 6px 8px; }
-                td { padding: 6px 8px; font-size: 9px; }
-              }
-              @media print and (max-width: 21cm) {
-                table { font-size: 9px; }
-                th, td { padding: 4px 6px; }
-                .stats-grid { grid-template-columns: repeat(2, 1fr); }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="print-header">
-              <h1>Transfers Report</h1>
-              <p>Comprehensive log of internal and external money movements</p>
-              <p>Generated on ${new Date().toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
-            </div>
-            
-            <div class="print-meta">
-              <div class="meta-row">
-                <div><strong>Date Range:</strong> ${filters.dateRange || 'All Dates'}</div>
-                <div><strong>Country:</strong> ${filters.country}</div>
-                <div><strong>Status:</strong> ${filters.status}</div>
-              </div>
-              <div class="meta-row">
-                <div><strong>Total Records:</strong> ${filteredData.length}</div>
-                <div><strong>Total Amount:</strong> $${stats.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-                <div><strong>Total Fees:</strong> $${stats.totalFees.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-              </div>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Date & Time</th>
-                  <th>Transfer ID</th>
-                  <th>Sender</th>
-                  <th>Beneficiary</th>
-                  <th>Bank</th>
-                  <th>SWIFT/IBAN</th>
-                  <th>Amount</th>
-                  <th>Fee</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${filteredData
-                  .map(
-                    (transfer) => `
-                  <tr>
-                    <td>
-                      <div><strong>${transfer.date}</strong></div>
-                      <div style="color: #6B7280; font-size: 9px;">${transfer.time}</div>
-                    </td>
-                    <td><strong style="color: #f5813d;">${transfer.transferId}</strong></td>
-                    <td>
-                      <div><strong>${transfer.senderName}</strong></div>
-                      <div style="color: #6B7280; font-size: 9px;">${transfer.senderAccount}</div>
-                    </td>
-                    <td>
-                      <div><strong>${transfer.beneficiaryName}</strong></div>
-                      <div style="color: #6B7280; font-size: 9px;">${transfer.beneficiaryLocation}</div>
-                    </td>
-                    <td>${transfer.bankName}</td>
-                    <td style="font-family: monospace; font-size: 9px;">${transfer.swiftIban}</td>
-                    <td><strong>$${transfer.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
-                    <td style="color: #6B7280;">$${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                    <td>
-                      <span class="status status-${transfer.status.toLowerCase().replace(' ', '-')}">
-                        ${transfer.status}
-                      </span>
-                    </td>
-                  </tr>
-                `,
-                  )
-                  .join('')}
-              </tbody>
-            </table>
-            
-            <div class="footer">
-              <p>Report generated by Admin Panel • Page 1 of 1 • Confidential</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
-    }
-  };
+  // Inside TransfersPage.tsx, replace the existing handlePrint function with this:
 
+  const handlePrint = () => {
+    if (filteredData.length === 0) {
+      alert('No data to print. Adjust your filters and try again.');
+      return;
+    }
+
+    // Current date/time (same format as other reports)
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    // Build filter summary text
+    const filterParts = [];
+    if (filters.dateRange) filterParts.push(`Date: ${filters.dateRange}`);
+    if (filters.country !== 'All Countries')
+      filterParts.push(`Country: ${filters.country}`);
+    if (filters.status !== 'All Statuses')
+      filterParts.push(`Status: ${filters.status}`);
+    if (filters.search) filterParts.push(`Search: "${filters.search}"`);
+    const filterSummary = filterParts.length
+      ? filterParts.join(' • ')
+      : 'No filters applied';
+
+    // Build table rows with alternating background
+    const tableRows = filteredData
+      .map(
+        (transfer, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${idx + 1}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div><strong>${transfer.date}</strong></div>
+          <div style="color: #6B7280; font-size: 11px;">${transfer.time}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace; color: #f5813d;">${transfer.transferId}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div><strong>${transfer.senderName}</strong></div>
+          <div style="color: #6B7280; font-size: 11px;">${transfer.senderAccount}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div><strong>${transfer.beneficiaryName}</strong></div>
+          <div style="color: #6B7280; font-size: 11px;">${transfer.beneficiaryLocation}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${transfer.bankName}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace;">${transfer.swiftIban}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
+          <strong>$${transfer.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; color: #6B7280;">
+          $${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; background: ${
+            transfer.status === 'Completed'
+              ? '#d1fae5'
+              : transfer.status === 'Pending'
+                ? '#fef3c7'
+                : transfer.status === 'Failed'
+                  ? '#fee2e2'
+                  : '#dbeafe'
+          }; color: ${
+            transfer.status === 'Completed'
+              ? '#065f46'
+              : transfer.status === 'Pending'
+                ? '#92400e'
+                : transfer.status === 'Failed'
+                  ? '#991b1b'
+                  : '#1e40af'
+          };">
+            ${transfer.status}
+          </span>
+        </td>
+      </tr>
+    `,
+      )
+      .join('');
+
+    // Full HTML document with same styling as other reports
+    const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Transfers Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+          h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
+          .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .header-row { display: flex; justify-content: space-between; align-items: center; }
+          .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+          .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
+          .stat-title { font-size: 14px; color: #4b5563; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          .filter-summary { background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background: #ff7207; color: white; padding: 8px; text-align: left; }
+          td { padding: 6px; border: 1px solid #e5e7eb; }
+          .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
+          @media print {
+            body { margin: 0.5in; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Transfers Report</h1>
+          <div class="header-row">
+            <span>Generated: ${dateStr} ${timeStr}</span>
+            <span>Total transfers: ${filteredData.length}</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-title">Total Sent</div>
+            <div class="stat-value">$${stats.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Transactions</div>
+            <div class="stat-value">${stats.totalTransactions}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Average Transfer</div>
+            <div class="stat-value">$${stats.averageTransfer.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Fees</div>
+            <div class="stat-value">$${stats.totalFees.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+          </div>
+        </div>
+
+        <div class="filter-summary">
+          <strong>Applied filters:</strong> ${filterSummary}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date & Time</th>
+              <th>Transfer ID</th>
+              <th>Sender</th>
+              <th>Beneficiary</th>
+              <th>Bank</th>
+              <th>SWIFT/IBAN</th>
+              <th>Amount</th>
+              <th>Fee</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Printed from Transfer Management System
+        </div>
+      </body>
+    </html>
+  `;
+
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800,scrollbars=yes',
+    );
+    if (!printWindow) {
+      alert('Popup blocked. Please allow popups to print.');
+      return;
+    }
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+
+    // Small delay to ensure content is loaded before printing
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+    }, 250);
+  };
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({...prev, [key]: value}));

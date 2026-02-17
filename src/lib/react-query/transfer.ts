@@ -53,6 +53,9 @@ interface ApiTransaction {
     createdAt: string;
     updatedAt: string;
   };
+  customer?: {
+    aadharCard: string;
+  };
 }
 
 export const useGetPendingTransfers = () => {
@@ -163,7 +166,8 @@ const mapApiToTransactionTransfer = (
     isVerified: apiTransaction.isVerified,
     dob: apiTransaction.dob,
     beneficiaryDetails: apiTransaction.beneficiary,
-
+    customer: apiTransaction.customer,
+    // beneficiary: apiTransaction.beneficiary,
     // UI specific fields
     senderName: apiTransaction.fullname || 'Unknown Sender',
     beneficiary: apiTransaction.beneficiary?.fullName || 'Unknown Beneficiary',

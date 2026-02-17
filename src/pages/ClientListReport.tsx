@@ -16,6 +16,7 @@ import {
   MdTrendingUp,
   MdTrendingDown,
   MdPictureAsPdf,
+  MdPrint,
 } from 'react-icons/md';
 
 // Types based on your API response
@@ -669,75 +670,198 @@ const ClientListReport: React.FC = () => {
     return true;
   });
 
-  // PDF Export handler
-  const handleExportPDF = async () => {
-    if (clientData.length === 0) {
-      alert('No data available to export');
+  const handlePrint = () => {
+    if (filteredData.length === 0) {
+      alert('No data to print. Adjust your filters and try again.');
       return;
     }
 
-    setIsExporting(true);
-    setExportProgress(0);
+    // Compute stats from the filtered data
+    const totalClients = filteredData.length;
+    const activeClients = filteredData.filter(
+      (c) => c.status === 'Active',
+    ).length;
+    const totalBalance = filteredData.reduce((sum, c) => sum + c.balance, 0);
+    const avgTransactions =
+      totalClients > 0
+        ? filteredData.reduce((sum, c) => sum + c.transactions, 0) /
+          totalClients
+        : 0;
+    const verifiedClients = filteredData.filter((c) => c.isVerified).length;
 
-    try {
-      // Ask user what to export
-      const exportAll = window.confirm(
-        'Do you want to export all data or only filtered results?\n\nClick OK for all data, Cancel for filtered results only.',
-      );
+    // Current date/time
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
 
-      const dataToExport = exportAll ? clientData : filteredData;
+    // Build filter summary
+    const filterParts = [];
+    if (searchQuery) filterParts.push(`Search: "${searchQuery}"`);
+    if (accountTypeFilter && accountTypeFilter !== 'All Types')
+      filterParts.push(`Account Type: ${accountTypeFilter}`);
+    if (statusFilter && statusFilter !== 'All Status')
+      filterParts.push(`Status: ${statusFilter}`);
+    const filterSummary = filterParts.length
+      ? filterParts.join(' • ')
+      : 'No filters applied';
 
-      if (dataToExport.length === 0) {
-        alert('No data to export based on your selection');
-        setIsExporting(false);
-        return;
-      }
+    // Build table rows
+    const tableRows = filteredData
+      .map(
+        (client, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${idx + 1}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div><strong>${client.name}</strong></div>
+          <div style="color: #6B7280; font-size: 11px;">${client.email}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${client.phone}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${client.accountNumber}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${client.accountType}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
+          ${formatCurrency(client.balance)}
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; background: ${
+            client.status === 'Active'
+              ? '#d1fae5'
+              : client.status === 'Pending'
+                ? '#fef3c7'
+                : client.status === 'Rejected'
+                  ? '#fee2e2'
+                  : '#e5e7eb'
+          }; color: ${
+            client.status === 'Active'
+              ? '#065f46'
+              : client.status === 'Pending'
+                ? '#92400e'
+                : client.status === 'Rejected'
+                  ? '#991b1b'
+                  : '#374151'
+          };">
+            ${client.status}
+          </span>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">${client.transactions}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${new Date(client.createdAt).toLocaleDateString()}</td>
+      </tr>
+    `,
+      )
+      .join('');
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setExportProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+    const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Client List Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+          h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
+          .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .header-row { display: flex; justify-content: space-between; align-items: center; }
+          .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+          .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
+          .stat-title { font-size: 14px; color: #4b5563; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          .filter-summary { background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background: #ff7207; color: white; padding: 8px; text-align: left; }
+          td { padding: 6px; border: 1px solid #e5e7eb; }
+          .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
+          @media print {
+            body { margin: 0.5in; }
           }
-          return prev + 10;
-        });
-      }, 100);
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Client List Report</h1>
+          <div class="header-row">
+            <span>Generated: ${dateStr} ${timeStr}</span>
+            <span>Total clients: ${totalClients}</span>
+          </div>
+        </div>
 
-      console.log(`Starting PDF export with ${dataToExport.length} records...`);
-      await PDFExportService.exportTableData(
-        dataToExport,
-        dynamicStats,
-        exportAll,
-      );
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-title">Total Clients</div>
+            <div class="stat-value">${totalClients}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Active Clients</div>
+            <div class="stat-value">${activeClients}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Balance</div>
+            <div class="stat-value">${formatCurrency(totalBalance)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Avg. Transactions</div>
+            <div class="stat-value">${avgTransactions.toFixed(1)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Verified Clients</div>
+            <div class="stat-value">${verifiedClients}</div>
+          </div>
+        </div>
 
-      clearInterval(progressInterval);
-      setExportProgress(100);
+        <div class="filter-summary">
+          <strong>Applied filters:</strong> ${filterSummary}
+        </div>
 
-      // Reset after successful export
-      setTimeout(() => {
-        setIsExporting(false);
-        setExportProgress(0);
-      }, 500);
-    } catch (error) {
-      console.error('Export error:', error);
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Client</th>
+              <th>Phone</th>
+              <th>Account Number</th>
+              <th>Account Type</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Transactions</th>
+              <th>Join Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
 
-      // Provide specific error messages
-      let errorMessage = 'Failed to export PDF. Please try again.';
-      if (error instanceof Error) {
-        if (error.message.includes('jspdf')) {
-          errorMessage = `PDF Export Error: ${error.message}\n\nPlease ensure you have installed the required packages:\nnpm install jspdf jspdf-autotable`;
-        } else if (error.message.includes('No data')) {
-          errorMessage = 'No data available to export.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
+        <div class="footer">
+          Printed from Client Management System
+        </div>
+      </body>
+    </html>
+  `;
 
-      alert(errorMessage);
-      setIsExporting(false);
-      setExportProgress(0);
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800,scrollbars=yes',
+    );
+    if (!printWindow) {
+      alert('Popup blocked. Please allow popups to print.');
+      return;
     }
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+    }, 250);
   };
 
   // Define columns for GenericTable
@@ -870,26 +994,6 @@ const ClientListReport: React.FC = () => {
     },
   ];
 
-  const handleView = (item: ClientRow) => {
-    console.log('View client:', item);
-    // Implement view functionality
-  };
-
-  const handleEdit = (item: ClientRow) => {
-    console.log('Edit client:', item);
-    // Implement edit functionality
-  };
-
-  const handleDelete = (item: ClientRow) => {
-    console.log('Delete client:', item);
-    // Implement delete functionality
-  };
-
-  const handleAddClient = () => {
-    console.log('Adding new client...');
-    // Implement add client functionality
-  };
-
   // Loading state
   if (isLoading) {
     return (
@@ -963,41 +1067,12 @@ const ClientListReport: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={handleExportPDF}
-                disabled={isExporting || clientData.length === 0}
-                className={`border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 relative flex h-10 items-center gap-2 overflow-hidden rounded-lg border bg-white px-4 text-sm font-semibold transition-colors ${
-                  isExporting || clientData.length === 0
-                    ? 'cursor-not-allowed opacity-50'
-                    : ''
-                }`}
-                title="Export Table Data as PDF"
+                onClick={handlePrint}
+                className="flex h-10 items-center gap-2 whitespace-nowrap rounded-lg bg-orange-500 px-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                title="Print"
               >
-                {isExporting ? (
-                  <>
-                    <div className="border-gray-300 border-t-gray-600 h-4 w-4 animate-spin rounded-full border-2"></div>
-                    <span>Exporting... {exportProgress}%</span>
-                    {/* Progress bar background */}
-                    <div className="bg-gray-200 absolute bottom-0 left-0 h-0.5 w-full">
-                      {/* Progress bar fill */}
-                      <div
-                        className="h-full bg-green-500 transition-all duration-300 ease-out"
-                        style={{width: `${exportProgress}%`}}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <MdPictureAsPdf className="text-lg" />
-                    <span>Export PDF</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleAddClient}
-                className="hover:bg-primary-dark flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-colors"
-              >
-                <MdAdd className="text-lg" />
-                <span>Add Client</span>
+                <MdPrint className="text-lg" />
+                <span>Print</span>
               </button>
             </div>
           </div>
@@ -1057,11 +1132,6 @@ const ClientListReport: React.FC = () => {
                   </select>
                 </div>
               </div>
-
-              <button className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 flex items-center gap-2 rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold transition-colors">
-                <MdFilterList className="text-lg" />
-                More Filters
-              </button>
             </div>
 
             {/* Generic Table Container */}
@@ -1118,10 +1188,6 @@ const ClientListReport: React.FC = () => {
                     data={filteredData}
                     columns={columns}
                     searchAble={false}
-                    action={true}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
                     itemsPerPage={10}
                     viewTooltip="View Client Details"
                     editTooltip="Edit Client"

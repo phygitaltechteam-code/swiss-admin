@@ -287,7 +287,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
               console.log(' Viewing details for transaction:', item);
               onSelectTransaction(item.id);
             }}
-            className="border-gray-200 text-gray-500 flex size-9 items-center justify-center rounded-lg border transition-colors hover:border-primary/50 hover:bg-white hover:text-primary"
+            className="inline-flex items-center justify-center rounded p-1 hover:text-primary dark:hover:text-secondary"
             title="View Details"
           >
             <Eye size={18} />
@@ -405,7 +405,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                     : ''
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="mb-8 flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
                       Pending
@@ -418,7 +418,6 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                     <Hourglass className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-yellow-600">Requires Action</p>
               </button>
 
               {/* Approved Count */}
@@ -430,7 +429,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                     : ''
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="mb-8 flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
                       Approved
@@ -443,9 +442,6 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                     <CheckCircle2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-green-600">
-                  Successful transfers
-                </p>
               </button>
 
               {/* Rejected Count */}
@@ -455,7 +451,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                   filter === 'Rejected' ? 'bg-red-50 ring-2 ring-red-200' : ''
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="mb-8 flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
                       Rejected
@@ -550,7 +546,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
 
           {/* Table - Mobile Responsive */}
           {filteredTransactions.length > 0 ? (
-            <div className="border-gray-200 overflow-hidden rounded-xl border bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
               {/* Mobile Card View */}
               <div className="divide-gray-200 divide-y lg:hidden">
                 {filteredTransactions.map((transaction) => (

@@ -12,8 +12,7 @@ import {
   ComposedChart,
 } from 'recharts';
 import {ChartDataPoint, BarChartDataPoint} from '@/types/dashboard';
-import {useGetDashToUpGraph} from '@/lib/react-query/dashboard';
-import {useGetfeeChart} from '@/lib/api/dashboard';
+import {useGetDashToUpGraph, useGetfeeChart} from '@/lib/api/dashboard';
 
 // const volumeData: ChartDataPoint[] = ;
 

@@ -18,7 +18,7 @@ import {
 } from '@/lib/react-query/Beneficiary';
 import {Route} from '@/routes/_app/client/beneficiaryverification.$id';
 import {getRequestStatus} from '../approval/methods';
-import {MdArrowBack} from 'react-icons/md';
+import {MdArrowBack, MdClose} from 'react-icons/md';
 import {useNavigate} from '@tanstack/react-router';
 import toast from 'react-hot-toast';
 
@@ -36,6 +36,20 @@ const BeneficiaryPage: React.FC = () => {
 
   // State for mobile sidebar
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
+  // State for image modal
+  const [modalImage, setModalImage] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openImageModal = (imageUrl: string) => {
+    setModalImage(imageUrl);
+    setIsModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setIsModalOpen(false);
+    setModalImage(null);
+  };
 
   // Get status of selected beneficiary
   const selectedStatus = selectedBeneficiary
@@ -60,16 +74,17 @@ const BeneficiaryPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-select the first beneficiary when data loads
     if (beneficiaries?.foreignBeneficiaries?.length) {
-      setSelectedBeneficiary(beneficiaries.foreignBeneficiaries[0]);
+      // Sort beneficiaries: PENDING first, then APPROVED, then REJECTED
+      const sorted = [...beneficiaries.foreignBeneficiaries].sort((a, b) => {
+        const statusA = getRequestStatus(a);
+        const statusB = getRequestStatus(b);
+        const order = {PENDING: 0, APPROVED: 1, REJECTED: 2};
+        return order[statusA] - order[statusB];
+      });
+      setSelectedBeneficiary(sorted[0]);
     }
   }, [beneficiaries]);
-
-  // Calculate total assets dynamically from the data
-  // Here we use the count of foreign beneficiaries as a placeholder.
-  // Replace with actual asset total from your API when available.
-  const totalAssets = beneficiaries?.foreignBeneficiaries?.length || 0;
 
   // Loading state
   if (isLoading) {
@@ -140,6 +155,16 @@ const BeneficiaryPage: React.FC = () => {
     );
   }
 
+  // Sort beneficiaries for display in sidebar
+  const sortedBeneficiaries = [...beneficiaries.foreignBeneficiaries].sort(
+    (a, b) => {
+      const statusA = getRequestStatus(a);
+      const statusB = getRequestStatus(b);
+      const order = {PENDING: 0, APPROVED: 1, REJECTED: 2};
+      return order[statusA] - order[statusB];
+    },
+  );
+
   // Main render with beneficiaries
   return (
     <div className="bg-background-light font-sans flex h-screen flex-col overflow-hidden text-slate-800">
@@ -177,13 +202,16 @@ const BeneficiaryPage: React.FC = () => {
         >
           <div className="border-b border-stroke p-4 lg:p-5">
             <div className="mb-4 flex items-center gap-3">
-              <div className="ring-gray-100 h-10 w-10 overflow-hidden rounded-full ring-2 lg:h-12 lg:w-12">
+              <button
+                onClick={() => openImageModal(beneficiaries?.photo)}
+                className="ring-gray-100 h-10 w-10 overflow-hidden rounded-full ring-2 lg:h-12 lg:w-12"
+              >
                 <img
                   src={beneficiaries?.photo}
                   alt="Client"
                   className="h-full w-full object-cover"
                 />
-              </div>
+              </button>
               <div>
                 <h2 className="text-header-text text-sm font-bold">
                   {beneficiaries?.user?.fullname}
@@ -197,12 +225,15 @@ const BeneficiaryPage: React.FC = () => {
 
             <div className="bg-gray-50 grid grid-cols-2 gap-3 rounded-lg border border-stroke p-3 text-xs">
               <div>
-                <p className="text-label-text mb-0.5 text-[10px]">
-                  Total Assets
-                </p>
+                <p className="text-label-text mb-0.5 text-[10px]">E-Private</p>
                 <p className="text-header-text font-semibold">
-                  ${totalAssets.toFixed(2)}{' '}
-                  {/* Dynamic value using count of beneficiaries */}
+                  ${beneficiaries?.wallets?.[0]?.eprivateAccount || 0}
+                </p>
+              </div>
+              <div>
+                <p className="text-label-text mb-0.5 text-[10px]">Temporary</p>
+                <p className="text-header-text font-semibold">
+                  ${beneficiaries?.wallets?.[0]?.temporyAccount || 0}
                 </p>
               </div>
             </div>
@@ -214,7 +245,7 @@ const BeneficiaryPage: React.FC = () => {
               Recent Beneficiaries
             </h3>
             <div className="space-y-1">
-              {beneficiaries.foreignBeneficiaries.map((b) => {
+              {sortedBeneficiaries.map((b) => {
                 const benestatus = getRequestStatus(b);
 
                 return (
@@ -293,7 +324,7 @@ const BeneficiaryPage: React.FC = () => {
           )}
         </aside>
 
-        {/* Main Content Area (unchanged) */}
+        {/* Main Content Area */}
         <section className="bg-gray-50/50 relative flex min-w-0 flex-1 flex-col overflow-y-auto">
           {/* Detail Header */}
           <div className="shrink-0 border-b border-stroke bg-white px-4 py-4 lg:px-8 lg:py-5">
@@ -315,7 +346,7 @@ const BeneficiaryPage: React.FC = () => {
                   }}
                   className="rounded border border-stroke bg-white px-3 py-1.5 text-sm"
                 >
-                  {beneficiaries.foreignBeneficiaries.map((b) => (
+                  {sortedBeneficiaries.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.fullName}
                     </option>
@@ -537,7 +568,7 @@ const BeneficiaryPage: React.FC = () => {
           </div>
 
           {/* Action Center - Fixed at bottom (hidden for approved/rejected) */}
-          {selectedStatus !== 'REJECTED' && (
+          {selectedStatus !== 'REJECTED' && selectedStatus !== 'APPROVED' && (
             <div className="border-t border-stroke bg-white p-4 shadow-lg lg:px-6">
               <div className="mx-auto max-w-5xl">
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -580,6 +611,34 @@ const BeneficiaryPage: React.FC = () => {
           )}
         </section>
       </div>
+
+      {/* Image Modal for Client Photo */}
+      {isModalOpen && modalImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={closeImageModal}
+        >
+          <div
+            className="dark:bg-gray-900 relative max-h-[90vh] max-w-[90vw] rounded-lg bg-white p-1 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeImageModal}
+              className="text-gray-800 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 absolute -right-3 -top-3 rounded-full bg-white p-1 shadow-lg dark:text-white"
+            >
+              <MdClose className="h-5 w-5" />
+            </button>
+            <img
+              src={modalImage}
+              alt="Client"
+              className="max-h-[85vh] max-w-full rounded object-contain"
+              onError={(e) => {
+                e.currentTarget.src = '/fallback-image.png'; // optional fallback
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

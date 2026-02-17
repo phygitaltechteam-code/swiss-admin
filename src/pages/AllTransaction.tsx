@@ -457,244 +457,175 @@ function AllTransaction() {
     window.URL.revokeObjectURL(url);
   };
 
-  // Handle print
-  const handlePrint = () => {
-    const statsData = calculateStats(filteredData);
-    const printWindow = window.open('', '_blank');
+  // Inside AllTransaction.tsx, replace the existing handlePrint function with this:
 
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Transaction Report</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-              font-family: 'Inter', sans-serif;
-              padding: 20px;
-              background: #fff;
-              color: #000;
-            }
-            .print-header {
-              text-align: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-              border-bottom: 2px solid #f0f0f0;
-            }
-            .print-header h1 {
-              color: #0F1535;
-              margin: 0;
-              font-size: 28px;
-              font-weight: 700;
-            }
-            .print-header p {
-              color: #6B7280;
-              margin: 5px 0 0;
-              font-size: 14px;
-            }
-            .summary-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 15px;
-              margin-bottom: 30px;
-            }
-            .summary-card {
-              background: #f8fafc;
-              padding: 15px;
-              border-radius: 8px;
-              border: 1px solid #e5e7eb;
-            }
-            .summary-card h3 {
-              color: #374151;
-              font-size: 14px;
-              margin-bottom: 8px;
-            }
-            .summary-card .value {
-              color: #111827;
-              font-size: 20px;
-              font-weight: 700;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-              font-size: 12px;
-            }
-            th {
-              background-color: #f8fafc;
-              color: #6B7280;
-              font-weight: 600;
-              text-transform: uppercase;
-              padding: 12px 8px;
-              text-align: left;
-              border-bottom: 2px solid #e5e7eb;
-            }
-            td {
-              padding: 10px 8px;
-              border-bottom: 1px solid #e5e7eb;
-              vertical-align: top;
-            }
-            .type-badge {
-              display: inline-block;
-              padding: 4px 8px;
-              border-radius: 4px;
-              font-size: 11px;
-              font-weight: 600;
-            }
-            .type-CREDIT { background: #dbeafe; color: #1e40af; }
-            .type-DEBIT { background: #fef3c7; color: #92400e; }
-            .status-badge {
-              display: inline-block;
-              padding: 4px 8px;
-              border-radius: 50px;
-              font-size: 11px;
-              font-weight: 600;
-            }
-            .status-success { background: #d1fae5; color: #065f46; }
-            .status-pending { background: #fef3c7; color: #92400e; }
-            .status-failed { background: #fee2e2; color: #991b1b; }
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 1px solid #e5e7eb;
-              text-align: center;
-              color: #6B7280;
-              font-size: 12px;
-            }
-            @media print {
-              body { margin: 0; padding: 15px; }
-              .no-print { display: none; }
-              table { page-break-inside: auto; }
-              tr { page-break-inside: avoid; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-header">
-            <h1>All Transaction Reports</h1>
-            <p>Comprehensive log of all financial activities</p>
-            <p>Generated on ${new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}</p>
-          </div>
-          
-          <div class="summary-grid">
-            <div class="summary-card">
-              <h3>Total Transactions</h3>
-              <div class="value">${statsData.totalTransactions}</div>
-            </div>
-            <div class="summary-card">
-              <h3>Total Amount</h3>
-              <div class="value">$${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-            </div>
-            <div class="summary-card">
-              <h3>Successful</h3>
-              <div class="value">${statsData.successfulTransactions}</div>
-            </div>
-            <div class="summary-card">
-              <h3>Pending</h3>
-              <div class="value">${statsData.pendingTransactions}</div>
-            </div>
-            <div class="summary-card">
-              <h3>Failed</h3>
-              <div class="value">${statsData.failedTransactions}</div>
-            </div>
-            <div class="summary-card">
-              <h3>Filtered Records</h3>
-              <div class="value">${filteredData.length}</div>
-            </div>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Date/Time</th>
-                <th>TXN ID</th>
-                <th>Particular</th>
-                <th>Sender</th>
-                <th>Beneficiary</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Account Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredData
-                .map(
-                  (transaction) => `
-                <tr>
-                  <td>
-                    <div><strong>${formatDate(transaction.createdAt)}</strong></div>
-                    <div style="color: #6B7280;">${formatTime(transaction.createdAt)}</div>
-                  </td>
-                  <td style="font-family: monospace; color: #6B7280; font-size: 11px;">
-                    ${transaction.id.substring(0, 8)}...
-                  </td>
-                  <td>${transaction.particular}</td>
-                  <td>
-                    <div><strong>${transaction.fullname || 'N/A'}</strong></div>
-                    <div style="color: #6B7280; font-size: 11px;">${transaction.email || 'N/A'}</div>
-                  </td>
-                  <td>
-                    ${
-                      transaction.beneficiary
-                        ? `
-                      <div><strong>${transaction.beneficiary.fullName}</strong></div>
-                      <div style="color: #6B7280; font-size: 11px;">${transaction.beneficiary.accountNumber}</div>
-                    `
-                        : '<div style="color: #6B7280;">N/A</div>'
-                    }
-                  </td>
-                  <td>
-                    <span class="type-badge type-${transaction.type}">
-                      ${transaction.type}
-                    </span>
-                  </td>
-                  <td>
-                    <strong>$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
-                    <div style="color: #6B7280; font-size: 11px;">${transaction.amountType}</div>
-                  </td>
-                  <td>
-                    <span class="status-badge status-${transaction.isPending ? 'pending' : transaction.isRejected ? 'failed' : 'success'}">
-                      ${transaction.isPending ? 'Pending' : transaction.isRejected ? 'Failed' : 'Success'}
-                    </span>
-                  </td>
-                  <td>
-                    ${transaction.accountType.replace('E_PRIVATEACCOUNT', 'Private').replace('E_TEMPORYACCOUNT', 'Temporary')}
-                  </td>
-                </tr>
-              `,
-                )
-                .join('')}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            <p>Report generated by Admin Panel • Confidential Financial Data</p>
-            <p>Page 1 of 1</p>
-          </div>
-          
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(() => window.close(), 500);
-            }
-          </script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
+  const handlePrint = () => {
+    if (filteredData.length === 0) {
+      alert('No data to print. Adjust your filters and try again.');
+      return;
     }
+
+    // Compute stats from the filtered data
+    const statsData = calculateStats(filteredData);
+    const total = filteredData.length;
+    const successful = statsData.successfulTransactions;
+    const pending = statsData.pendingTransactions;
+    const failed = statsData.failedTransactions;
+    const totalAmount = statsData.totalAmount;
+
+    // Helper to get status text (same as in table column)
+    const getStatusText = (item: Transaction) => {
+      if (item.isPending) return 'Pending';
+      if (item.isRejected) return 'Failed';
+      return 'Success';
+    };
+
+    // Build table rows
+    const tableRows = filteredData
+      .map(
+        (item, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${idx + 1}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div><strong>${formatDate(item.createdAt)}</strong></div>
+          <div style="color: #6B7280; font-size: 11px;">${formatTime(item.createdAt)}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace; font-size: 11px;">${item.id.substring(0, 8)}...</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.particular}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <div><strong>${item.fullname || 'N/A'}</strong></div>
+          <div style="color: #6B7280; font-size: 11px;">${item.email || ''}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          ${item.beneficiary ? `<div><strong>${item.beneficiary.fullName}</strong></div><div style="color: #6B7280; font-size: 11px;">${item.beneficiary.accountNumber}</div>` : '<span style="color: #9CA3AF;">N/A</span>'}
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${item.type === 'CREDIT' ? '#dbeafe' : '#fef3c7'}; color: ${item.type === 'CREDIT' ? '#1e40af' : '#92400e'};">${item.type}</span>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
+          <strong>$${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+          <div style="color: #6B7280; font-size: 11px;">${item.amountType}</div>
+        </td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; background: ${item.isPending ? '#fef3c7' : item.isRejected ? '#fee2e2' : '#d1fae5'}; color: ${item.isPending ? '#92400e' : item.isRejected ? '#991b1b' : '#065f46'};">${getStatusText(item)}</span>
+        </td>
+      </tr>
+    `,
+      )
+      .join('');
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeStr = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const printContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Transaction Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+          h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
+          .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+          .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
+          .stat-title { font-size: 14px; color: #4b5563; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th { background: #ff7207; color: white; padding: 8px; text-align: left; }
+          td { padding: 6px; border: 1px solid #e5e7eb; }
+          .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
+          @media print {
+            body { margin: 0.5in; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Transaction Report</h1>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Generated: ${dateStr} ${timeStr}</span>
+            <span>Total records: ${total}</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-title">Total Transactions</div>
+            <div class="stat-value">${total}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Amount</div>
+            <div class="stat-value">$${totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Successful</div>
+            <div class="stat-value">${successful}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Pending</div>
+            <div class="stat-value">${pending}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Failed</div>
+            <div class="stat-value">${failed}</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date/Time</th>
+              <th>TXN ID</th>
+              <th>Particular</th>
+              <th>Sender</th>
+              <th>Beneficiary</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Printed from Transaction Management System
+        </div>
+      </body>
+    </html>
+  `;
+
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800,scrollbars=yes',
+    );
+    if (!printWindow) {
+      alert('Popup blocked. Please allow popups to print.');
+      return;
+    }
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+    };
   };
 
   // Handle filter changes
