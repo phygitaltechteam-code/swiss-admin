@@ -59,9 +59,9 @@ const transformApiDataToClient = (apiClient: any): Client => {
     transVolume: transVolume,
     privateBalance: privateBalance,
     tempBalance: tempBalance,
-    isActive: apiClient.user?.isActive,
-    isVerified: apiClient.user?.isVerified,
-    isRejected: apiClient.user?.isRejected,
+    isActive: apiClient.user?.isActive || false,
+    isVerified: apiClient.user?.isVerified || false,
+    isRejected: apiClient.user?.isRejected || false,
     // Additional fields from API
     address: apiClient.address,
     city: apiClient.city,
@@ -110,14 +110,20 @@ const ClientDisplay: React.FC = () => {
   const navigate = useNavigate();
 
   // Use the hook to get clients data
-  const {data: apiResponse, isLoading, isError, error} = useGetClients();
+  const {
+    data: apiResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetClients();
 
   // Debug: Log the API response
   useEffect(() => {
     console.log('Full API Response:', apiResponse);
   }, [apiResponse]);
 
-  // Transform API data when it loads
+  // Transform API data when it loads and filter only active customers
   useEffect(() => {
     if (apiResponse) {
       console.log('API Response structure:', apiResponse);
@@ -144,11 +150,20 @@ const ClientDisplay: React.FC = () => {
       console.log('Data array to transform:', dataArray);
 
       if (dataArray.length > 0) {
+        // First transform all data
         const transformedData = dataArray.map((apiClient: any) =>
           transformApiDataToClient(apiClient),
         );
-        console.log('Transformed data:', transformedData);
-        setClientsData(transformedData);
+
+        // Then filter to show ONLY active customers (isActive === true)
+        const activeCustomers = transformedData.filter(
+          (client) => client.isActive === true && client.isRejected === false,
+        );
+
+        console.log('Transformed data (all):', transformedData);
+        console.log('Active customers only:', activeCustomers);
+
+        setClientsData(activeCustomers);
       } else {
         console.log('No data found in API response');
         setClientsData([]);
@@ -156,7 +171,7 @@ const ClientDisplay: React.FC = () => {
     }
   }, [apiResponse]);
 
-  // Filter data based on search and filters
+  // Filter data based on search and filters (applied on already filtered active customers)
   const filteredData = clientsData.filter((client) => {
     // Search filter
     if (
@@ -185,12 +200,10 @@ const ClientDisplay: React.FC = () => {
         return false;
     }
 
-    // Trans Volume filter
+    // Status filter (now applied on already active customers)
     if (transVolumeFilter) {
-      if (transVolumeFilter === 'high' && client.transVolume < 10000)
-        return false;
-      if (transVolumeFilter === 'low' && client.transVolume >= 10000)
-        return false;
+      if (transVolumeFilter === 'verified' && !client.isVerified) return false;
+      if (transVolumeFilter === 'unverified' && client.isVerified) return false;
     }
 
     return true;
@@ -212,24 +225,6 @@ const ClientDisplay: React.FC = () => {
           <span className="text-gray-900 mt-0.5 text-xs">
             {item.accountNumber}
           </span>
-          {/* Show verification status */}
-          {/* <div className="mt-1 flex gap-2">
-            {item.isVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                Verified
-              </span>
-            )}
-            {item.isRejected && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                Rejected
-              </span>
-            )}
-            {item.rejectedReason && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
-                With Reason
-              </span>
-            )}
-          </div> */}
         </div>
       ),
       className: 'min-w-[200px]',
@@ -308,23 +303,18 @@ const ClientDisplay: React.FC = () => {
     },
     {
       header: 'Status',
-      accessor: 'isActive',
+      accessor: 'isVerified',
       render: (item) => {
-        let label = 'Inactive';
+        let label = 'Active';
         let style =
-          'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
-        let dot = 'bg-gray-500';
+          'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+        let dot = 'bg-emerald-500';
 
-        if (item.isRejected) {
-          label = 'Rejected';
+        if (item.isVerified) {
+          label = 'Verified';
           style =
-            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-          dot = 'bg-red-500';
-        } else if (item.isActive && item.isVerified) {
-          label = 'Active';
-          style =
-            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
-          dot = 'bg-emerald-500';
+            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+          dot = 'bg-blue-500';
         }
 
         return (
@@ -342,8 +332,6 @@ const ClientDisplay: React.FC = () => {
 
   const handleView = (client: Client) => {
     console.log('Navigating to client profile with ID:', client.id);
-
-    // Try using search params instead of state
     navigate({
       to: '/client/profile',
       search: {id: client.id},
@@ -360,7 +348,7 @@ const ClientDisplay: React.FC = () => {
     // Show confirmation dialog
   };
 
-  // Calculate summary statistics
+  // Calculate summary statistics (based on active customers only)
   const totalPrivateBalance = clientsData.reduce(
     (sum, client) => sum + client.privateBalance,
     0,
@@ -373,7 +361,6 @@ const ClientDisplay: React.FC = () => {
     (sum, client) => sum + client.totalTrans,
     0,
   );
-  const activeClients = clientsData.filter((client) => client.isActive).length;
   const verifiedClients = clientsData.filter(
     (client) => client.isVerified,
   ).length;
@@ -388,14 +375,11 @@ const ClientDisplay: React.FC = () => {
               Client Management
             </h1>
             <p className="dark:text-gray-400 text-gray-900 mt-1 text-sm">
-              View and manage detailed client account records and balances.
+              View and manage active client accounts (inactive clients are
+              hidden).
             </p>
           </div>
           <div className="flex gap-3">
-            {/* <button className="hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center gap-2 rounded-lg border border-stroke bg-white px-4 py-2.5 text-sm font-semibold text-[#0F1535] transition-colors dark:text-white">
-              <FiDownload className="text-lg" />
-              Export
-            </button> */}
             <button
               onClick={() => {
                 navigate({to: '/addclient'});
@@ -412,12 +396,12 @@ const ClientDisplay: React.FC = () => {
         {clientsData.length > 0 && !isLoading && (
           <div className="w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
             <div className="flex min-w-max gap-4 md:grid md:min-w-0 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
-              {/* Total Clients */}
+              {/* Total Active Clients */}
               <div className="dark:bg-gray-800 dark:border-gray-700 w-[280px] flex-shrink-0 rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                      Total Clients
+                      Total Active Clients
                     </p>
                     <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
                       {clientsData.length}
@@ -439,39 +423,12 @@ const ClientDisplay: React.FC = () => {
                 </div>
               </div>
 
-              {/* Active Clients */}
-              <div className="dark:bg-gray-800 dark:border-gray-700 w-[280px] flex-shrink-0 rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                      Active Clients
-                    </p>
-                    <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
-                      {activeClients}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
-                    <svg
-                      className="h-5 w-5 text-orange-600 dark:text-orange-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
               {/* Verified Clients */}
               <div className="dark:bg-gray-800 dark:border-gray-700 w-[280px] flex-shrink-0 rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                      Verified Clients
+                      Verified Active Clients
                     </p>
                     <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
                       {verifiedClients}
@@ -521,6 +478,34 @@ const ClientDisplay: React.FC = () => {
                 </div>
               </div>
 
+              {/* Total Temp Balance */}
+              <div className="dark:bg-gray-800 dark:border-gray-700 w-[280px] flex-shrink-0 rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-gray-500 dark:text-gray-400 text-xs font-medium sm:text-sm">
+                      Total Temp Balance
+                    </p>
+                    <p className="text-base font-bold text-[#0F1535] dark:text-white sm:text-lg md:text-xl lg:text-2xl">
+                      {formatCompactIndian(totalTempBalance)}
+                    </p>
+                  </div>
+                  <div className="ml-2 shrink-0 rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+                    <svg
+                      className="h-4 w-4 text-orange-600 dark:text-orange-400 sm:h-5 sm:w-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
               {/* Total Transactions */}
               <div className="dark:bg-gray-800 dark:border-gray-700 w-[280px] flex-shrink-0 rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
                 <div className="flex items-center justify-between">
@@ -550,6 +535,7 @@ const ClientDisplay: React.FC = () => {
             </div>
           </div>
         )}
+
         {/* Loading State */}
         {isLoading && (
           <div className="dark:border-gray-700 dark:bg-gray-800 rounded-xl border border-stroke bg-white p-8 shadow-sm">
@@ -654,9 +640,7 @@ const ClientDisplay: React.FC = () => {
                   >
                     <option value="">Status</option>
                     <option value="verified">Verified Only</option>
-                    <option value="rejected">Rejected Only</option>
-                    <option value="active">Active Only</option>
-                    <option value="inactive">Inactive Only</option>
+                    <option value="unverified">Unverified Only</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <svg
@@ -684,10 +668,10 @@ const ClientDisplay: React.FC = () => {
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="text-sm font-semibold text-[#0F1535] dark:text-white">
-                      Client Records ({filteredData.length} total)
+                      Active Client Records ({filteredData.length} total)
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
-                      Showing real-time client data from API
+                      Showing real-time active client data from API
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -727,7 +711,7 @@ const ClientDisplay: React.FC = () => {
           </>
         )}
 
-        {/* Show when no data is available and not loading */}
+        {/* Show when no active data is available and not loading */}
         {!isLoading && !isError && clientsData.length === 0 && (
           <div className="dark:border-gray-700 dark:bg-gray-800 rounded-xl border border-stroke bg-white p-8 shadow-sm">
             <div className="flex flex-col items-center justify-center py-8">
@@ -735,21 +719,18 @@ const ClientDisplay: React.FC = () => {
                 <MdSearch className="text-gray-400 text-2xl" />
               </div>
               <h3 className="text-gray-900 text-lg font-semibold dark:text-white">
-                No Clients Found
+                No Active Clients Found
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <p className="text-gray-600 dark:text-gray-400 mt-2 text-center">
                 {apiResponse
-                  ? 'API returned data but it could not be processed. Check console for details.'
-                  : 'No client data is available. Try refreshing the page.'}
+                  ? 'API returned data but there are no active clients. Inactive or rejected clients are hidden.'
+                  : 'No active client data is available. Try refreshing the page.'}
               </p>
               <button
-                onClick={() => {
-                  console.log('API Response:', apiResponse);
-                  console.log('Clients Data:', clientsData);
-                }}
-                className="mt-4 text-sm text-primary hover:underline"
+                onClick={() => refetch()}
+                className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-sm text-white"
               >
-                Debug Info in Console
+                Refresh Data
               </button>
             </div>
           </div>

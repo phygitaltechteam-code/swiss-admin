@@ -457,8 +457,6 @@ function AllTransaction() {
     window.URL.revokeObjectURL(url);
   };
 
-  // Inside AllTransaction.tsx, replace the existing handlePrint function with this:
-
   const handlePrint = () => {
     if (filteredData.length === 0) {
       alert('No data to print. Adjust your filters and try again.');
