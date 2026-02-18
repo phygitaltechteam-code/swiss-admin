@@ -80,7 +80,8 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
     'aadharCardNumber',
     'photo',
     'wallets',
-    'user','rejectedReason',
+    'user',
+    'rejectedReason',
     '',
   ];
 

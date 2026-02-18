@@ -370,7 +370,7 @@ const WalletReport: React.FC = () => {
 
   // Transform API data to Transaction format if needed
   const transformedData = useMemo(() => {
-    const transactions = apiData.transactions;        
+    const transactions = apiData.transactions;
 
     // If transactions are already in the correct format, return them
     if (transactions.length > 0 && transactions[0].id) {
