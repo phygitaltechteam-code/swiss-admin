@@ -12,7 +12,19 @@ import {
   MdRefresh,
   MdVisibility,
 } from 'react-icons/md';
-import {FileText} from 'lucide-react'; // for empty state icon
+import {
+  FileText,
+  DollarSign,
+  Bell,
+  Hourglass,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  Search,
+  X,
+  Filter,
+  ChevronDown,
+} from 'lucide-react'; // used for icons like TopUpList
 import {TransactionTransfer} from '@/types/transactionhistory';
 import {useNavigate} from '@tanstack/react-router';
 import GenericButton from '../Forms/Buttons/GenericButton';
@@ -59,64 +71,34 @@ const formatCompactIndian = (num: number): string => {
 
 // ========== Status Badge Component ==========
 const StatusBadge = ({transaction}: {transaction: TransactionTransfer}) => {
-  const getStatus = () => {
-    if (transaction.isRejected) return 'Rejected';
-    if (!transaction.isPending && !transaction.isRejected) return 'Approved';
-    return 'Pending';
-  };
-  const status = getStatus();
+  const baseClasses =
+    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap';
 
-  const styles: Record<string, string> = {
-    Pending: 'bg-yellow-50 text-yellow-700',
-    Approved: 'bg-blue-50 text-blue-700',
-    Rejected: 'bg-red-50 text-red-700',
-  };
+  let status = '';
+  let colorClasses = '';
+  let dotColor = '';
 
-  const dots: Record<string, string> = {
-    Pending: 'bg-yellow-500',
-    Approved: 'bg-blue-500',
-    Rejected: 'bg-red-500',
-  };
+  if (transaction.isRejected) {
+    status = 'Rejected';
+    colorClasses = 'bg-red-50 text-red-800';
+    dotColor = 'bg-red-500';
+  } else if (transaction.isPending) {
+    status = 'Pending';
+    colorClasses = 'bg-yellow-50 text-yellow-800';
+    dotColor = 'bg-yellow-500';
+  } else {
+    status = 'Approved';
+    colorClasses = 'bg-green-50 text-green-800';
+    dotColor = 'bg-green-500';
+  }
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold ${styles[status] || 'bg-gray-50 text-gray-700'}`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${dots[status] || 'bg-gray-500'}`}
-      />
+    <span className={`${baseClasses} ${colorClasses}`}>
+      <span className={`size-1.5 rounded-full ${dotColor}`}></span>
       {status}
     </span>
   );
 };
-
-// ========== Stat Card (unchanged) ==========
-const StatCard = ({
-  label,
-  value,
-  subValue,
-  subValueColor,
-  icon,
-  iconBgColor,
-  iconColor,
-}: any) => (
-  <div className="group flex h-full flex-col justify-between rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
-    <div className="mb-3 flex items-start justify-between sm:mb-4">
-      <p className="text-gray-600 text-xs font-medium sm:text-sm">{label}</p>
-      <span
-        className={`rounded-lg p-1.5 sm:p-2 ${iconBgColor} ${iconColor} transition-transform group-hover:scale-110`}
-      >
-        {React.cloneElement(icon, {className: 'text-[18px] sm:text-[22px]'})}
-      </span>
-    </div>
-    <h3 className="text-gray-900 text-xl font-bold sm:text-2xl">{value}</h3>
-    <p
-      className={`mt-1 flex items-center gap-1 text-xs font-bold ${subValueColor}`}
-    >
-      {subValue}
-    </p>
-  </div>
-);
 
 // ========== Main Component ==========
 export const TransferDashboard = () => {
@@ -124,7 +106,10 @@ export const TransferDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [activeFilter, setActiveFilter] = useState('All Requests');
+  const [filter, setFilter] = useState<
+    'All' | 'Pending' | 'Approved' | 'Rejected'
+  >('All');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filteredTransactions, setFilteredTransactions] = useState<
     TransactionTransfer[]
   >([]);
@@ -136,6 +121,17 @@ export const TransferDashboard = () => {
     if (!apiData?.transactions) return;
     let filtered = apiData.transactions;
 
+    // Status filter
+    if (filter !== 'All') {
+      filtered = filtered.filter((t) => {
+        if (filter === 'Pending') return t.isPending && !t.isRejected;
+        if (filter === 'Approved') return !t.isPending && !t.isRejected;
+        if (filter === 'Rejected') return t.isRejected;
+        return true;
+      });
+    }
+
+    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -149,57 +145,45 @@ export const TransferDashboard = () => {
       );
     }
 
-    if (activeFilter !== 'All Requests') {
+    // Date filter
+    if (startDate || endDate) {
+      const start = startDate
+        ? new Date(startDate + 'T00:00:00').getTime()
+        : -Infinity;
+      const end = endDate
+        ? new Date(endDate + 'T23:59:59').getTime()
+        : Infinity;
       filtered = filtered.filter((t) => {
-        if (activeFilter === 'Pending') return t.isPending && !t.isRejected;
-        if (activeFilter === 'Approved') return !t.isPending && !t.isRejected;
-        if (activeFilter === 'Rejected') return t.isRejected;
-        return true;
-      });
-    }
-
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        return transactionDate >= start && transactionDate <= end;
+        const txTime = new Date(t.createdAt).getTime();
+        return txTime >= start && txTime <= end;
       });
     }
 
     setFilteredTransactions(filtered);
-  }, [apiData, searchQuery, activeFilter, startDate, endDate]);
+  }, [apiData, searchQuery, filter, startDate, endDate]);
 
   // Stats
-  const calculateStats = () => {
-    const transactions =
-      filteredTransactions.length > 0
-        ? filteredTransactions
-        : apiData?.transactions || [];
-    const totalTransactions = transactions.length;
-    const pendingCount = transactions.filter(
+  const stats = {
+    totalPendingAmount: filteredTransactions
+      .filter((t) => t.isPending && !t.isRejected)
+      .reduce((sum, t) => sum + (t.amount || 0), 0),
+    totalTransactions: filteredTransactions.length,
+    pendingCount: filteredTransactions.filter(
       (t) => t.isPending && !t.isRejected,
-    ).length;
-    const rejectedCount = transactions.filter((t) => t.isRejected).length;
-    const approvedCount = transactions.filter(
+    ).length,
+    approvedCount: filteredTransactions.filter(
       (t) => !t.isPending && !t.isRejected,
-    ).length;
-    return {totalTransactions, pendingCount, rejectedCount, approvedCount};
+    ).length,
+    rejectedCount: filteredTransactions.filter((t) => t.isRejected).length,
   };
-  const stats = calculateStats();
 
-  const pendingAmount = filteredTransactions
-    .filter((t) => t.isPending && !t.isRejected)
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-  // Table Columns (updated date formatter)
+  // Table Columns
   const columns: Column<any>[] = [
     {
       header: 'Date & Time',
       accessor: 'createdAt',
       render: (item) => (
-        <span className="text-gray-600 text-sm">
+        <span className="text-gray-500 text-sm">
           {formatTransactionDate(item.createdAt)}
         </span>
       ),
@@ -271,10 +255,10 @@ export const TransferDashboard = () => {
                 search: {transactionId: item.id},
               })
             }
-            className="text-gray-500 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+            className="inline-flex items-center justify-center rounded p-1 hover:text-primary"
             title="View Details"
           >
-            <MdVisibility className="text-[20px]" />
+            <MdVisibility size={18} />
           </button>
           {item.isRejected && item.rejectReason && (
             <button
@@ -295,7 +279,7 @@ export const TransferDashboard = () => {
     },
   ];
 
-  // Loading / Error states
+  // Loading / Error states (unchanged)
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -335,7 +319,7 @@ export const TransferDashboard = () => {
   return (
     <div className="flex h-full flex-col">
       {/* Page Header */}
-      <div className="shrink-0 px-4 py-4 sm:px-6 sm:py-5">
+      <div className="shrink-0 px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-bold tracking-tight text-black sm:text-2xl">
@@ -348,17 +332,36 @@ export const TransferDashboard = () => {
         </div>
       </div>
 
+      {/* Mobile Filter Toggle */}
+      <div className="border-gray-200 border-b bg-white p-4 lg:hidden">
+        <button
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="border-gray-300 flex w-full items-center justify-between rounded-lg border bg-white px-4 py-2"
+        >
+          <div className="flex items-center gap-2">
+            <Filter size={20} className="text-gray-600" />
+            <span className="text-gray-700 font-medium">
+              Filters {filter !== 'All' && `(${filter})`}
+            </span>
+          </div>
+          <ChevronDown
+            size={20}
+            className={`transition-transform ${showMobileFilters ? 'rotate-180' : ''}`}
+          />
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 sm:gap-6">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:gap-8">
           {/* Stats Cards (unchanged) */}
           <div className="w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
             <div className="flex min-w-max gap-3 md:grid md:min-w-0 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
               {/* Total Pending Amount */}
               <button
-                onClick={() => setActiveFilter('Pending')}
+                onClick={() => setFilter('Pending')}
                 className={`flex w-[260px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
-                  activeFilter === 'Pending'
+                  filter === 'Pending'
                     ? 'border-primary/20 bg-orange-50 ring-2 ring-primary/20'
                     : 'border-stroke bg-white'
                 }`}
@@ -369,7 +372,7 @@ export const TransferDashboard = () => {
                       Total Pending Amount
                     </p>
                     <h3 className="mt-2 text-2xl font-bold text-[#0F1535]">
-                      ${formatCompactIndian(pendingAmount)}
+                      ${formatCompactIndian(stats.totalPendingAmount)}
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">
@@ -399,9 +402,9 @@ export const TransferDashboard = () => {
               </div>
 
               <button
-                onClick={() => setActiveFilter('Pending')}
+                onClick={() => setFilter('Pending')}
                 className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
-                  activeFilter === 'Pending'
+                  filter === 'Pending'
                     ? 'bg-yellow-50 ring-2 ring-yellow-200'
                     : 'border-stroke bg-white'
                 }`}
@@ -420,9 +423,9 @@ export const TransferDashboard = () => {
               </button>
 
               <button
-                onClick={() => setActiveFilter('Approved')}
+                onClick={() => setFilter('Approved')}
                 className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
-                  activeFilter === 'Approved'
+                  filter === 'Approved'
                     ? 'bg-green-50 ring-2 ring-green-200'
                     : 'border-stroke bg-white'
                 }`}
@@ -443,9 +446,9 @@ export const TransferDashboard = () => {
               </button>
 
               <button
-                onClick={() => setActiveFilter('Rejected')}
+                onClick={() => setFilter('Rejected')}
                 className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
-                  activeFilter === 'Rejected'
+                  filter === 'Rejected'
                     ? 'bg-red-50 ring-2 ring-red-200'
                     : 'border-stroke bg-white'
                 }`}
@@ -467,61 +470,82 @@ export const TransferDashboard = () => {
             </div>
           </div>
 
-          {/* Search & Filter Bar (unchanged) */}
-          <div className="flex flex-col gap-4 rounded-xl bg-white p-4 shadow-sm">
-            <div className="flex w-full flex-col gap-3">
-              <div className="relative w-full">
-                <div className="text-gray-400 pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <MdSearch className="text-[18px] sm:text-[20px]" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border-gray-200 text-gray-900 placeholder-gray-400 block w-full rounded-lg border bg-white py-2 pl-10 pr-4 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Search Transaction ID, Client, Beneficiary..."
-                />
-              </div>
-              <div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-                <div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="border-gray-200 text-gray-900 block w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                  <span className="text-gray-600 text-sm font-medium">to</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="border-gray-200 text-gray-900 block w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex w-full overflow-x-auto pb-1">
-              <div className="bg-gray-100 flex min-w-min gap-1 rounded-lg p-1">
-                {['All Requests', 'Pending', 'Approved', 'Rejected'].map(
-                  (tab) => (
+          {/* Filters Section */}
+          <div className={`${showMobileFilters ? 'block' : 'hidden'} lg:block`}>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Status Tabs */}
+              <div className="bg-gray-100 inline-flex overflow-x-auto rounded-lg p-1">
+                {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(
+                  (f) => (
                     <GenericButton
-                      key={tab}
-                      onClick={() => setActiveFilter(tab)}
-                      className={`whitespace-nowrap px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
-                        activeFilter === tab
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-gray-600 hover:bg-white hover:text-primary'
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`whitespace-nowrap px-3 py-1.5 text-sm font-semibold ${
+                        filter === f
+                          ? 'text-gray-900 bg-white shadow-sm ring-2 ring-primary/20'
+                          : 'text-gray-600 hover:text-gray-900 bg-transparent'
                       }`}
                     >
-                      {tab}
+                      {f}
                     </GenericButton>
                   ),
                 )}
               </div>
+
+              {/* Search and Date Filters */}
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
+                {/* Date Range */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="border-gray-200 flex h-10 flex-1 items-center rounded-lg border bg-white px-3 shadow-sm">
+                    <Calendar size={18} className="text-gray-400 mr-2" />
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="text-gray-900 w-full border-none bg-transparent p-0 text-sm outline-none focus:ring-0"
+                      max={endDate || undefined}
+                    />
+                  </div>
+                  <span className="text-gray-400 mx-2 hidden sm:block">-</span>
+                  <div className="border-gray-200 flex h-10 flex-1 items-center rounded-lg border bg-white px-3 shadow-sm">
+                    <Calendar size={18} className="text-gray-400 mr-2" />
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="text-gray-900 w-full border-none bg-transparent p-0 text-sm outline-none focus:ring-0"
+                      min={startDate || undefined}
+                    />
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div className="relative h-10 flex-1 lg:min-w-[240px]">
+                  <Search
+                    size={18}
+                    className="text-gray-400 absolute left-3 top-2.5"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search by ID, name, email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-gray-200 text-gray-900 h-full w-full rounded-lg border bg-white pl-10 pr-10 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="text-gray-400 hover:text-gray-600 absolute right-3 top-2.5"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* ===== UPDATED TABLE SECTION ===== */}
+          {/* Table / Mobile Card View */}
           {displayTransactions.length > 0 ? (
             <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
               {/* Mobile Card View */}
@@ -559,7 +583,9 @@ export const TransferDashboard = () => {
                               {transaction.amountType === 'USD' ? '$' : ''}
                               {(transaction.amount || 0).toLocaleString(
                                 undefined,
-                                {minimumFractionDigits: 2},
+                                {
+                                  minimumFractionDigits: 2,
+                                },
                               )}
                               <span className="text-gray-500 ml-1 text-sm">
                                 {transaction.amountType}
@@ -617,7 +643,7 @@ export const TransferDashboard = () => {
                   columns={columns}
                   itemsPerPage={10}
                   title=""
-                  searchable={false}
+                  searchAble={false}
                   action={false}
                   paginationOff={false}
                 />
@@ -629,23 +655,17 @@ export const TransferDashboard = () => {
                 <FileText size={32} className="text-gray-400" />
               </div>
               <h3 className="text-gray-900 mb-2 text-lg font-semibold">
-                No transfers found
+                No transactions found
               </h3>
               <p className="text-gray-600 mb-6 max-w-md px-4 text-center">
-                {searchQuery ||
-                activeFilter !== 'All Requests' ||
-                startDate ||
-                endDate
-                  ? 'No transfers match your current filters. Try adjusting your search criteria.'
+                {searchQuery || filter !== 'All' || startDate || endDate
+                  ? 'No transactions match your current filters. Try adjusting your search criteria.'
                   : 'No transfer transactions available.'}
               </p>
-              {(searchQuery ||
-                activeFilter !== 'All Requests' ||
-                startDate ||
-                endDate) && (
+              {(searchQuery || filter !== 'All' || startDate || endDate) && (
                 <button
                   onClick={() => {
-                    setActiveFilter('All Requests');
+                    setFilter('All');
                     setSearchQuery('');
                     setStartDate('');
                     setEndDate('');

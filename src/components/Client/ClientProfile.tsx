@@ -126,6 +126,14 @@ const ClientProfile: React.FC = () => {
       await activateMutation.mutateAsync(clientId);
       toast.success(checked ? 'Account activated' : 'Account deactivated');
       refetch();
+
+      // After deactivating, we could navigate back to the active clients list
+      // Uncomment the line below if you want to auto-navigate after deactivation
+      // if (!checked) {
+      //   setTimeout(() => {
+      //     navigate({to: '/client/displayclient'});
+      //   }, 1500);
+      // }
     } catch (err: any) {
       toast.error(err.message || 'Failed to update status');
     }
@@ -198,7 +206,7 @@ const ClientProfile: React.FC = () => {
               className="flex items-center gap-1 transition-colors hover:text-primary"
             >
               <MdArrowBack className="text-sm" />
-              Back to Clients
+              Back to Active Clients
             </button>
             <span>/</span>
             <span className="text-gray-700 dark:text-gray-300 font-medium">
@@ -315,7 +323,7 @@ const ClientProfile: React.FC = () => {
                 <button
                   onClick={() =>
                     navigate({
-                      to: `/client/beneficiaryverification/${clientId}`,
+                      to: `/client/viewbeneficiary/${clientId}`,
                     })
                   }
                   className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none"
@@ -357,6 +365,7 @@ const ClientProfile: React.FC = () => {
             </div>
           </div>
 
+          {/* Rest of your component remains the same... */}
           {/* Grid Layout */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left Column (2/3) */}
