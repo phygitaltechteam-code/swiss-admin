@@ -80,7 +80,7 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
     'aadharCardNumber',
     'photo',
     'wallets',
-    'user',
+    'user','rejectedReason',
     '',
   ];
 
@@ -186,17 +186,17 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
               </Value>
             </div>
 
-            <div>
+            {/* <div>
               <Label>SWIFT / BIC</Label>
               <Value className="font-mono">
                 {customerDetails?.SWIFTBIC || '-'}
               </Value>
-            </div>
+            </div> */}
           </div>
         </div>
 
         {/* WALLETS */}
-        {customerDetails?.wallets?.length > 0 && (
+        {/* {customerDetails?.wallets?.length > 0 && (
           <div>
             <h3 className="mb-4 border-b pb-2 text-[10px] font-extrabold uppercase tracking-widest text-neutral-400">
               Wallet Details
@@ -217,7 +217,7 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* DOCUMENTS */}
         {docList

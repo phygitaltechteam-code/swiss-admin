@@ -252,7 +252,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       render: (item) => (
         <div
           className="flex items-center gap-2"
-          onClick={() => onSelectTransaction(item)}
+          onClick={() => onSelectTransaction(item.id)}
         >
           {getAccountIcon(item.accountType)}
           <span className="text-gray-700 text-sm">
@@ -553,7 +553,10 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                   <div
                     key={transaction.id}
                     className="hover:bg-gray-50 p-4"
-                    onClick={() => onSelectTransaction(transaction)}
+                    onClick={() => {
+                      // console.log('Selected transaction:', transaction);
+                      onSelectTransaction(transaction.id);
+                    }}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
