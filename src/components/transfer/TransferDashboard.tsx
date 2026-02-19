@@ -1,19 +1,5 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
-  MdFilterList,
-  MdDownload,
-  MdPayments,
-  MdTrendingUp,
-  MdToday,
-  MdHourglassEmpty,
-  MdCheckCircle,
-  MdCancel,
-  MdSearch,
-  MdRefresh,
-  MdVisibility,
-} from 'react-icons/md';
-import {
-  FileText,
   DollarSign,
   Bell,
   Hourglass,
@@ -21,18 +7,35 @@ import {
   XCircle,
   Calendar,
   Search,
+  Briefcase,
+  ShieldCheck,
+  BadgeCheck,
+  FileText,
+  ChevronRight,
+  MoreVertical,
+  Eye,
+  AlertCircle,
   X,
-  Filter,
   ChevronDown,
-} from 'lucide-react'; // used for icons like TopUpList
-import {TransactionTransfer} from '@/types/transactionhistory';
+  Filter,
+} from 'lucide-react';
+import {MdTrendingUp} from 'react-icons/md';
 import {useNavigate} from '@tanstack/react-router';
 import GenericButton from '../Forms/Buttons/GenericButton';
 import GenericTable, {Column} from '../Forms/Table/GenericTable';
 import {useGetPendingTransfers} from '@/lib/react-query/transfer';
 import toast from 'react-hot-toast';
 
-// ========== Helper Functions ==========
+// ========== Helper Functions (unchanged) ==========
+const formatCompactIndian = (num: number): string => {
+  const abs = Math.abs(num);
+  if (abs >= 10000000)
+    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  if (abs >= 100000) return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  if (abs >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return num.toString();
+};
+
 const formatTransactionDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -60,17 +63,29 @@ const formatTransactionDate = (dateString: string) => {
   return `${dateStr}, ${timeStr}`;
 };
 
-const formatCompactIndian = (num: number): string => {
-  const abs = Math.abs(num);
-  if (abs >= 10000000)
-    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
-  if (abs >= 100000) return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
-  if (abs >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  return num.toString();
+// ========== Stats Calculation (from raw transactions) ==========
+const calculateStats = (transactions: any[]) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return {
+    totalPendingAmount: transactions
+      .filter((t) => t.isPending && !t.isRejected)
+      .reduce((sum, t) => sum + (t.amount || 0), 0),
+    requestsToday: transactions.filter((t) => {
+      const createdDate = new Date(t.createdAt);
+      return createdDate >= today;
+    }).length,
+    pendingCount: transactions.filter((t) => t.isPending && !t.isRejected)
+      .length,
+    approvedCount: transactions.filter((t) => !t.isPending && !t.isRejected)
+      .length,
+    rejectedCount: transactions.filter((t) => t.isRejected).length,
+  };
 };
 
 // ========== Status Badge Component ==========
-const StatusBadge = ({transaction}: {transaction: TransactionTransfer}) => {
+const StatusBadge = ({transaction}: {transaction: any}) => {
   const baseClasses =
     'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap';
 
@@ -103,87 +118,76 @@ const StatusBadge = ({transaction}: {transaction: TransactionTransfer}) => {
 // ========== Main Component ==========
 export const TransferDashboard = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [filter, setFilter] = useState<
     'All' | 'Pending' | 'Approved' | 'Rejected'
   >('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [filteredTransactions, setFilteredTransactions] = useState<
-    TransactionTransfer[]
-  >([]);
 
-  const {data: apiData, isLoading, error, refetch} = useGetPendingTransfers();
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetPendingTransfers();
+  // Adjust according to your actual API response structure
+  const transactions = apiResponse?.data || apiResponse?.transactions || [];
 
-  // Filter transactions
-  useEffect(() => {
-    if (!apiData?.transactions) return;
-    let filtered = apiData.transactions;
+  const stats = calculateStats(transactions);
 
+  const filteredTransactions = transactions.filter((t: any) => {
     // Status filter
     if (filter !== 'All') {
-      filtered = filtered.filter((t) => {
-        if (filter === 'Pending') return t.isPending && !t.isRejected;
-        if (filter === 'Approved') return !t.isPending && !t.isRejected;
-        if (filter === 'Rejected') return t.isRejected;
-        return true;
-      });
+      if (filter === 'Pending' && (!t.isPending || t.isRejected)) return false;
+      if (filter === 'Approved' && (t.isPending || t.isRejected)) return false;
+      if (filter === 'Rejected' && !t.isRejected) return false;
     }
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.id?.toLowerCase().includes(query) ||
-          t.fullname?.toLowerCase().includes(query) ||
-          t.email?.toLowerCase().includes(query) ||
-          t.beneficiary?.toLowerCase().includes(query) ||
-          t.beneficiaryDetails?.fullName?.toLowerCase().includes(query) ||
-          t.particular?.toLowerCase().includes(query),
-      );
+    // Search filter (includes sender and beneficiary fields)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        t.id?.toLowerCase().includes(query) ||
+        t.fullname?.toLowerCase().includes(query) ||
+        t.email?.toLowerCase().includes(query) ||
+        t.phoneNumber?.toLowerCase().includes(query) ||
+        t.beneficiary?.fullName?.toLowerCase().includes(query) ||
+        t.beneficiary?.bankName?.toLowerCase().includes(query) ||
+        t.particular?.toLowerCase().includes(query) ||
+        t.amount?.toString().includes(query) ||
+        t.walletId?.toLowerCase().includes(query);
+
+      if (!matchesSearch) return false;
     }
 
     // Date filter
     if (startDate || endDate) {
-      const start = startDate
-        ? new Date(startDate + 'T00:00:00').getTime()
-        : -Infinity;
-      const end = endDate
-        ? new Date(endDate + 'T23:59:59').getTime()
-        : Infinity;
-      filtered = filtered.filter((t) => {
-        const txTime = new Date(t.createdAt).getTime();
-        return txTime >= start && txTime <= end;
-      });
+      const transactionTime = new Date(t.createdAt).getTime();
+      if (startDate) {
+        const start = new Date(startDate + 'T00:00:00').getTime();
+        if (transactionTime < start) return false;
+      }
+      if (endDate) {
+        const end = new Date(endDate + 'T23:59:59').getTime();
+        if (transactionTime > end) return false;
+      }
     }
 
-    setFilteredTransactions(filtered);
-  }, [apiData, searchQuery, filter, startDate, endDate]);
+    return true;
+  });
 
-  // Stats
-  const stats = {
-    totalPendingAmount: filteredTransactions
-      .filter((t) => t.isPending && !t.isRejected)
-      .reduce((sum, t) => sum + (t.amount || 0), 0),
-    totalTransactions: filteredTransactions.length,
-    pendingCount: filteredTransactions.filter(
-      (t) => t.isPending && !t.isRejected,
-    ).length,
-    approvedCount: filteredTransactions.filter(
-      (t) => !t.isPending && !t.isRejected,
-    ).length,
-    rejectedCount: filteredTransactions.filter((t) => t.isRejected).length,
+  const handleViewDetails = (transactionId: string) => {
+    navigate({to: '/client/transferview', search: {transactionId}});
   };
 
-  // Table Columns
   const columns: Column<any>[] = [
     {
       header: 'Date & Time',
       accessor: 'createdAt',
       render: (item) => (
-        <span className="text-gray-500 text-sm">
+        <span className="text-gray-500 whitespace-nowrap text-sm">
           {formatTransactionDate(item.createdAt)}
         </span>
       ),
@@ -192,12 +196,12 @@ export const TransferDashboard = () => {
       header: 'Beneficiary',
       accessor: 'beneficiary',
       render: (item) => (
-        <div className="flex flex-col">
+        <div className="flex min-w-[120px] flex-col">
           <span className="text-gray-900 text-sm font-medium">
-            {item.beneficiaryDetails?.fullName || item.beneficiary || 'Unknown'}
+            {item.beneficiary?.fullName || 'Unknown'}
           </span>
-          <span className="text-gray-500 max-w-[100px] truncate text-xs">
-            {item.beneficiaryDetails?.bankName || ''}
+          <span className="text-gray-500 max-w-[150px] truncate text-xs">
+            {item.beneficiary?.bankName || ''}
           </span>
         </div>
       ),
@@ -206,16 +210,16 @@ export const TransferDashboard = () => {
       header: 'Sender Client',
       accessor: 'fullname',
       render: (item) => (
-        <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+        <div className="flex min-w-[140px] items-center gap-2">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
             {(item.fullname || 'U').charAt(0).toUpperCase()}
           </div>
-          <div className="flex flex-col">
-            <span className="text-gray-900 text-sm font-medium">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-gray-900 truncate text-sm font-medium">
               {item.fullname || 'Unknown'}
             </span>
             {item.email && (
-              <span className="text-gray-500 max-w-[120px] truncate text-xs">
+              <span className="text-gray-500 max-w-[150px] truncate text-xs">
                 {item.email}
               </span>
             )}
@@ -227,20 +231,18 @@ export const TransferDashboard = () => {
       header: 'Amount',
       accessor: 'amount',
       render: (item) => (
-        <div className="flex flex-col">
-          <span className="text-gray-900 text-sm font-bold">
-            {item.amountType === 'USD' ? '$' : ''}
-            {(item.amount || 0).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-            })}
-          </span>
-          <span className="text-gray-500 text-xs">{item.amountType}</span>
-        </div>
+        <span className="text-gray-900 whitespace-nowrap text-sm font-bold">
+          {item.amountType === 'USD' ? '$' : ''}
+          {(item.amount || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+          })}
+          <span className="text-gray-500 ml-1 text-xs">{item.amountType}</span>
+        </span>
       ),
     },
     {
       header: 'Status',
-      accessor: 'status',
+      accessor: 'isPending',
       render: (item) => <StatusBadge transaction={item} />,
     },
     {
@@ -249,16 +251,11 @@ export const TransferDashboard = () => {
       render: (item) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() =>
-              navigate({
-                to: '/client/transferview',
-                search: {transactionId: item.id},
-              })
-            }
+            onClick={() => handleViewDetails(item.id)}
             className="inline-flex items-center justify-center rounded p-1 hover:text-primary"
             title="View Details"
           >
-            <MdVisibility size={18} />
+            <Eye size={18} />
           </button>
           {item.isRejected && item.rejectReason && (
             <button
@@ -269,7 +266,7 @@ export const TransferDashboard = () => {
                   duration: 4000,
                 });
               }}
-              className="text-xs font-medium text-red-600 hover:underline"
+              className="whitespace-nowrap text-xs font-medium text-red-600 hover:underline"
             >
               View Reason
             </button>
@@ -279,7 +276,7 @@ export const TransferDashboard = () => {
     },
   ];
 
-  // Loading / Error states (unchanged)
+  // Loading / Error states
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -304,17 +301,12 @@ export const TransferDashboard = () => {
             onClick={() => refetch()}
             className="flex items-center gap-2 bg-primary px-4 py-2 font-bold text-white"
           >
-            <MdRefresh /> Retry
+            <MdTrendingUp /> Retry
           </GenericButton>
         </div>
       </div>
     );
   }
-
-  const displayTransactions =
-    filteredTransactions.length > 0
-      ? filteredTransactions
-      : apiData?.transactions || [];
 
   return (
     <div className="flex h-full flex-col">
@@ -354,7 +346,7 @@ export const TransferDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-8">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:gap-8">
-          {/* Stats Cards (unchanged) */}
+          {/* Stats Cards */}
           <div className="w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
             <div className="flex min-w-max gap-3 md:grid md:min-w-0 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
               {/* Total Pending Amount */}
@@ -362,7 +354,7 @@ export const TransferDashboard = () => {
                 onClick={() => setFilter('Pending')}
                 className={`flex w-[260px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
                   filter === 'Pending'
-                    ? 'border-primary/20 bg-orange-50 ring-2 ring-primary/20'
+                    ? 'bg-orange-50 ring-2 ring-primary/20'
                     : 'border-stroke bg-white'
                 }`}
               >
@@ -376,7 +368,7 @@ export const TransferDashboard = () => {
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">
-                    <MdPayments className="text-[20px] text-orange-600" />
+                    <DollarSign className="h-5 w-5 text-orange-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm text-green-600">
@@ -385,22 +377,24 @@ export const TransferDashboard = () => {
                 </div>
               </button>
 
+              {/* Requests Today */}
               <div className="flex w-[200px] flex-shrink-0 flex-col justify-between rounded-xl border border-stroke bg-white p-4 shadow-sm md:w-auto">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-gray-500 text-sm font-medium">
-                      Total Transactions
+                      Requests Today
                     </p>
                     <h3 className="mt-2 text-2xl font-bold text-[#0F1535]">
-                      {stats.totalTransactions}
+                      {stats.requestsToday}
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">
-                    <MdToday className="text-[20px] text-orange-600" />
+                    <Bell className="h-5 w-5 text-orange-600" />
                   </div>
                 </div>
               </div>
 
+              {/* Pending Count */}
               <button
                 onClick={() => setFilter('Pending')}
                 className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
@@ -417,11 +411,12 @@ export const TransferDashboard = () => {
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">
-                    <MdHourglassEmpty className="text-[20px] text-orange-600" />
+                    <Hourglass className="h-5 w-5 text-orange-600" />
                   </div>
                 </div>
               </button>
 
+              {/* Approved Count */}
               <button
                 onClick={() => setFilter('Approved')}
                 className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
@@ -440,11 +435,12 @@ export const TransferDashboard = () => {
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">
-                    <MdCheckCircle className="text-[20px] text-orange-600" />
+                    <CheckCircle2 className="h-5 w-5 text-orange-600" />
                   </div>
                 </div>
               </button>
 
+              {/* Rejected Count */}
               <button
                 onClick={() => setFilter('Rejected')}
                 className={`flex w-[150px] flex-shrink-0 flex-col justify-between rounded-xl border p-4 shadow-sm transition-all hover:scale-[1.02] md:w-auto ${
@@ -463,7 +459,7 @@ export const TransferDashboard = () => {
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">
-                    <MdCancel className="text-[20px] text-orange-600" />
+                    <XCircle className="h-5 w-5 text-orange-600" />
                   </div>
                 </div>
               </button>
@@ -523,11 +519,11 @@ export const TransferDashboard = () => {
                 <div className="relative h-10 flex-1 lg:min-w-[240px]">
                   <Search
                     size={18}
-                    className="text-gray-400 absolute left-3 top-2.5"
+                    className="text-gray-400 absolute left-3 top-1.5"
                   />
                   <input
                     type="text"
-                    placeholder="Search by ID, name, email..."
+                    placeholder="Search by ID, name, email, beneficiary..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="border-gray-200 text-gray-900 h-full w-full rounded-lg border bg-white pl-10 pr-10 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -545,101 +541,28 @@ export const TransferDashboard = () => {
             </div>
           </div>
 
-          {/* Table / Mobile Card View */}
-          {displayTransactions.length > 0 ? (
+          {/* Table with Horizontal Scroll on Mobile/Tablet */}
+          {filteredTransactions.length > 0 ? (
             <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-              {/* Mobile Card View */}
-              <div className="divide-gray-200 divide-y lg:hidden">
-                {displayTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="hover:bg-gray-50 cursor-pointer p-4"
-                    onClick={() =>
-                      navigate({
-                        to: '/client/transferview',
-                        search: {transactionId: transaction.id},
-                      })
-                    }
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                              {(transaction.fullname || 'U')
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-                            <span className="text-gray-700 text-sm font-medium">
-                              {transaction.fullname || 'Unknown'}
-                            </span>
-                          </div>
-                          <StatusBadge transaction={transaction} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-900 font-bold">
-                              {transaction.amountType === 'USD' ? '$' : ''}
-                              {(transaction.amount || 0).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                },
-                              )}
-                              <span className="text-gray-500 ml-1 text-sm">
-                                {transaction.amountType}
-                              </span>
-                            </p>
-                            <p className="text-gray-500 text-sm">
-                              To:{' '}
-                              {transaction.beneficiaryDetails?.fullName ||
-                                transaction.beneficiary ||
-                                'Unknown'}
-                            </p>
-                            {transaction.beneficiaryDetails?.bankName && (
-                              <p className="text-gray-500 text-xs">
-                                {transaction.beneficiaryDetails.bankName}
-                              </p>
-                            )}
-                          </div>
-
-                          <p className="text-gray-500 text-xs">
-                            {formatTransactionDate(transaction.createdAt)}
-                          </p>
-
-                          <p className="text-gray-500 font-mono text-xs">
-                            ID: {transaction.id?.substring(0, 12)}...
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {transaction.isRejected && transaction.rejectReason && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast(
-                            transaction.rejectReason || 'No reason provided',
-                            {
-                              icon: '⚠️',
-                              duration: 4000,
-                            },
-                          );
-                        }}
-                        className="mt-3 text-xs font-medium text-red-600 hover:underline"
-                      >
-                        View Rejection Reason
-                      </button>
-                    )}
-                  </div>
-                ))}
+              {/* Mobile/Tablet Horizontal Scroll View */}
+              <div className="block overflow-x-auto lg:hidden">
+                <div className="min-w-[800px] p-4">
+                  <GenericTable
+                    data={filteredTransactions}
+                    columns={columns}
+                    itemsPerPage={10}
+                    title=""
+                    searchAble={false}
+                    action={false}
+                    paginationOff={false}
+                  />
+                </div>
               </div>
 
               {/* Desktop Table View */}
               <div className="hidden lg:block">
                 <GenericTable
-                  data={displayTransactions}
+                  data={filteredTransactions}
                   columns={columns}
                   itemsPerPage={10}
                   title=""

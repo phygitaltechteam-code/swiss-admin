@@ -18,6 +18,7 @@ const RegistrationReview: React.FC = () => {
   const {mutateAsync: rejectCustomer} = useRejectCustomer();
   const status = getRequestStatus(CustomerDetails);
   console.log('each customerrr', CustomerDetails);
+
   return (
     <div className="bg-subtle-pattern flex h-screen overflow-hidden">
       <main className="relative flex h-screen flex-1 flex-col overflow-hidden transition-all duration-300">
@@ -29,12 +30,14 @@ const RegistrationReview: React.FC = () => {
               <ApplicantDetails customerDetails={CustomerDetails} />
             </div>
 
-            <div className="flex flex-col gap-6">
-              <DecisionActions
-                onAccept={() => acceptCustomer(id)}
-                onReject={(note: string) => rejectCustomer({id, note})}
-              />
-            </div>
+            {status === 'PENDING' && (
+              <div className="flex flex-col gap-6">
+                <DecisionActions
+                  onAccept={() => acceptCustomer(id)}
+                  onReject={(note: string) => rejectCustomer({id, note})}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
