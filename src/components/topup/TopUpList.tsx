@@ -162,7 +162,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
     return true;
   });
 
-  const getStatusBadge = (transaction: TransactionTopup) => {
+  const getStatusBadge = (transaction: any) => {
     const baseClasses =
       'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap';
 
@@ -206,12 +206,6 @@ export const TopUpList: React.FC<TopUpListProps> = ({
             <Briefcase size={18} />
           </div>
         );
-      // case 'E_STANDARDACCOUNT':
-      //   return (
-      //     <div className="flex size-8 items-center justify-center rounded bg-green-50 text-green-600">
-      //       <ShieldCheck size={18} />
-      //     </div>
-      //   );
       default:
         return (
           <div className="bg-gray-50 text-gray-600 flex size-8 items-center justify-center rounded">
@@ -226,7 +220,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       header: 'Date & Time',
       accessor: 'createdAt',
       render: (item) => (
-        <span className="text-gray-500 text-sm">
+        <span className="text-gray-500 whitespace-nowrap text-sm">
           {formatTransactionDate(item.createdAt)}
         </span>
       ),
@@ -236,13 +230,13 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       accessor: 'fullname',
       render: (item) => (
         <div
-          className="flex flex-col"
+          className="flex min-w-[140px] flex-col"
           onClick={() => onSelectTransaction(item.id)}
         >
-          <span className="text-gray-900 text-sm font-semibold">
+          <span className="text-gray-900 truncate text-sm font-semibold">
             {item.fullname}
           </span>
-          <span className="text-gray-500 text-xs">{item.email}</span>
+          <span className="text-gray-500 truncate text-xs">{item.email}</span>
         </div>
       ),
     },
@@ -251,11 +245,11 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       accessor: 'accountType',
       render: (item) => (
         <div
-          className="flex items-center gap-2"
+          className="flex min-w-[140px] items-center gap-2"
           onClick={() => onSelectTransaction(item.id)}
         >
           {getAccountIcon(item.accountType)}
-          <span className="text-gray-700 text-sm">
+          <span className="text-gray-700 whitespace-nowrap text-sm">
             {getAccountTypeDisplay(item.accountType)}
           </span>
         </div>
@@ -265,13 +259,12 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       header: 'Amount',
       accessor: 'amount',
       render: (item) => (
-        <span className="text-gray-900 text-sm font-bold">
+        <span className="text-gray-900 whitespace-nowrap text-sm font-bold">
           ${item.amount.toLocaleString('en-US')}
           <span className="text-gray-500 ml-1 text-xs">{item.amountType}</span>
         </span>
       ),
     },
-
     {
       header: 'Status',
       accessor: 'isPending',
@@ -301,7 +294,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                   duration: 4000,
                 });
               }}
-              className="text-xs font-medium text-red-600 hover:underline"
+              className="whitespace-nowrap text-xs font-medium text-red-600 hover:underline"
             >
               View Reason
             </button>
@@ -312,7 +305,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
   ];
 
   return (
-    <div className="] flex h-full flex-col">
+    <div className="flex h-full flex-col">
       {/* Page Header */}
       <div className="shrink-0 px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5">
         <div className="flex flex-col gap-4">
@@ -326,6 +319,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
           </div>
         </div>
       </div>
+
       {/* Mobile Filter Toggle */}
       <div className="border-gray-200 border-b bg-white p-4 lg:hidden">
         <button
@@ -348,7 +342,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-8">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:gap-8">
-          {/* === NEW SUMMARY CARDS === */}
+          {/* Stats Cards - Horizontal Scroll on Mobile */}
           <div className="w-full overflow-x-auto pb-2 md:overflow-visible md:pb-0">
             <div className="flex min-w-max gap-4 md:grid md:min-w-0 md:grid-cols-2 md:gap-4 lg:grid-cols-5">
               {/* Total Pending Amount */}
@@ -467,11 +461,10 @@ export const TopUpList: React.FC<TopUpListProps> = ({
               </button>
             </div>
           </div>
-          {/* ========================= */}
 
           {/* Filters Section - Responsive */}
           <div className={`${showMobileFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               {/* Status Filters */}
               <div className="bg-gray-100 inline-flex overflow-x-auto rounded-lg p-1">
                 {(['All', 'Pending', 'Approved', 'Rejected'] as const).map(
@@ -493,7 +486,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
 
               {/* Search and Date Filters */}
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
-                {/* Date Range - Mobile Stacked */}
+                {/* Date Range */}
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <div className="border-gray-200 flex h-10 flex-1 items-center rounded-lg border bg-white px-3 shadow-sm">
                     <Calendar size={18} className="text-gray-400 mr-2" />
@@ -522,11 +515,11 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                 <div className="relative h-10 flex-1 lg:min-w-[240px]">
                   <Search
                     size={18}
-                    className="text-gray-400 absolute left-3 top-2.5"
+                    className="text-gray-400 absolute left-3 top-1.5"
                   />
                   <input
                     type="text"
-                    placeholder="Search by ID, name, email..."
+                    placeholder="Search by ID, name, email, beneficiary..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="border-gray-200 text-gray-900 h-full w-full rounded-lg border bg-white pl-10 pr-10 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -544,82 +537,22 @@ export const TopUpList: React.FC<TopUpListProps> = ({
             </div>
           </div>
 
-          {/* Table - Mobile Responsive */}
+          {/* Table - Mobile Responsive with Horizontal Scroll */}
           {filteredTransactions.length > 0 ? (
             <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-              {/* Mobile Card View */}
-              <div className="divide-gray-200 divide-y lg:hidden">
-                {filteredTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="hover:bg-gray-50 p-4"
-                    onClick={() => {
-                      // console.log('Selected transaction:', transaction);
-                      onSelectTransaction(transaction.id);
-                    }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {getAccountIcon(transaction.accountType)}
-                            <span className="text-gray-700 text-sm font-medium">
-                              {getAccountTypeDisplay(transaction.accountType)}
-                            </span>
-                          </div>
-                          {getStatusBadge(transaction)}
-                        </div>
-
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-900 font-semibold">
-                              ${transaction.amount.toLocaleString('en-US')}
-                              <span className="text-gray-500 ml-1 text-sm">
-                                {transaction.amountType}
-                              </span>
-                            </p>
-                            <p className="text-gray-500 text-sm">
-                              {transaction.particular}
-                            </p>
-                          </div>
-
-                          <div className="text-gray-600 text-sm">
-                            <p className="font-medium">
-                              {transaction.fullname}
-                            </p>
-                            <p className="text-gray-500">{transaction.email}</p>
-                          </div>
-
-                          <p className="text-gray-500 text-xs">
-                            {formatTransactionDate(transaction.createdAt)}
-                          </p>
-
-                          <p className="text-gray-500 font-mono text-xs">
-                            ID: {transaction.id.substring(0, 12)}...
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {transaction.isRejected && transaction.rejectReason && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast(
-                            transaction.rejectReason || 'No reason provided',
-                            {
-                              icon: '⚠️',
-                              duration: 4000,
-                            },
-                          );
-                        }}
-                        className="mt-3 text-xs font-medium text-red-600 hover:underline"
-                      >
-                        View Rejection Reason
-                      </button>
-                    )}
-                  </div>
-                ))}
+              {/* Mobile/Tablet Horizontal Scroll Table */}
+              <div className="block overflow-x-auto lg:hidden">
+                <div className="min-w-[900px] p-4">
+                  <GenericTable
+                    data={filteredTransactions}
+                    columns={columns}
+                    itemsPerPage={10}
+                    title=""
+                    paginationOff={false}
+                    searchAble={false}
+                    action={false}
+                  />
+                </div>
               </div>
 
               {/* Desktop Table View */}
@@ -636,14 +569,14 @@ export const TopUpList: React.FC<TopUpListProps> = ({
               </div>
             </div>
           ) : (
-            <div className="border-gray-300 flex flex-col items-center justify-center rounded-xl border border-dashed bg-white py-12">
+            <div className="border-gray-300 flex flex-col items-center justify-center rounded-xl border border-dashed bg-white px-4 py-12">
               <div className="bg-gray-100 mb-4 flex size-16 items-center justify-center rounded-full">
                 <FileText size={32} className="text-gray-400" />
               </div>
-              <h3 className="text-gray-900 mb-2 text-lg font-semibold">
+              <h3 className="text-gray-900 mb-2 text-center text-lg font-semibold">
                 No transactions found
               </h3>
-              <p className="text-gray-600 mb-6 max-w-md px-4 text-center">
+              <p className="text-gray-600 mb-6 max-w-md text-center">
                 {searchQuery || filter !== 'All' || startDate || endDate
                   ? 'No transactions match your current filters. Try adjusting your search criteria.'
                   : 'No top-up transactions available.'}

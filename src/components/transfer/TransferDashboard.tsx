@@ -187,7 +187,7 @@ export const TransferDashboard = () => {
       header: 'Date & Time',
       accessor: 'createdAt',
       render: (item) => (
-        <span className="text-gray-500 text-sm">
+        <span className="text-gray-500 whitespace-nowrap text-sm">
           {formatTransactionDate(item.createdAt)}
         </span>
       ),
@@ -196,11 +196,11 @@ export const TransferDashboard = () => {
       header: 'Beneficiary',
       accessor: 'beneficiary',
       render: (item) => (
-        <div className="flex flex-col">
+        <div className="flex min-w-[120px] flex-col">
           <span className="text-gray-900 text-sm font-medium">
             {item.beneficiary?.fullName || 'Unknown'}
           </span>
-          <span className="text-gray-500 max-w-[100px] truncate text-xs">
+          <span className="text-gray-500 max-w-[150px] truncate text-xs">
             {item.beneficiary?.bankName || ''}
           </span>
         </div>
@@ -210,16 +210,16 @@ export const TransferDashboard = () => {
       header: 'Sender Client',
       accessor: 'fullname',
       render: (item) => (
-        <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+        <div className="flex min-w-[140px] items-center gap-2">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
             {(item.fullname || 'U').charAt(0).toUpperCase()}
           </div>
-          <div className="flex flex-col">
-            <span className="text-gray-900 text-sm font-medium">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-gray-900 truncate text-sm font-medium">
               {item.fullname || 'Unknown'}
             </span>
             {item.email && (
-              <span className="text-gray-500 max-w-[120px] truncate text-xs">
+              <span className="text-gray-500 max-w-[150px] truncate text-xs">
                 {item.email}
               </span>
             )}
@@ -231,7 +231,7 @@ export const TransferDashboard = () => {
       header: 'Amount',
       accessor: 'amount',
       render: (item) => (
-        <span className="text-gray-900 text-sm font-bold">
+        <span className="text-gray-900 whitespace-nowrap text-sm font-bold">
           {item.amountType === 'USD' ? '$' : ''}
           {(item.amount || 0).toLocaleString(undefined, {
             minimumFractionDigits: 2,
@@ -266,7 +266,7 @@ export const TransferDashboard = () => {
                   duration: 4000,
                 });
               }}
-              className="text-xs font-medium text-red-600 hover:underline"
+              className="whitespace-nowrap text-xs font-medium text-red-600 hover:underline"
             >
               View Reason
             </button>
@@ -519,7 +519,7 @@ export const TransferDashboard = () => {
                 <div className="relative h-10 flex-1 lg:min-w-[240px]">
                   <Search
                     size={18}
-                    className="text-gray-400 absolute left-3 top-2.5"
+                    className="text-gray-400 absolute left-3 top-1.5"
                   />
                   <input
                     type="text"
@@ -541,88 +541,22 @@ export const TransferDashboard = () => {
             </div>
           </div>
 
-          {/* Table / Mobile Cards */}
+          {/* Table with Horizontal Scroll on Mobile/Tablet */}
           {filteredTransactions.length > 0 ? (
             <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-              {/* Mobile Card View */}
-              <div className="divide-gray-200 divide-y lg:hidden">
-                {filteredTransactions.map((transaction: any) => (
-                  <div
-                    key={transaction.id}
-                    className="hover:bg-gray-50 cursor-pointer p-4"
-                    onClick={() => handleViewDetails(transaction.id)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                              {(transaction.fullname || 'U')
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-                            <span className="text-gray-700 text-sm font-medium">
-                              {transaction.fullname || 'Unknown'}
-                            </span>
-                          </div>
-                          <StatusBadge transaction={transaction} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-900 font-bold">
-                              {transaction.amountType === 'USD' ? '$' : ''}
-                              {(transaction.amount || 0).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                },
-                              )}
-                              <span className="text-gray-500 ml-1 text-sm">
-                                {transaction.amountType}
-                              </span>
-                            </p>
-                            <p className="text-gray-500 text-sm">
-                              To:{' '}
-                              {transaction.beneficiary?.fullName || 'Unknown'}
-                            </p>
-                            {transaction.beneficiary?.bankName && (
-                              <p className="text-gray-500 text-xs">
-                                {transaction.beneficiary.bankName}
-                              </p>
-                            )}
-                          </div>
-
-                          <p className="text-gray-500 text-xs">
-                            {formatTransactionDate(transaction.createdAt)}
-                          </p>
-
-                          <p className="text-gray-500 font-mono text-xs">
-                            ID: {transaction.id?.substring(0, 12)}...
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {transaction.isRejected && transaction.rejectReason && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast(
-                            transaction.rejectReason || 'No reason provided',
-                            {
-                              icon: '⚠️',
-                              duration: 4000,
-                            },
-                          );
-                        }}
-                        className="mt-3 text-xs font-medium text-red-600 hover:underline"
-                      >
-                        View Rejection Reason
-                      </button>
-                    )}
-                  </div>
-                ))}
+              {/* Mobile/Tablet Horizontal Scroll View */}
+              <div className="block overflow-x-auto lg:hidden">
+                <div className="min-w-[800px] p-4">
+                  <GenericTable
+                    data={filteredTransactions}
+                    columns={columns}
+                    itemsPerPage={10}
+                    title=""
+                    searchAble={false}
+                    action={false}
+                    paginationOff={false}
+                  />
+                </div>
               </div>
 
               {/* Desktop Table View */}
