@@ -65,7 +65,12 @@ api.interceptors.response.use(
     return res.data;
   },
   (error: AxiosError<unknown>) => {
-    if (error.response?.status === 401) {
+    // Check if it's the token required error
+    const errorData = error.response?.data as any;
+    if (errorData?.message === 'Token is required for authentication') {
+      // Just return the error, don't do anything else
+      console.log('Token missing - user might be logged out');
+    } else if (error.response?.status === 401) {
       console.error('Unauthorized:', error.response.data);
     } else if (error.response?.status === 403) {
       console.error('Forbidden:', error.response.data);

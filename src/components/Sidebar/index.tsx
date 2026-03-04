@@ -1,4 +1,4 @@
-/* eslint-disable*/
+/* eslint-disable */
 
 import {useEffect, useRef, useState} from 'react';
 import {Link, useLocation} from '@tanstack/react-router';
@@ -12,6 +12,7 @@ import {
   MdDashboard,
   MdDescription,
   MdFactCheck,
+  MdNoTransfer,
   MdPercent,
   MdPriceCheck,
   MdSend,
@@ -20,6 +21,7 @@ import {
 } from 'react-icons/md';
 import {useAuthContext} from '@/context/AuthContext';
 import {FaUsers, FaUserTie} from 'react-icons/fa';
+import {FaMoneyBillTransfer} from 'react-icons/fa6';
 
 const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
   const location = useLocation();
@@ -44,9 +46,16 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
   } | null>(null);
 
   const handleSignOut = async () => {
-    console.log('logouttt');
-    localStorage.clear();
-    window.location.reload();
+    try {
+      // Clear everything
+      localStorage.clear();
+      sessionStorage.clear();
+
+      window.location.href = '/';
+    } catch (error) {
+      // console.error('Logout error:', error);
+      window.location.href = '/';
+    }
   };
   const sidebarRoutes = isEmployee
     ? [
@@ -67,6 +76,11 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             label: 'Client',
             path: '/client/displayclient',
             icon: <FaUsers size={22} />,
+          },
+          {
+            label: 'Fund Transfer',
+            path: '/fundtransfer',
+            icon: <FaMoneyBillTransfer size={22} />,
           },
           {
             label: 'Beneficiary Management',
@@ -103,13 +117,12 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/client/comission',
             icon: <MdPercent size={22} />,
           },
-
           {
             label: 'Settings',
             icon: <MdSettings size={22} />,
             subRoutes: [
               {label: 'Change Password', path: '/changepassword'},
-              {label: 'Logout', onClick: () => handleSignOut()},
+              {label: 'Logout', onClick: () => handleSignOut()}, // Using the same logout function
             ],
           },
         ]
@@ -120,7 +133,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
               icon: <MdAccountCircle size={22} />,
               subRoutes: [
                 {label: 'View Profile', path: '/manager/profile'},
-                {label: 'Logout', onClick: () => handleSignOut()},
+                {label: 'Logout', onClick: () => handleSignOut()}, // Using the same logout function
               ],
             },
           ]
@@ -187,6 +200,7 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
       }
     };
   }, []);
+
   // Handle screen resize for responsiveness
   useEffect(() => {
     const handleResize = () => {
@@ -204,22 +218,19 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
     <div className="relative z-50">
       {/* SIDEBAR */}
       <aside
+        ref={sidebar}
         className={`fixed inset-y-0 left-0 z-50 flex h-screen flex-col bg-white text-black transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:static lg:translate-x-0`}
       >
         {/* Header */}
-
         <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-5">
           <button
             className="flex items-center gap-3 rounded-lg transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
             onClick={() => {
               const nextState = !isExpanded;
-
               setSidebarOpen(nextState);
               setIsFixedOpen(nextState);
-
-              // Close any open floating submenus when toggling
               setHoveredRoute(null);
               setShowSubRoutes(null);
               setHoveredRect(null);
@@ -276,7 +287,6 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
                               left: rect.right + 5,
                             });
                             setHoveredRoute(route.label);
-
                             setShowSubRoutes({
                               label: route.label,
                               subRoutes: route.subRoutes || [],
@@ -300,17 +310,31 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
                           <ul className="ml-6 mt-1 space-y-1">
                             {route.subRoutes.map((subRoute, subIndex) => (
                               <li key={subIndex}>
-                                <Link
-                                  to={subRoute.path}
-                                  onClick={() => {
-                                    setHoveredRoute(null);
-                                    setShowSubRoutes(null);
-                                    setSidebarOpen(false);
-                                  }}
-                                  className="block rounded px-3 py-2 text-sm text-black hover:bg-primary/20"
-                                >
-                                  {subRoute.label}
-                                </Link>
+                                {subRoute.onClick ? (
+                                  <button
+                                    onClick={() => {
+                                      subRoute.onClick();
+                                      setHoveredRoute(null);
+                                      setShowSubRoutes(null);
+                                      setSidebarOpen(false);
+                                    }}
+                                    className="block w-full rounded px-3 py-2 text-left text-sm text-black hover:bg-primary/20"
+                                  >
+                                    {subRoute.label}
+                                  </button>
+                                ) : (
+                                  <Link
+                                    to={subRoute.path}
+                                    onClick={() => {
+                                      setHoveredRoute(null);
+                                      setShowSubRoutes(null);
+                                      setSidebarOpen(false);
+                                    }}
+                                    className="block rounded px-3 py-2 text-sm text-black hover:bg-primary/20"
+                                  >
+                                    {subRoute.label}
+                                  </Link>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -378,13 +402,12 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
           style={{
             top: (() => {
               const menuItemCount = showSubRoutes.subRoutes.length;
-              const estimatedHeight = menuItemCount * 40 + 20; // 40px per item + padding
+              const estimatedHeight = menuItemCount * 40 + 20;
               const maxTop = window.innerHeight - estimatedHeight - 20;
-
               return Math.min(hoveredRect.top, maxTop);
             })(),
             left: hoveredRect.left + 5,
-            maxHeight: 'calc(100vh - 100px)', // Reserve space for weather widget
+            maxHeight: 'calc(100vh - 100px)',
           }}
           onMouseEnter={() => {
             if (closeTimeoutRef.current) {
@@ -399,23 +422,41 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             }, 300);
           }}
         >
-          {showSubRoutes.subRoutes.map((subRoute, subIndex) => (
-            <Link
-              key={subIndex}
-              to={subRoute.path}
-              onClick={() => {
-                setHoveredRect(null);
-                setHoveredRoute(null);
-                setShowSubRoutes(null);
-                if (window.innerWidth < 1024) {
-                  setSidebarOpen(false);
-                }
-              }}
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-black hover:bg-primary/10"
-            >
-              {subRoute.label}
-            </Link>
-          ))}
+          {showSubRoutes.subRoutes.map((subRoute, subIndex) =>
+            subRoute.onClick ? (
+              <button
+                key={subIndex}
+                onClick={() => {
+                  subRoute.onClick();
+                  setHoveredRect(null);
+                  setHoveredRoute(null);
+                  setShowSubRoutes(null);
+                  if (window.innerWidth < 1024) {
+                    setSidebarOpen(false);
+                  }
+                }}
+                className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm text-black hover:bg-primary/10"
+              >
+                {subRoute.label}
+              </button>
+            ) : (
+              <Link
+                key={subIndex}
+                to={subRoute.path}
+                onClick={() => {
+                  setHoveredRect(null);
+                  setHoveredRoute(null);
+                  setShowSubRoutes(null);
+                  if (window.innerWidth < 1024) {
+                    setSidebarOpen(false);
+                  }
+                }}
+                className="flex items-center gap-2 rounded px-3 py-2 text-sm text-black hover:bg-primary/10"
+              >
+                {subRoute.label}
+              </Link>
+            ),
+          )}
         </div>
       )}
     </div>

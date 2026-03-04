@@ -13,10 +13,17 @@ const DropdownUser = () => {
   // const {data: adminInfo, refetch} = useGetAdminProfile(adminId as string);
 
   const handleSignOut = async () => {
-    localStorage.clear();
-    window.location.reload();
-  };
+    try {
+      // Clear everything
+      localStorage.clear();
+      sessionStorage.clear();
 
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/';
+    }
+  };
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
       <Link
