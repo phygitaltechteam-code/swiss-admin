@@ -1,6 +1,7 @@
 // @/lib/react-query/client.ts
 import {api} from '@/utils/axios';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {error} from 'console';
 import toast from 'react-hot-toast';
 
 export const useGetClients = () => {
@@ -63,4 +64,30 @@ export const useGettransactionCustomerById = (id: string) => {
     },
     enabled: !!id, // prevents API call if id is undefined
   });
+};
+
+export const useTransferFund = () => {
+  return useMutation({
+    mutationFn: (data: {id: string; amount: number}) =>
+      transferFund(data.id, data.amount),
+    onSuccess: () => {
+      toast.success('Fund transferred successfully!');
+    },
+    onError: () => {
+      toast.error('Failed to transfer fund!');
+    },
+  });
+};
+
+export const transferFund = async (id: string, amount: number) => {
+  try {
+    const response = await api.post(`/admin/transaction/topup`, {
+      id: id,
+      amount: amount,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error transferring fund:', error);
+    throw error;
+  }
 };
