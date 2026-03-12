@@ -77,11 +77,11 @@ const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
             path: '/client/displayclient',
             icon: <FaUsers size={22} />,
           },
-          {
-            label: 'Fund Transfer',
-            path: '/fundtransfer',
-            icon: <FaMoneyBillTransfer size={22} />,
-          },
+          // {
+          //   label: 'Fund Transfer',
+          //   path: '/fundtransfer',
+          //   icon: <FaMoneyBillTransfer size={22} />,
+          // },
           {
             label: 'Beneficiary Management',
             path: '/client/beneficiary',

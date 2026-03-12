@@ -2,7 +2,11 @@ import {useNavigate} from '@tanstack/react-router';
 import React, {useState, useMemo} from 'react';
 import {MdSearch, MdAdd} from 'react-icons/md';
 import GenericTable, {Column} from '../Forms/Table/GenericTable';
-import {useGetComissionAll} from '@/lib/react-query/commission';
+import {
+  useGetComissionAll,
+  useDeleteComission,
+} from '@/lib/react-query/commission';
+import toast from 'react-hot-toast';
 
 export interface Commission {
   id: string;
@@ -33,8 +37,22 @@ const typeConfig: Record<string, {label: string; color: string}> = {
 const CommissionTable: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    commission: Commission | null;
+  }>({
+    isOpen: false,
+    commission: null,
+  });
 
-  const {data: apiData, isLoading, isError, error} = useGetComissionAll();
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetComissionAll();
+  const deleteMutation = useDeleteComission();
 
   const commissions: Commission[] = useMemo(() => {
     if (!apiData) return [];
@@ -73,7 +91,7 @@ const CommissionTable: React.FC = () => {
       className: 'min-w-[200px]',
     },
     {
-      header: ' Applied On',
+      header: 'Applied On',
       accessor: 'type',
       render: (item) => (
         <span
@@ -100,7 +118,13 @@ const CommissionTable: React.FC = () => {
       accessor: 'amount',
       render: (item) => (
         <span className="text-sm font-medium tabular-nums text-[#0F1535] dark:text-white">
-          {item.amount || '0'}
+          {item.amount
+            ? new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+              }).format(item.amount)
+            : '0'}
         </span>
       ),
       className: 'min-w-[120px]',
@@ -118,6 +142,30 @@ const CommissionTable: React.FC = () => {
         }),
       },
     });
+  };
+
+  const handleDelete = (item: Commission) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      commission: item,
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation.commission) return;
+
+    try {
+      await deleteMutation.mutateAsync(deleteConfirmation.commission.id);
+      toast.success('Commission deleted successfully');
+      refetch(); // Refresh the list
+      setDeleteConfirmation({isOpen: false, commission: null});
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to delete commission');
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmation({isOpen: false, commission: null});
   };
 
   if (isLoading) {
@@ -140,7 +188,7 @@ const CommissionTable: React.FC = () => {
           <p className="text-lg font-semibold">Failed to load commissions</p>
           <p className="mt-1 text-sm">{error?.message || 'Unknown error'}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => refetch()}
             className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
           >
             Retry
@@ -210,15 +258,68 @@ const CommissionTable: React.FC = () => {
                 searchAble={false}
                 action={true}
                 onEdit={handleEdit}
+                onDelete={handleDelete}
                 paginationOff={true}
                 itemsPerPage={5}
                 editTooltip="Edit Commission"
                 deleteTooltip="Delete Commission"
+                isDeleting={deleteMutation.isPending}
               />
             )}
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.isOpen && deleteConfirmation.commission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-[#f4ece7] bg-white p-6 shadow-xl dark:border-[#3a2a20] dark:bg-[#1a120b]">
+            <h3 className="text-lg font-bold text-[#0F1535] dark:text-white">
+              Delete Commission
+            </h3>
+            <p className="mt-2 text-sm text-[#9c6949]">
+              Are you sure you want to delete &quot;
+              {deleteConfirmation.commission.name}&quot;? This action cannot be
+              undone.
+            </p>
+
+            <div className="mt-4 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                <span className="font-semibold">Commission Details:</span>
+                <br />
+                Type: {typeConfig[deleteConfirmation.commission.type].label}
+                <br />
+                Percentage: {deleteConfirmation.commission.percentage}%<br />
+                Amount: {deleteConfirmation.commission.amount || 0}
+              </p>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                onClick={cancelDelete}
+                disabled={deleteMutation.isPending}
+                className="rounded-lg border border-[#f4ece7] bg-white px-4 py-2 text-sm font-medium text-[#0F1535] transition-colors hover:bg-[#f8f7f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#3a2a20] dark:bg-transparent dark:text-white dark:hover:bg-[#2c2019]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Commission'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

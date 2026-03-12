@@ -1,5 +1,5 @@
 import type {FC} from 'react';
-import {useState, useRef, useCallback} from 'react';
+import {useState, useRef, useCallback, useEffect} from 'react';
 import {BiArrowBack} from 'react-icons/bi';
 import {BsArrowRight} from 'react-icons/bs';
 import {
@@ -10,6 +10,9 @@ import {
   MdLightMode,
   MdFace,
   MdPortrait,
+  MdCheckCircle,
+  MdError,
+  MdWarning,
 } from 'react-icons/md';
 import Webcam from 'react-webcam';
 import React from 'react';
@@ -17,6 +20,11 @@ import React from 'react';
 interface SignupStep3FacialVerificationProps {
   onComplete: (image: File | null) => void;
   onBack: () => void;
+}
+
+interface ValidationErrors {
+  image?: string;
+  camera?: string;
 }
 
 const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
@@ -27,6 +35,11 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
   const [capturedImage, setCapturedImage] = useState<File | null>(null);
   const [cameraActive, setCameraActive] = useState(true);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
   const webcamRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,45 +49,200 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
     height: {ideal: 720},
   };
 
-  const capturePhoto = useCallback(() => {
+  // Validate image file
+  const validateImage = (
+    file: File | null,
+  ): {isValid: boolean; error: string} => {
+    if (!file) {
+      return {isValid: false, error: 'Please capture or upload a photo'};
+    }
+
+    // Check file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      return {
+        isValid: false,
+        error: `Image size must be less than 5MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+      };
+    }
+
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        isValid: false,
+        error: 'Only JPG or PNG images are allowed',
+      };
+    }
+
+    return {isValid: true, error: ''};
+  };
+
+  // Simulate image quality check
+  const checkImageQuality = async (
+    file: File,
+  ): Promise<{isValid: boolean; error: string}> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        // Check minimum dimensions
+        if (img.width < 300 || img.height < 300) {
+          resolve({
+            isValid: false,
+            error:
+              'Image resolution too low. Please use a higher quality photo.',
+          });
+          return;
+        }
+
+        // Check aspect ratio (roughly portrait)
+        const aspectRatio = img.width / img.height;
+        if (aspectRatio < 0.5 || aspectRatio > 1.5) {
+          resolve({
+            isValid: false,
+            error:
+              'Image should be roughly portrait orientation for facial verification',
+          });
+          return;
+        }
+
+        resolve({isValid: true, error: ''});
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve({
+          isValid: false,
+          error: 'Failed to load image for quality check',
+        });
+      };
+
+      img.src = objectUrl;
+    });
+  };
+
+  const capturePhoto = useCallback(async () => {
     if (!webcamRef.current) return;
 
     setIsCapturing(true);
+    setUploadProgress(0);
 
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) {
-      setIsCapturing(false);
-      return;
-    }
+    try {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (!imageSrc) {
+        throw new Error('Failed to capture image');
+      }
 
-    fetch(imageSrc)
-      .then((res) => res.blob())
-      .then((blob) => {
-        if (blob.size === 0) throw new Error('Empty image');
-        const file = new File([blob], 'face-verification.jpg', {
-          type: 'image/jpeg',
-          lastModified: Date.now(),
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
         });
+      }, 100);
 
-        setTimeout(() => {
-          setCapturedImage(file);
-          setIsCapturing(false);
-        }, 1000);
-      })
-      .catch((err) => {
-        console.error('Capture failed:', err);
-        setIsCapturing(false);
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+
+      if (blob.size === 0) throw new Error('Empty image');
+
+      const file = new File([blob], 'face-verification.jpg', {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
       });
-  }, []);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIsCapturing(true);
+      // Validate image quality
+      const qualityCheck = await checkImageQuality(file);
+
+      if (!qualityCheck.isValid) {
+        setErrors({image: qualityCheck.error});
+        clearInterval(interval);
+        setUploadProgress(0);
+        setIsCapturing(false);
+        return;
+      }
+
+      // Complete progress
+      clearInterval(interval);
+      setUploadProgress(100);
+
       setTimeout(() => {
         setCapturedImage(file);
+        setErrors({});
+        setUploadProgress(0);
         setIsCapturing(false);
-      }, 1000);
+      }, 500);
+    } catch (err) {
+      console.error('Capture failed:', err);
+      setErrors({image: 'Failed to capture image. Please try again.'});
+      setUploadProgress(0);
+      setIsCapturing(false);
+    }
+  }, []);
+
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setTouched(true);
+
+    try {
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
+      // Validate file
+      const validation = validateImage(file);
+      if (!validation.isValid) {
+        setErrors({image: validation.error});
+        clearInterval(interval);
+        setUploadProgress(0);
+        setIsUploading(false);
+        return;
+      }
+
+      // Check image quality
+      const qualityCheck = await checkImageQuality(file);
+      if (!qualityCheck.isValid) {
+        setErrors({image: qualityCheck.error});
+        clearInterval(interval);
+        setUploadProgress(0);
+        setIsUploading(false);
+        return;
+      }
+
+      // Complete progress
+      clearInterval(interval);
+      setUploadProgress(100);
+
+      setTimeout(() => {
+        setCapturedImage(file);
+        setErrors({});
+        setUploadProgress(0);
+        setIsUploading(false);
+      }, 500);
+    } catch (error) {
+      setErrors({image: 'Failed to process image'});
+      setUploadProgress(0);
+      setIsUploading(false);
     }
   };
 
@@ -84,16 +252,59 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
 
   const handleRetakePhoto = () => {
     setCapturedImage(null);
+    setErrors({});
+    setTouched(false);
+    setUploadProgress(0);
   };
 
-  const handleComplete = () => {
-    if (capturedImage) {
-      onComplete(capturedImage);
+  const handleComplete = async () => {
+    if (!capturedImage) {
+      setTouched(true);
+      setErrors({image: 'Please capture or upload a photo'});
+      return;
     }
+
+    const validation = validateImage(capturedImage);
+    if (!validation.isValid) {
+      setErrors({image: validation.error});
+      return;
+    }
+
+    onComplete(capturedImage);
   };
 
   const handleUploadPhoto = () => {
     fileInputRef.current?.click();
+  };
+
+  const ErrorMessage = ({message}: {message?: string}) => {
+    if (!message) return null;
+    return (
+      <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+        <MdError className="flex-shrink-0 text-xl" />
+        <p className="text-sm">{message}</p>
+      </div>
+    );
+  };
+
+  const SuccessMessage = ({message}: {message?: string}) => {
+    if (!message) return null;
+    return (
+      <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+        <MdCheckCircle className="flex-shrink-0 text-xl" />
+        <p className="text-sm">{message}</p>
+      </div>
+    );
+  };
+
+  const WarningMessage = ({message}: {message?: string}) => {
+    if (!message) return null;
+    return (
+      <div className="mt-4 flex items-center gap-2 rounded-lg bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+        <MdWarning className="flex-shrink-0 text-xl" />
+        <p className="text-sm">{message}</p>
+      </div>
+    );
   };
 
   return (
@@ -103,12 +314,12 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
         <input
           type="file"
           ref={fileInputRef}
-          accept="image/*"
+          accept="image/jpeg,image/png,image/jpg"
           className="hidden"
           onChange={handleFileSelect}
         />
 
-        {/* Background elements - simplified for white theme */}
+        {/* Background elements */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="from-[#F57F3D]/3 absolute -right-40 -top-40 size-[400px] rounded-full bg-gradient-to-br to-transparent blur-3xl" />
           <div className="from-[#F57F3D]/3 absolute -bottom-40 -left-40 size-[400px] rounded-full bg-gradient-to-tr to-transparent blur-3xl" />
@@ -151,13 +362,19 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
             </p>
           </div>
 
-          {/* Facial capture area - tablet responsive */}
+          {/* Facial capture area */}
           <div className="mb-10 flex flex-col items-center justify-center md:mb-12">
             <div className="relative mx-auto h-[340px] w-[280px] md:h-[400px] md:w-[320px]">
               {/* Camera overlay frame */}
               <div
-                className={`absolute inset-0 rounded-[40%] border-2 border-[#F57F3D] ${
-                  isCapturing ? 'animate-pulse' : ''
+                className={`absolute inset-0 rounded-[40%] border-2 ${
+                  isCapturing || isUploading
+                    ? 'animate-pulse border-blue-500'
+                    : capturedImage
+                      ? 'border-green-500'
+                      : errors.image
+                        ? 'border-red-500'
+                        : 'border-[#F57F3D]'
                 } pointer-events-none z-20 opacity-70`}
               />
 
@@ -171,7 +388,7 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
                     />
                     <div className="absolute top-6 rounded-full bg-black/50 px-4 py-1.5 backdrop-blur-md md:top-8 md:px-5">
                       <p className="text-sm font-medium text-white md:text-base">
-                        Captured
+                        Photo Captured
                       </p>
                     </div>
                   </div>
@@ -214,7 +431,7 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
                     />
                     <div className="absolute top-6 rounded-full bg-black/50 px-4 py-1.5 backdrop-blur-md md:top-8 md:px-5">
                       <p className="text-sm font-medium text-white md:text-base">
-                        {isCapturing ? 'Processing...' : 'Looking Good'}
+                        {isCapturing ? 'Processing...' : 'Position Face'}
                       </p>
                     </div>
                     <div className="absolute bottom-8 left-0 right-0 text-center md:bottom-10">
@@ -227,27 +444,45 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
               </div>
             </div>
 
-            {/* Status message */}
-            {isCapturing ? (
-              <p className="mt-6 animate-pulse text-base font-semibold text-[#F57F3D] md:text-lg">
-                Verifying identity...
-              </p>
-            ) : capturedImage ? (
-              <p className="mt-6 text-base font-semibold text-green-600 md:text-lg">
-                ✓ Photo captured successfully!
-              </p>
-            ) : cameraError ? (
-              <p className="mt-6 text-base font-semibold text-amber-600 md:text-lg">
-                Camera access required for auto-verification
-              </p>
-            ) : (
-              <p className="mt-6 text-base font-semibold text-slate-600 md:text-lg">
-                Ready to capture
-              </p>
+            {/* Upload Progress */}
+            {(isCapturing || isUploading) && uploadProgress > 0 && (
+              <div className="mt-4 w-full max-w-[280px] md:max-w-[320px]">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    {isCapturing ? 'Capturing...' : 'Uploading...'}
+                  </span>
+                  <span className="text-xs font-medium text-[#F57F3D]">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700">
+                  <div
+                    className="h-2 rounded-full bg-[#F57F3D] transition-all duration-300"
+                    style={{width: `${uploadProgress}%`}}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Status messages */}
+            {!isCapturing && !isUploading && (
+              <>
+                {capturedImage ? (
+                  <SuccessMessage message="Photo captured successfully! You can continue or retake." />
+                ) : cameraError ? (
+                  <WarningMessage message="Camera access required for auto-capture. You can upload a photo instead." />
+                ) : errors.image && touched ? (
+                  <ErrorMessage message={errors.image} />
+                ) : (
+                  <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                    Ensure your face is well-lit and centered
+                  </p>
+                )}
+              </>
             )}
           </div>
 
-          {/* Action buttons - tablet responsive */}
+          {/* Action buttons */}
           <div className="mb-8 flex flex-col gap-4 md:mb-10">
             {capturedImage ? (
               <div className="flex gap-3 md:gap-4">
@@ -256,7 +491,7 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
                   className="flex h-14 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#F57F3D] text-base font-semibold text-[#F57F3D] transition-colors hover:bg-[#F57F3D]/10 md:h-16 md:text-lg"
                 >
                   <MdReplay className="text-[20px] md:text-[22px]" />
-                  Retake Photo
+                  Retake
                 </button>
                 <button
                   onClick={handleComplete}
@@ -270,27 +505,29 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
               <div className="flex gap-3 md:gap-4">
                 <button
                   onClick={handleUploadPhoto}
-                  disabled={isCapturing}
+                  disabled={isCapturing || isUploading}
                   className={`flex h-14 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#F57F3D] text-base font-semibold text-[#F57F3D] transition-colors ${
-                    isCapturing
+                    isCapturing || isUploading
                       ? 'cursor-not-allowed opacity-50'
                       : 'hover:bg-[#F57F3D]/10'
                   } md:h-16 md:text-lg`}
                 >
                   <MdUpload className="text-[20px] md:text-[22px]" />
-                  Upload Photo
+                  Upload
                 </button>
                 <button
                   onClick={capturePhoto}
-                  disabled={isCapturing || !!cameraError || !cameraActive}
+                  disabled={
+                    isCapturing || isUploading || !!cameraError || !cameraActive
+                  }
                   className={`flex h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-[#F57F3D] text-base font-semibold text-white shadow-[#F57F3D]/20 transition-colors ${
-                    isCapturing || !!cameraError || !cameraActive
+                    isCapturing || isUploading || !!cameraError || !cameraActive
                       ? 'cursor-not-allowed opacity-50'
                       : 'hover:bg-[#e06c2e]'
                   } md:h-16 md:text-lg`}
                 >
                   <MdCamera className="text-[20px] md:text-[22px]" />
-                  {isCapturing ? 'Processing...' : 'Capture'}
+                  Capture
                 </button>
               </div>
             )}
@@ -305,7 +542,6 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
               onClick={handleContinueWithoutPhoto}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-300 text-base font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800/50 md:h-16 md:text-lg"
             >
-              <BsArrowRight className="text-[20px] md:text-[22px]" />
               Continue Without Photo
               <span className="ml-1 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
                 (Optional)
@@ -316,7 +552,7 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
             </p>
           </div>
 
-          {/* Tips - tablet responsive */}
+          {/* Tips */}
           <div className="mt-8 grid grid-cols-2 gap-3 md:mt-10 md:grid-cols-3 md:gap-4">
             <div className="flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm dark:border-slate-800 dark:bg-slate-800/50 md:p-5">
               <MdLightMode className="mb-2 text-2xl text-[#F57F3D] md:text-3xl" />
@@ -348,20 +584,30 @@ const SignupStep3FacialVerification: FC<SignupStep3FacialVerificationProps> = ({
           </div>
         </div>
 
-        {/* Fixed bottom bar - tablet responsive */}
+        {/* Fixed bottom bar */}
         <div className="fixed bottom-0 left-0 right-0 z-20 mx-auto w-full max-w-[min(390px,95vw,500px)] border-t border-slate-100 bg-white/95 p-6 backdrop-blur-md dark:border-slate-800 dark:bg-[#221610]/80 md:relative md:mt-6 md:max-w-[800px] md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           <div className="flex flex-col items-center gap-4 md:px-8 md:pb-6">
             {/* Status indicator */}
             <div className="flex items-center justify-center gap-2 md:gap-3">
               <div
-                className={`h-2 w-2 rounded-full md:h-3 md:w-3 ${cameraActive ? 'animate-pulse bg-green-500' : 'bg-amber-500'}`}
+                className={`h-2 w-2 rounded-full md:h-3 md:w-3 ${
+                  capturedImage
+                    ? 'bg-green-500'
+                    : cameraActive
+                      ? 'animate-pulse bg-green-500'
+                      : 'bg-amber-500'
+                }`}
               />
               <span className="text-xs text-slate-600 dark:text-slate-400 md:text-sm">
-                {cameraActive ? 'Camera active' : 'Camera not active'}
+                {capturedImage
+                  ? 'Photo ready'
+                  : cameraActive
+                    ? 'Camera active'
+                    : 'Camera not active'}
               </span>
             </div>
 
-            {/* Helper text for tablet */}
+            {/* Helper text */}
             <p className="hidden text-center text-sm text-slate-500 dark:text-slate-400 md:block">
               Ensure your face is clearly visible in the oval frame for best
               results

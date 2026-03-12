@@ -1,4 +1,3 @@
-/*eslint-disable*/
 import {useNavigate} from '@tanstack/react-router';
 import type {FC} from 'react';
 import {useEffect, useState} from 'react';
@@ -10,9 +9,10 @@ import {
   MdCalendarToday,
   MdCheckCircle,
   MdLock,
+  MdError,
 } from 'react-icons/md';
 import {Eye, EyeOff} from 'lucide-react';
-
+import React from 'react';
 interface SignupStep1PersonalProps {
   initialData: {
     accountHolderName: string;
@@ -46,7 +46,6 @@ interface ValidationErrors {
   country?: string;
 }
 
-// Add interface for PIN code API response
 interface PinCodeResponse {
   Message: string;
   Status: string;
@@ -73,35 +72,224 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
 }) => {
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isValidating, setIsValidating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isPinVisible, setIsPinVisible] = useState(false);
 
-  const toggleVisibility = () => {
+  const togglePasswordVisibility = () => {
     setIsPasswordVisible((prev) => !prev);
   };
 
-  // Validate form on input change
-  useEffect(() => {
-    if (isValidating) {
-      validateField('accountHolderName', formData.accountHolderName);
-      validateField('dateOfBirth', formData.dateOfBirth);
-      validateField('contactEmail', formData.contactEmail);
-      validateField('password', formData.password);
-      validateField('securityPin', formData.securityPin);
-      validateField('contactPhone', formData.contactPhone);
-      validateField('streetAddress', formData.streetAddress);
-      validateField('city', formData.city);
-      validateField('stateProvince', formData.stateProvince);
-      validateField('postalCode', formData.postalCode);
-      validateField('country', formData.country);
+  const togglePinVisibility = () => {
+    setIsPinVisible((prev) => !prev);
+  };
+
+  // Validation functions
+  const validateAccountHolderName = (name: string): string => {
+    if (!name.trim()) return 'Account holder name is required';
+    if (name.length < 2) return 'Name must be at least 2 characters';
+    if (name.length > 100) return 'Name must be less than 100 characters';
+    if (!/^[a-zA-Z\s\-']+$/.test(name))
+      return 'Name can only contain letters, spaces, hyphens and apostrophes';
+    return '';
+  };
+
+  const validateDateOfBirth = (dob: string): string => {
+    if (!dob) return 'Date of birth is required';
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    if (isNaN(birthDate.getTime())) return 'Invalid date format';
+    if (birthDate > today) return 'Date of birth cannot be in the future';
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
     }
-  }, [formData, isValidating]);
+
+    if (age < 18) return 'You must be at least 18 years old';
+    if (age > 120) return 'Please enter a valid date of birth';
+
+    return '';
+  };
+
+  const validateEmail = (email: string): string => {
+    if (!email) return 'Email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return 'Please enter a valid email address';
+    if (email.length > 254) return 'Email is too long';
+    return '';
+  };
+
+  const validatePassword = (password: string): string => {
+    if (!password) return 'Password is required';
+    if (password.length < 8) return 'Password must be at least 8 characters';
+    if (password.length > 128)
+      return 'Password must be less than 128 characters';
+    if (!/(?=.*[a-z])/.test(password))
+      return 'Password must contain at least one lowercase letter';
+    if (!/(?=.*[A-Z])/.test(password))
+      return 'Password must contain at least one uppercase letter';
+    if (!/(?=.*\d)/.test(password))
+      return 'Password must contain at least one number';
+    if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)) {
+      return 'Password must contain at least one special character';
+    }
+    return '';
+  };
+
+  const validateSecurityPin = (pin: string): string => {
+    if (!pin) return 'Security PIN is required';
+    if (!/^\d{6}$/.test(pin)) return 'Security PIN must be exactly 6 digits';
+    if (/(\d)\1{4,}/.test(pin))
+      return 'PIN cannot have 5 or more repeated digits';
+    if (/123456|234567|345678|456789|567890|012345/.test(pin))
+      return 'PIN cannot be sequential';
+    return '';
+  };
+
+  const validatePhone = (phone: string): string => {
+    if (!phone) return 'Phone number is required';
+    if (!/^\d{10}$/.test(phone))
+      return 'Phone number must be exactly 10 digits';
+    if (/(\d)\1{9,}/.test(phone)) return 'Invalid phone number pattern';
+    return '';
+  };
+
+  const validateStreetAddress = (address: string): string => {
+    if (!address.trim()) return 'Street address is required';
+    if (address.length < 5) return 'Address must be at least 5 characters';
+    if (address.length > 200) return 'Address must be less than 200 characters';
+    return '';
+  };
+
+  const validateCity = (city: string): string => {
+    if (!city.trim()) return 'City is required';
+    if (city.length < 2) return 'City must be at least 2 characters';
+    if (city.length > 100) return 'City must be less than 100 characters';
+    if (!/^[a-zA-Z\s\-']+$/.test(city))
+      return 'City can only contain letters, spaces, hyphens and apostrophes';
+    return '';
+  };
+
+  const validateState = (state: string): string => {
+    if (!state.trim()) return 'State/Province is required';
+    if (state.length < 2) return 'State must be at least 2 characters';
+    if (state.length > 100) return 'State must be less than 100 characters';
+    return '';
+  };
+
+  const validatePostalCode = (postalCode: string, country: string): string => {
+    if (!postalCode.trim()) return 'Postal/ZIP code is required';
+
+    if (country === 'IN') {
+      if (!/^\d{6}$/.test(postalCode))
+        return 'Indian PIN code must be exactly 6 digits';
+      if (/000000/.test(postalCode)) return 'Invalid PIN code';
+    } else if (country === 'US') {
+      if (!/^\d{5}(-\d{4})?$/.test(postalCode))
+        return 'Please enter a valid US ZIP code (e.g., 12345 or 12345-6789)';
+    } else {
+      if (postalCode.length < 3 || postalCode.length > 12)
+        return 'Postal code must be between 3 and 12 characters';
+    }
+    return '';
+  };
+
+  const validateCountry = (country: string): string => {
+    if (!country) return 'Country is required';
+    return '';
+  };
+
+  // Validate single field
+  const validateField = (
+    field: keyof typeof formData,
+    value: string,
+  ): string => {
+    switch (field) {
+      case 'accountHolderName':
+        return validateAccountHolderName(value);
+      case 'dateOfBirth':
+        return validateDateOfBirth(value);
+      case 'contactEmail':
+        return validateEmail(value);
+      case 'password':
+        return validatePassword(value);
+      case 'securityPin':
+        return validateSecurityPin(value);
+      case 'contactPhone':
+        return validatePhone(value);
+      case 'streetAddress':
+        return validateStreetAddress(value);
+      case 'city':
+        return validateCity(value);
+      case 'stateProvince':
+        return validateState(value);
+      case 'postalCode':
+        return validatePostalCode(value, formData.country);
+      case 'country':
+        return validateCountry(value);
+      default:
+        return '';
+    }
+  };
+
+  // Validate all fields
+  const validateAllFields = (): ValidationErrors => {
+    const newErrors: ValidationErrors = {};
+
+    (Object.keys(formData) as Array<keyof typeof formData>).forEach((key) => {
+      const error = validateField(key, formData[key]);
+      if (error) {
+        newErrors[key] = error;
+      }
+    });
+
+    return newErrors;
+  };
+
+  // Handle field blur
+  const handleBlur = (field: keyof typeof formData) => {
+    setTouched((prev) => ({...prev, [field]: true}));
+    const error = validateField(field, formData[field]);
+    setErrors((prev) => ({...prev, [field]: error}));
+  };
+
+  // Handle input change
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    // Special handling for fields
+    if (field === 'securityPin' || field === 'contactPhone') {
+      value = value.replace(/\D/g, '');
+    }
+
+    if (field === 'securityPin' && value.length > 6) {
+      value = value.slice(0, 6);
+    }
+
+    if (field === 'contactPhone' && value.length > 10) {
+      value = value.slice(0, 10);
+    }
+
+    setFormData((prev) => ({...prev, [field]: value}));
+
+    // Validate on change if field has been touched
+    if (touched[field]) {
+      const error = validateField(field, value);
+      setErrors((prev) => ({...prev, [field]: error}));
+    }
+  };
 
   // Auto-fill city/state based on postal code
   useEffect(() => {
-    // Debounce the API call
     const timeoutId = setTimeout(() => {
       if (formData.postalCode.length >= 5 && formData.country === 'US') {
         lookupCityStateByZip(formData.postalCode);
@@ -111,151 +299,16 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
       ) {
         lookupCityStateByPincode(formData.postalCode);
       }
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [formData.postalCode, formData.country]);
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({...prev, [field]: value}));
-
-    // Start validating after first interaction
-    if (!isValidating) {
-      setIsValidating(true);
-    }
-
-    // Validate this specific field
-    validateField(field, value);
-  };
-
-  const validateField = (field: keyof typeof formData, value: string) => {
-    let error = '';
-
-    switch (field) {
-      case 'accountHolderName':
-        if (!value.trim()) {
-          error = 'Account holder name is required';
-        } else if (value.length < 2) {
-          error = 'Name must be at least 2 characters';
-        }
-        break;
-
-      case 'dateOfBirth':
-        if (!value) {
-          error = 'Date of birth is required';
-        } else {
-          const dob = new Date(value);
-          const today = new Date();
-          let age = today.getFullYear() - dob.getFullYear();
-          const monthDiff = today.getMonth() - dob.getMonth();
-
-          if (
-            monthDiff < 0 ||
-            (monthDiff === 0 && today.getDate() < dob.getDate())
-          ) {
-            age--;
-          }
-
-          if (age < 18) {
-            error = 'You must be at least 18 years old';
-          }
-        }
-        break;
-
-      case 'contactEmail':
-        if (!value) {
-          error = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = 'Please enter a valid email address';
-        }
-        break;
-
-      case 'password':
-        if (!value) {
-          error = 'Password is required';
-        } else if (value.length < 8) {
-          error = 'Password must be at least 8 characters';
-        } else if (!/(?=.*[a-z])/.test(value)) {
-          error = 'Password must contain at least one lowercase letter';
-        } else if (!/(?=.*[A-Z])/.test(value)) {
-          error = 'Password must contain at least one uppercase letter';
-        } else if (!/(?=.*\d)/.test(value)) {
-          error = 'Password must contain at least one number';
-        } else if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) {
-          error = 'Password must contain at least one special character';
-        }
-        break;
-
-      case 'securityPin':
-        if (!value) {
-          error = 'Security PIN is required';
-        } else if (!/^\d{6}$/.test(value)) {
-          error = 'Security PIN must be exactly 6 digits';
-        } else if (value.length > 6) {
-          // Prevent extra digits
-          setFormData((prev) => ({...prev, securityPin: value.slice(0, 6)}));
-        }
-        break;
-
-      case 'contactPhone':
-        if (!value) {
-          error = 'Phone number is required';
-        } else if (!/^\d{10}$/.test(value.replace(/\D/g, ''))) {
-          error = 'Phone number must be exactly 10 digits';
-        }
-        break;
-
-      case 'streetAddress':
-        if (!value.trim()) {
-          error = 'Street address is required';
-        }
-        break;
-
-      case 'city':
-        if (!value.trim()) {
-          error = 'City is required';
-        }
-        break;
-
-      case 'stateProvince':
-        if (!value.trim()) {
-          error = 'State/Province is required';
-        }
-        break;
-
-      // case 'postalCode':
-      //   if (!value.trim()) {
-      //     error = 'Postal/ZIP code is required';
-      //   } else if (formData.country === 'IN' && !/^\d{6}$/.test(value)) {
-      //     error = 'Indian PIN code must be exactly 6 digits';
-      //   } else if (
-      //     formData.country === 'US' &&
-      //     !/^\d{5}(-\d{4})?$/.test(value)
-      //   ) {
-      //     error = 'Please enter a valid US ZIP code';
-      //   }
-      //   break;
-
-      case 'country':
-        if (!value) {
-          error = 'Country is required';
-        }
-        break;
-    }
-
-    setErrors((prev) => ({
-      ...prev,
-      [field]: error,
-    }));
-  };
-
   const lookupCityStateByZip = async (zipCode: string) => {
-    // Only for US ZIP codes
     if (formData.country !== 'US' || zipCode.length < 5) return;
 
     try {
       setIsLoading(true);
-      // Using a free ZIP code API
       const response = await fetch(`https://api.zippopotam.us/us/${zipCode}`);
       if (response.ok) {
         const data = await response.json();
@@ -270,14 +323,12 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
       }
     } catch (error) {
       console.error('Failed to fetch city/state:', error);
-      // Fallback: Keep existing values
     } finally {
       setIsLoading(false);
     }
   };
 
   const lookupCityStateByPincode = async (pincode: string) => {
-    // Only for Indian PIN codes
     if (formData.country !== 'IN' || pincode.length !== 6) return;
 
     try {
@@ -296,14 +347,11 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
             ...prev,
             city: firstPostOffice.District || prev.city,
             stateProvince: firstPostOffice.State || prev.stateProvince,
-            // Optionally, you can also auto-fill the country if it's not set
-            country: formData.country || 'IN',
           }));
         }
       }
     } catch (error) {
       console.error('Failed to fetch city/state from PIN code:', error);
-      // Fallback: Keep existing values
     } finally {
       setIsLoading(false);
     }
@@ -311,20 +359,23 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsValidating(true);
 
-    // Validate all fields before submission
-    const newErrors: ValidationErrors = {};
+    // Mark all fields as touched
+    const allTouched = Object.keys(formData).reduce(
+      (acc, key) => {
+        acc[key] = true;
+        return acc;
+      },
+      {} as Record<string, boolean>,
+    );
+    setTouched(allTouched);
 
-    Object.keys(formData).forEach((key) => {
-      validateField(
-        key as keyof typeof formData,
-        formData[key as keyof typeof formData],
-      );
-    });
+    // Validate all fields
+    const newErrors = validateAllFields();
+    setErrors(newErrors);
 
     // Check if there are any errors
-    const hasErrors = Object.values(errors).some((error) => error !== '');
+    const hasErrors = Object.values(newErrors).some((error) => error !== '');
 
     if (!hasErrors) {
       onComplete(formData);
@@ -333,17 +384,29 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
 
   const ErrorMessage = ({message}: {message?: string}) => {
     if (!message) return null;
-
     return (
-      <p className="mt-1 text-xs font-medium text-red-500 dark:text-red-400">
+      <p className="mt-1 flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400">
+        <MdError className="text-red-500" />
         {message}
       </p>
     );
   };
 
+  const SuccessIcon = ({show}: {show: boolean}) => {
+    if (!show) return null;
+    return (
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+        <MdCheckCircle className="text-[16px] md:text-[18px]" />
+      </span>
+    );
+  };
+
+  const isFieldValid = (field: keyof typeof formData): boolean => {
+    return touched[field] && !errors[field] && formData[field]?.length > 0;
+  };
+
   return (
     <div className="dark:bg-gray-950 flex min-h-screen w-full items-center justify-center bg-white font-['Inter'] antialiased selection:bg-[#F57F3D]/30 md:p-6">
-      {/* Main container with responsive width */}
       <div className="relative mx-auto w-full max-w-[min(390px,95vw,500px)] overflow-hidden rounded-2xl bg-white dark:bg-[#221610] md:min-h-[600px] md:max-w-[700px]">
         {/* Header section */}
         <div className="sticky top-0 z-20 flex items-center justify-between bg-white/95 p-4 pb-2 backdrop-blur-sm dark:bg-[#221610]/95 md:p-6 md:pb-3">
@@ -381,7 +444,7 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
         {/* Main content area */}
         <div className="relative z-10 px-6 pb-1 pt-4 md:px-8 md:pt-6">
           <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#0d131c] dark:text-white md:text-[26px]">
-            Let's get started
+            Let&apos;s get started
           </h1>
         </div>
 
@@ -396,14 +459,16 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
               <div className="flex flex-col gap-3">
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Account Holder Name
+                    Account Holder Name <span className="text-red-500">*</span>
                   </span>
                   <div className="relative">
                     <input
                       className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.accountHolderName
+                        errors.accountHolderName && touched.accountHolderName
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                          : isFieldValid('accountHolderName')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
                       } bg-white dark:bg-slate-800/80 dark:text-white`}
                       placeholder="Full legal name as on ID"
                       type="text"
@@ -411,25 +476,26 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
                       onChange={(e) =>
                         handleInputChange('accountHolderName', e.target.value)
                       }
+                      onBlur={() => handleBlur('accountHolderName')}
                       required
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
-                      <MdCheckCircle className="text-[16px] md:text-[18px]" />
-                    </span>
+                    <SuccessIcon show={isFieldValid('accountHolderName')} />
                   </div>
                   <ErrorMessage message={errors.accountHolderName} />
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Date of Birth
+                    Date of Birth <span className="text-red-500">*</span>
                   </span>
                   <div className="relative">
                     <input
                       className={`h-10 w-full rounded-md border px-3 pl-9 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.dateOfBirth
+                        errors.dateOfBirth && touched.dateOfBirth
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                          : isFieldValid('dateOfBirth')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
                       } bg-white dark:bg-slate-800/80 dark:text-white`}
                       placeholder="DD / MM / YYYY"
                       type="date"
@@ -437,14 +503,14 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
                       onChange={(e) =>
                         handleInputChange('dateOfBirth', e.target.value)
                       }
+                      onBlur={() => handleBlur('dateOfBirth')}
                       required
                       max={new Date().toISOString().split('T')[0]}
                     />
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                      <span className="material-symbols-outlined text-[16px] md:text-[18px]">
-                        <MdCalendarToday />
-                      </span>
+                      <MdCalendarToday className="text-[16px] md:text-[18px]" />
                     </span>
+                    <SuccessIcon show={isFieldValid('dateOfBirth')} />
                   </div>
                   <ErrorMessage message={errors.dateOfBirth} />
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -461,35 +527,43 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Contact Email
+                    Contact Email <span className="text-red-500">*</span>
                   </span>
-                  <input
-                    className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                      errors.contactEmail
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                        : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
-                    } bg-white dark:bg-slate-800/80 dark:text-white`}
-                    placeholder="name@example.com"
-                    type="email"
-                    value={formData.contactEmail}
-                    onChange={(e) =>
-                      handleInputChange('contactEmail', e.target.value)
-                    }
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
+                        errors.contactEmail && touched.contactEmail
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
+                          : isFieldValid('contactEmail')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                      } bg-white dark:bg-slate-800/80 dark:text-white`}
+                      placeholder="name@example.com"
+                      type="email"
+                      value={formData.contactEmail}
+                      onChange={(e) =>
+                        handleInputChange('contactEmail', e.target.value)
+                      }
+                      onBlur={() => handleBlur('contactEmail')}
+                      required
+                    />
+                    <SuccessIcon show={isFieldValid('contactEmail')} />
+                  </div>
                   <ErrorMessage message={errors.contactEmail} />
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Password
+                    Password <span className="text-red-500">*</span>
                   </span>
                   <div className="relative">
                     <input
                       className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.password
+                        errors.password && touched.password
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                          : isFieldValid('password')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
                       } bg-white dark:bg-slate-800/80 dark:text-white`}
                       placeholder="Minimum 8 characters"
                       type={isPasswordVisible ? 'text' : 'password'}
@@ -497,82 +571,151 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
                       onChange={(e) =>
                         handleInputChange('password', e.target.value)
                       }
+                      onBlur={() => handleBlur('password')}
                       required
                       minLength={8}
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                      <span
-                        className="material-symbols-outlined cursor-pointer text-[16px] md:text-[18px]"
-                        onClick={toggleVisibility}
+                    <span className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400">
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        className="focus:outline-none"
                       >
-                        {isPasswordVisible ? <Eye /> : <EyeOff />}
-                      </span>
+                        {isPasswordVisible ? (
+                          <EyeOff className="text-[16px] md:text-[18px]" />
+                        ) : (
+                          <Eye className="text-[16px] md:text-[18px]" />
+                        )}
+                      </button>
                     </span>
+                    <SuccessIcon show={isFieldValid('password')} />
                   </div>
                   <ErrorMessage message={errors.password} />
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Must contain at least 8 characters, including uppercase,
-                    lowercase, number and special character
-                  </p>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p>Password must contain:</p>
+                    <ul className="mt-1 list-disc pl-4">
+                      <li
+                        className={
+                          formData.password.length >= 8 ? 'text-green-500' : ''
+                        }
+                      >
+                        ✓ At least 8 characters
+                      </li>
+                      <li
+                        className={
+                          /(?=.*[a-z])/.test(formData.password)
+                            ? 'text-green-500'
+                            : ''
+                        }
+                      >
+                        ✓ One lowercase letter
+                      </li>
+                      <li
+                        className={
+                          /(?=.*[A-Z])/.test(formData.password)
+                            ? 'text-green-500'
+                            : ''
+                        }
+                      >
+                        ✓ One uppercase letter
+                      </li>
+                      <li
+                        className={
+                          /(?=.*\d)/.test(formData.password)
+                            ? 'text-green-500'
+                            : ''
+                        }
+                      >
+                        ✓ One number
+                      </li>
+                      <li
+                        className={
+                          /(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(
+                            formData.password,
+                          )
+                            ? 'text-green-500'
+                            : ''
+                        }
+                      >
+                        ✓ One special character
+                      </li>
+                    </ul>
+                  </div>
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Security Pin
+                    Security Pin <span className="text-red-500">*</span>
                   </span>
                   <div className="relative">
                     <input
                       className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.securityPin
+                        errors.securityPin && touched.securityPin
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                          : isFieldValid('securityPin')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
                       } bg-white dark:bg-slate-800/80 dark:text-white`}
                       placeholder="6 digits"
-                      type="text"
+                      type={isPinVisible ? 'text' : 'password'}
                       inputMode="numeric"
-                      pattern="[0-9]*"
                       maxLength={6}
                       value={formData.securityPin}
-                      onChange={(e) => {
-                        // Only allow numbers
-                        const value = e.target.value.replace(/\D/g, '');
-                        handleInputChange('securityPin', value);
-                      }}
+                      onChange={(e) =>
+                        handleInputChange('securityPin', e.target.value)
+                      }
+                      onBlur={() => handleBlur('securityPin')}
                       required
                     />
+                    <span className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400">
+                      <button
+                        type="button"
+                        onClick={togglePinVisibility}
+                        className="focus:outline-none"
+                      >
+                        {isPinVisible ? (
+                          <EyeOff className="text-[16px] md:text-[18px]" />
+                        ) : (
+                          <Eye className="text-[16px] md:text-[18px]" />
+                        )}
+                      </button>
+                    </span>
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                       <MdLock className="text-[16px] md:text-[18px]" />
                     </span>
                   </div>
                   <ErrorMessage message={errors.securityPin} />
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    6-digit PIN for account security
+                    6-digit PIN for account security (avoid repeated or
+                    sequential digits)
                   </p>
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Contact Phone Number
+                    Contact Phone Number <span className="text-red-500">*</span>
                   </span>
-                  <div className="flex gap-2 md:gap-3">
+                  <div className="relative">
                     <input
-                      className={`h-10 flex-1 rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.contactPhone
+                      className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
+                        errors.contactPhone && touched.contactPhone
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                          : isFieldValid('contactPhone')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
                       } bg-white dark:bg-slate-800/80 dark:text-white`}
                       placeholder="10 digit Phone Number"
                       type="tel"
                       inputMode="tel"
                       value={formData.contactPhone}
-                      onChange={(e) => {
-                        // Remove non-numeric characters
-                        const value = e.target.value.replace(/\D/g, '');
-                        handleInputChange('contactPhone', value);
-                      }}
+                      onChange={(e) =>
+                        handleInputChange('contactPhone', e.target.value)
+                      }
+                      onBlur={() => handleBlur('contactPhone')}
                       maxLength={10}
                       required
                     />
+                    <SuccessIcon show={isFieldValid('contactPhone')} />
                   </div>
                   <ErrorMessage message={errors.contactPhone} />
                 </label>
@@ -586,41 +729,55 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Street Address, Apartment, Unit
+                    Street Address, Apartment, Unit{' '}
+                    <span className="text-red-500">*</span>
                   </span>
-                  <textarea
-                    className={`min-h-[80px] w-full rounded-md border px-3 py-2 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                      errors.streetAddress
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                        : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
-                    } bg-white dark:bg-slate-800/80 dark:text-white`}
-                    placeholder="123 Main St, Apt 4B"
-                    value={formData.streetAddress}
-                    onChange={(e) =>
-                      handleInputChange('streetAddress', e.target.value)
-                    }
-                    required
-                  />
+                  <div className="relative">
+                    <textarea
+                      className={`min-h-[80px] w-full rounded-md border px-3 py-2 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
+                        errors.streetAddress && touched.streetAddress
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
+                          : isFieldValid('streetAddress')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                      } bg-white dark:bg-slate-800/80 dark:text-white`}
+                      placeholder="123 Main St, Apt 4B"
+                      value={formData.streetAddress}
+                      onChange={(e) =>
+                        handleInputChange('streetAddress', e.target.value)
+                      }
+                      onBlur={() => handleBlur('streetAddress')}
+                      required
+                    />
+                    <SuccessIcon show={isFieldValid('streetAddress')} />
+                  </div>
                   <ErrorMessage message={errors.streetAddress} />
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Postal/ZIP Code
+                    Postal/ZIP Code <span className="text-red-500">*</span>
                   </span>
                   <div className="relative">
                     <input
                       className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.postalCode
+                        errors.postalCode && touched.postalCode
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                          : isFieldValid('postalCode')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
                       } bg-white dark:bg-slate-800/80 dark:text-white`}
-                      placeholder="12345 or 12345-6789"
+                      placeholder={
+                        formData.country === 'US'
+                          ? '12345 or 12345-6789'
+                          : 'Postal code'
+                      }
                       type="text"
                       value={formData.postalCode}
                       onChange={(e) =>
                         handleInputChange('postalCode', e.target.value)
                       }
+                      onBlur={() => handleBlur('postalCode')}
                       required
                     />
                     {isLoading && (
@@ -630,23 +787,22 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
                         </span>
                       </span>
                     )}
+                    <SuccessIcon
+                      show={isFieldValid('postalCode') && !isLoading}
+                    />
                   </div>
                   <ErrorMessage message={errors.postalCode} />
                   {formData.country === 'US' &&
                     formData.postalCode.length >= 5 && (
                       <p className="mt-0.5 text-xs text-[#F57F3D] dark:text-[#F57F3D]">
-                        <span className="material-symbols-outlined mr-1 align-middle text-[12px]">
-                          <MdAutoAwesome />
-                        </span>
+                        <MdAutoAwesome className="mr-1 inline text-[12px]" />
                         City/State will auto-fill for US ZIP codes
                       </p>
                     )}
                   {formData.country === 'IN' &&
                     formData.postalCode.length === 6 && (
                       <p className="mt-0.5 text-xs text-[#F57F3D] dark:text-[#F57F3D]">
-                        <span className="material-symbols-outlined mr-1 align-middle text-[12px]">
-                          <MdAutoAwesome />
-                        </span>
+                        <MdAutoAwesome className="mr-1 inline text-[12px]" />
                         City/State will auto-fill for Indian PIN codes
                       </p>
                     )}
@@ -655,70 +811,88 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
                 <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <label className="flex flex-col gap-1">
                     <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                      City
+                      City <span className="text-red-500">*</span>
                     </span>
-                    <input
-                      className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.city
-                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
-                      } bg-white dark:bg-slate-800/80 dark:text-white`}
-                      placeholder="City"
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) =>
-                        handleInputChange('city', e.target.value)
-                      }
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
+                          errors.city && touched.city
+                            ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
+                            : isFieldValid('city')
+                              ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                              : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                        } bg-white dark:bg-slate-800/80 dark:text-white`}
+                        placeholder="City"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) =>
+                          handleInputChange('city', e.target.value)
+                        }
+                        onBlur={() => handleBlur('city')}
+                        required
+                      />
+                      <SuccessIcon show={isFieldValid('city')} />
+                    </div>
                     <ErrorMessage message={errors.city} />
                   </label>
 
                   <label className="flex flex-col gap-1">
                     <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                      State/Province
+                      State/Province <span className="text-red-500">*</span>
                     </span>
-                    <input
-                      className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
-                        errors.stateProvince
-                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                          : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
-                      } bg-white dark:bg-slate-800/80 dark:text-white`}
-                      placeholder="State"
-                      type="text"
-                      value={formData.stateProvince}
-                      onChange={(e) =>
-                        handleInputChange('stateProvince', e.target.value)
-                      }
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all placeholder:text-[#94a3b8] focus:ring-1 md:text-base ${
+                          errors.stateProvince && touched.stateProvince
+                            ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
+                            : isFieldValid('stateProvince')
+                              ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                              : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                        } bg-white dark:bg-slate-800/80 dark:text-white`}
+                        placeholder="State"
+                        type="text"
+                        value={formData.stateProvince}
+                        onChange={(e) =>
+                          handleInputChange('stateProvince', e.target.value)
+                        }
+                        onBlur={() => handleBlur('stateProvince')}
+                        required
+                      />
+                      <SuccessIcon show={isFieldValid('stateProvince')} />
+                    </div>
                     <ErrorMessage message={errors.stateProvince} />
                   </label>
                 </div>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-[#0d131c] dark:text-white md:text-base">
-                    Country
+                    Country <span className="text-red-500">*</span>
                   </span>
-                  <select
-                    className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all focus:ring-1 md:text-base ${
-                      errors.country
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
-                        : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
-                    } bg-white dark:bg-slate-800/80 dark:text-white`}
-                    value={formData.country}
-                    onChange={(e) =>
-                      handleInputChange('country', e.target.value)
-                    }
-                    required
-                  >
-                    <option value="">Select a country</option>
-                    {COUNTRIES.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={`h-10 w-full rounded-md border px-3 text-sm text-[#0d131c] shadow-sm outline-none transition-all focus:ring-1 md:text-base ${
+                        errors.country && touched.country
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/30 dark:border-red-500'
+                          : isFieldValid('country')
+                            ? 'border-green-400 focus:border-green-400 focus:ring-green-400/30 dark:border-green-500'
+                            : 'border-[#ced9e9] focus:border-[#F57F3D] focus:ring-[#F57F3D]/30 dark:border-slate-600'
+                      } bg-white dark:bg-slate-800/80 dark:text-white`}
+                      value={formData.country}
+                      onChange={(e) =>
+                        handleInputChange('country', e.target.value)
+                      }
+                      onBlur={() => handleBlur('country')}
+                      required
+                    >
+                      <option value="">Select a country</option>
+                      {COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                    <SuccessIcon show={isFieldValid('country')} />
+                  </div>
                   <ErrorMessage message={errors.country} />
                 </label>
               </div>
@@ -731,9 +905,14 @@ const SignupStep1Personal: FC<SignupStep1PersonalProps> = ({
           <div className="flex flex-col items-center gap-3 md:px-8 md:pb-6">
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F57F3D] text-base font-semibold text-white shadow-md shadow-[#F57F3D]/20 transition-all hover:bg-[#e06c2e] active:scale-[0.98] md:h-14 md:max-w-[400px] md:text-lg"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F57F3D] text-base font-semibold text-white shadow-md shadow-[#F57F3D]/20 transition-all hover:bg-[#e06c2e] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#F57F3D] md:h-14 md:max-w-[400px] md:text-lg"
               onClick={handleSubmit}
-              disabled={isLoading}
+              disabled={
+                isLoading ||
+                Object.keys(errors).some(
+                  (key) => errors[key as keyof ValidationErrors],
+                )
+              }
             >
               {isLoading ? (
                 <>
