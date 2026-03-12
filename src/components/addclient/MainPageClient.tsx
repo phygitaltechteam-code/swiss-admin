@@ -1,7 +1,7 @@
 /*eslint-disable*/
 import React, {useState} from 'react';
 import {useMutation} from '@tanstack/react-query';
-import {unAuthenticatedApi} from '@/utils/axios'; // assuming this is your unauth axios instance
+import {unAuthenticatedApi} from '@/utils/axios';
 
 import {useNavigate} from '@tanstack/react-router';
 import {AxiosError} from 'axios';
@@ -76,7 +76,6 @@ const MainPageClient = () => {
         '/users/register',
         formData,
         {
-          // Optional: track upload progress (useful for large files)
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const percent = Math.round(
@@ -109,7 +108,7 @@ const MainPageClient = () => {
           to: '/Approval/customerregisterapprove',
         });
       }
-    }, // Added missing comma and closing brace
+    },
   });
 
   const handleStep1Complete = (data: Partial<PersonalData>) => {
@@ -128,33 +127,33 @@ const MainPageClient = () => {
     const formData = new FormData();
     formData.append('fullname', personalData.accountHolderName.trim() || '');
     formData.append('email', personalData.contactEmail.trim() || '');
-    formData.append('username', personalData.contactEmail.split('@')[0] || ''); // or have separate username field
+    formData.append('username', personalData.contactEmail.split('@')[0] || '');
     formData.append('password', personalData.password || '');
     formData.append(
       'phoneNumber',
       `${personalData.contactPhone.trim()}`.replace(/\s+/g, ''),
     );
-    formData.append('dob', personalData.dateOfBirth || ''); // yyyy-mm-dd
-    // formData.append('nationality', personalData.nationality || 'Indian');
+    formData.append('dob', personalData.dateOfBirth || '');
     formData.append('address', personalData.streetAddress.trim() || '');
     formData.append('city', personalData.city.trim() || '');
     formData.append('state', personalData.stateProvince.trim() || '');
     formData.append('country', personalData.country || 'India');
     formData.append('pincode', personalData.postalCode.trim() || '');
     formData.append('securityPin', personalData.securityPin.trim() || '');
-    // formData.append('SWIFTBIC', personalData.swiftBicCode || '');
     formData.append('role', 'CUSTOMER');
-    // formData.append('documentNumber', '');
+
     if (kycDocument.type === 'Passport') {
       formData.append('documentType', 'Passport');
       formData.append('documentNumber', kycDocument.number.toUpperCase());
       if (kycDocument.file) {
-        formData.append('passport', kycDocument.file); // or passportCard
+        formData.append('passport', kycDocument.file);
       }
     }
+
     if (image) {
       formData.append('photo', image, image.name || 'selfie.jpg');
     }
+
     signupMutation.mutate(formData);
   };
 
@@ -187,10 +186,9 @@ const MainPageClient = () => {
         />
       )}
 
-      {/* Optional: show loading state during submission */}
       {signupMutation.isPending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="rounded-lg bg-white">
+          <div className="rounded-lg bg-white p-6">
             <p className="text-lg font-medium">Creating your account...</p>
             <div className="bg-gray-200 mt-4 h-2 w-64 overflow-hidden rounded">
               <div

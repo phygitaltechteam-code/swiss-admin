@@ -25,9 +25,10 @@ const Value: React.FC<{children: React.ReactNode; className?: string}> = ({
 
 type Props = {
   customerDetails: UserRequest;
+  onImageClick?: (src: string, title: string) => void;
 };
 
-const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
+const ApplicantDetails: React.FC<Props> = ({customerDetails, onImageClick}) => {
   // -------------------- STATUS --------------------
   const user = customerDetails?.user;
 
@@ -47,10 +48,9 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
   // -------------------- DOCUMENTS --------------------
   const docList = [
     {
-      key: 'photo ',
-      label: 'Profile',
+      key: 'photo',
+      label: 'Profile Photo',
       image: customerDetails?.photo,
-      // number: customerDetails?.panCardNumber,
     },
     {
       key: 'passport',
@@ -58,7 +58,6 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
       image: customerDetails?.passport,
       number: customerDetails?.passportNumber,
     },
-
     {
       key: 'aadharCard',
       label: 'Aadhaar Card',
@@ -75,7 +74,6 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
     'passport',
     'panCard',
     'aadharCard',
-    // 'passportNumber',
     'panCardNumber',
     'aadharCardNumber',
     'photo',
@@ -104,15 +102,9 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
   const renderObjectDetails = (data: any) => {
     return Object.entries(data || {})
       .filter(([key, value]) => {
-        // Remove excluded fields
         if (EXCLUDE_FIELDS.includes(key)) return false;
-
-        // Remove objects/arrays
         if (typeof value === 'object' && value !== null) return false;
-
-        // ❗ Remove boolean fields
         if (typeof value === 'boolean') return false;
-
         return true;
       })
       .map(([key, value]) => (
@@ -186,39 +178,8 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
                 {customerDetails?.accountNumber || '-'}
               </Value>
             </div>
-
-            {/* <div>
-              <Label>SWIFT / BIC</Label>
-              <Value className="font-mono">
-                {customerDetails?.SWIFTBIC || '-'}
-              </Value>
-            </div> */}
           </div>
         </div>
-
-        {/* WALLETS */}
-        {/* {customerDetails?.wallets?.length > 0 && (
-          <div>
-            <h3 className="mb-4 border-b pb-2 text-[10px] font-extrabold uppercase tracking-widest text-neutral-400">
-              Wallet Details
-            </h3>
-
-            <div className="grid grid-cols-2 gap-6">
-              {customerDetails.wallets.map((wallet, index) => (
-                <div
-                  key={index}
-                  className="rounded-lg border border-stroke bg-neutral-50 p-3"
-                >
-                  <Label>E-Private Account</Label>
-                  <Value>{wallet.eprivateAccount}</Value>
-
-                  <Label className="mt-2">Temporary Account</Label>
-                  <Value>{wallet.temporyAccount}</Value>
-                </div>
-              ))}
-            </div>
-          </div>
-        )} */}
 
         {/* DOCUMENTS */}
         {docList
@@ -227,9 +188,6 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
             <div key={doc.key}>
               <h3 className="mb-4 flex justify-between border-b pb-2 text-[10px] font-bold uppercase tracking-widest">
                 {doc.label}
-                {/* <button className="text-gray-500 flex items-center gap-1 text-[10px] hover:text-black">
-                  View Full Res <MdOpenInNew />
-                </button> */}
               </h3>
 
               {/* Document Number ABOVE image */}
@@ -240,19 +198,22 @@ const ApplicantDetails: React.FC<Props> = ({customerDetails}) => {
                 </div>
               )}
 
-              {/* Image */}
-              <div className="bg-gray-100 relative aspect-video overflow-hidden rounded-xl border">
+              {/* Image - Clickable */}
+              <button
+                onClick={() => onImageClick?.(doc.image!, doc.label)}
+                className="bg-gray-100 group relative aspect-video w-full overflow-hidden rounded-xl border border-stroke transition-all hover:shadow-lg"
+              >
                 <img
                   src={doc.image}
                   alt={doc.label}
                   className="h-full w-full object-contain"
                 />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
-                  <button className="rounded-full bg-white p-3 shadow">
-                    <MdZoomIn className="text-xl" />
-                  </button>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all group-hover:bg-black/40">
+                  <div className="scale-0 transform rounded-full bg-white p-3 shadow-lg transition-all group-hover:scale-100">
+                    <MdZoomIn className="text-gray-700 text-xl" />
+                  </div>
                 </div>
-              </div>
+              </button>
             </div>
           ))}
       </div>

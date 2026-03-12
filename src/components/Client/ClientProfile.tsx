@@ -338,6 +338,12 @@ const ClientProfile: React.FC = () => {
                 >
                   View Transactions
                 </button>
+                <button
+                  className="text-text-light dark:text-text-dark dark:bg-gray-800 border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 flex-1 rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 xl:flex-none"
+                  onClick={() => navigate({to: `/fundtransfer/${clientId}`})}
+                >
+                  Fund Transfer
+                </button>
 
                 <div className="bg-border-light dark:bg-border-dark mx-1 hidden h-8 w-px xl:block"></div>
 

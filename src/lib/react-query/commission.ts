@@ -52,3 +52,17 @@ export const getAllComission = async () => {
     throw error;
   }
 };
+
+export const useDeleteComission = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/admin/transaction/fee/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['commissions']});
+    },
+  });
+};

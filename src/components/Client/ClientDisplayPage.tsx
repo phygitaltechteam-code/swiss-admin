@@ -86,11 +86,26 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+// const formatCompactIndian = (num: number): string => {
+//   const abs = Math.abs(num);
+
+//   if (abs >= 10000000) {
+//     return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+//   }
+//   if (abs >= 100000) {
+//     return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+//   }
+//   if (abs >= 1000) {
+//     return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+//   }
+//   return num.toString();
+// };
+
 const formatCompactIndian = (num: number): string => {
   const abs = Math.abs(num);
 
   if (abs >= 10000000) {
-    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'M';
   }
   if (abs >= 100000) {
     return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
@@ -100,7 +115,6 @@ const formatCompactIndian = (num: number): string => {
   }
   return num.toString();
 };
-
 const ClientDisplay: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [privateBalanceFilter, setPrivateBalanceFilter] = useState('');
