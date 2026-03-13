@@ -13,8 +13,26 @@ import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {useGetAllTransaction} from '@/lib/react-query/alltransaction';
 import {jsPDF} from 'jspdf';
 import 'jspdf-autotable';
-import {MdPieChart, MdSearch} from 'react-icons/md';
+import {
+  MdPieChart,
+  MdSearch,
+  MdCheckCircle,
+  MdCancel,
+  MdPending,
+  MdAccountBalanceWallet,
+} from 'react-icons/md';
 import {FaCheckCircle, FaTimesCircle} from 'react-icons/fa';
+
+// Helper function to format currency with M/k suffixes
+const formatCurrency = (amount: number): string => {
+  if (amount === undefined || amount === null) return '$0';
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(1)}k`;
+  }
+  return `$${amount.toFixed(2)}`;
+};
 
 // Define the Transaction interface based on your API response
 interface Transaction {
@@ -112,7 +130,6 @@ function AllTransaction() {
   }, [transactionData]);
 
   console.log('Processed Transactions:', transactions); // Debug log
-
   // Calculate stats from API data
   const stats = useMemo(() => {
     const statsData = calculateStats(transactions);
@@ -121,79 +138,37 @@ function AllTransaction() {
       {
         title: 'Total Transactions',
         value: statsData.totalTransactions.toString(),
-        change: '+12.5%',
-        changeType: 'increase',
-        icon: <MdPieChart />,
-        trend: '+12.5',
-        trendDirection: 'up',
-        trendLabel: 'from last month',
-        type: 'volume',
+        icon: <MdPieChart className="text-orange-500" size={24} />,
       },
       {
         title: 'Total Amount',
-        value: `$${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-        change: '+8.3%',
-        changeType: 'increase',
-        icon: <FaFilePdf />,
-        trend: '+8.3',
-        trendDirection: 'up',
-        trendLabel: 'from last month',
-        type: 'volume',
+        value: formatCurrency(statsData.totalAmount),
+        icon: <MdAccountBalanceWallet className="text-orange-500" size={24} />,
       },
       {
         title: 'Successful',
         value: statsData.successfulTransactions.toString(),
-        change: '+5.2%',
-        changeType: 'increase',
-        icon: <FaCheckCircle />,
-        trend: '+5.2',
-        trendDirection: 'up',
-        trendLabel: 'success rate',
-        type: 'success',
+        icon: <FaCheckCircle className="text-orange-500" size={20} />,
       },
       {
         title: 'Pending',
         value: statsData.pendingTransactions.toString(),
-        change: '+2.1%',
-        changeType: 'increase',
-        icon: <FaHourglassHalf />,
-        trend: '+2.1',
-        trendDirection: 'up',
-        trendLabel: 'awaiting processing',
-        type: 'pending',
+        icon: <MdPending className="text-orange-500" size={24} />,
       },
       {
         title: 'Failed',
         value: statsData.failedTransactions.toString(),
-        change: '-1.8%',
-        changeType: 'decrease',
-        icon: <FaTimesCircle />,
-        trend: '-1.8',
-        trendDirection: 'down',
-        trendLabel: 'failure rate',
-        type: 'failed',
+        icon: <MdCancel className="text-orange-500" size={24} />,
       },
       {
         title: 'Total Credits',
-        value: `$${statsData.creditAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-        change: '+15.7%',
-        changeType: 'increase',
-        icon: <FaChartLine />,
-        trend: '+15.7',
-        trendDirection: 'up',
-        trendLabel: 'credit volume',
-        type: 'success',
+        value: formatCurrency(statsData.creditAmount),
+        icon: <FaChartLine className="text-orange-500" size={20} />,
       },
       {
         title: 'Total Debits',
-        value: `$${statsData.debitAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-        change: '+10.2%',
-        changeType: 'increase',
-        icon: <FaChartArea />,
-        trend: '+10.2',
-        trendDirection: 'up',
-        trendLabel: 'debit volume',
-        type: 'pending',
+        value: formatCurrency(statsData.debitAmount),
+        icon: <FaChartArea className="text-orange-500" size={20} />,
       },
     ];
 
@@ -315,11 +290,7 @@ function AllTransaction() {
 
     doc.setFontSize(9);
     doc.text(`Total Transactions: ${statsData.totalTransactions}`, 14, 55);
-    doc.text(
-      `Total Amount: $${statsData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-      14,
-      61,
-    );
+    doc.text(`Total Amount: ${formatCurrency(statsData.totalAmount)}`, 14, 61);
     doc.text(`Successful: ${statsData.successfulTransactions}`, 14, 67);
     doc.text(`Pending: ${statsData.pendingTransactions}`, 14, 73);
     doc.text(`Failed: ${statsData.failedTransactions}`, 14, 79);
@@ -343,7 +314,7 @@ function AllTransaction() {
       transaction.beneficiary?.fullName || 'N/A',
       transaction.beneficiary?.accountNumber || 'N/A',
       transaction.type,
-      `$${transaction.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+      formatCurrency(transaction.amount),
       transaction.amountType,
       transaction.isPending
         ? 'Pending'
@@ -465,7 +436,7 @@ function AllTransaction() {
 
     // Compute stats from the filtered data
     const statsData = calculateStats(filteredData);
-    const total = filteredData.length;
+    const total = statsData.totalTransactions;
     const successful = statsData.successfulTransactions;
     const pending = statsData.pendingTransactions;
     const failed = statsData.failedTransactions;
@@ -501,7 +472,7 @@ function AllTransaction() {
           <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${item.type === 'CREDIT' ? '#dbeafe' : '#fef3c7'}; color: ${item.type === 'CREDIT' ? '#1e40af' : '#92400e'};">${item.type}</span>
         </td>
         <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
-          <strong>$${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+          <strong>${formatCurrency(item.amount)}</strong>
           <div style="color: #6B7280; font-size: 11px;">${item.amountType}</div>
         </td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">
@@ -564,7 +535,7 @@ function AllTransaction() {
           </div>
           <div class="stat-card">
             <div class="stat-title">Total Amount</div>
-            <div class="stat-value">$${totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+            <div class="stat-value">${formatCurrency(totalAmount)}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Successful</div>
@@ -735,7 +706,7 @@ function AllTransaction() {
       render: (item: Transaction) => (
         <div className="text-right">
           <div className="text-header-text text-sm font-bold dark:text-white">
-            ${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+            {formatCurrency(item.amount)}
           </div>
           <div className="text-secondary-text dark:text-gray-400 text-xs">
             {item.amountType}
@@ -829,7 +800,7 @@ function AllTransaction() {
       <div className="bg-background-light dark:bg-background-dark flex min-h-screen w-full items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-            <span className="text-2xl">❌</span>
+            <MdCancel className="text-3xl text-red-500" />
           </div>
           <h3 className="text-gray-900 mb-2 text-lg font-medium dark:text-white">
             Error loading transactions
@@ -955,9 +926,7 @@ function AllTransaction() {
               {/* Search Input */}
               <div className="relative w-full lg:w-64">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <span className="text-secondary-text dark:text-gray-400 text-lg">
-                    <MdSearch />
-                  </span>
+                  <MdSearch className="text-secondary-text dark:text-gray-400 text-lg" />
                 </div>
                 <input
                   type="text"

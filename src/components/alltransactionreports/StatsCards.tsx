@@ -45,7 +45,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({stats}) => {
           <p className="text-header-text text-2xl font-bold dark:text-white">
             {stat.value}
           </p>
-          <div className="mt-3 flex items-center gap-2">
+          {/* <div className="mt-3 flex items-center gap-2">
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTrendColor(stat.type)}`}
             >
@@ -55,7 +55,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({stats}) => {
             <span className="text-secondary-text dark:text-gray-500 text-xs">
               {stat.trendLabel}
             </span>
-          </div>
+          </div> */}
         </div>
       ))}
     </div>

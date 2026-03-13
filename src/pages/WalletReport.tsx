@@ -5,17 +5,53 @@ import {
   MdCalendarToday,
   MdExpandMore,
   MdSearch,
-  MdDownload,
 } from 'react-icons/md';
 import StatsCard from '@/components/wallettopupreport/StatsCard';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {Transaction} from '@/components/wallettopupreport/types';
 import {useGetTopup} from '@/lib/react-query/Topup';
-import {FaCopy, FaFilePdf, FaHourglassHalf, FaRupeeSign} from 'react-icons/fa';
+import {FaCopy, FaHourglassHalf, FaRupeeSign} from 'react-icons/fa';
 import {IoMdRadioButtonOff} from 'react-icons/io';
-//import {useGetTopupApproved} from '@/lib/react-query/topup';
 
-// PDF Export Service - Separate from React component
+const formatAmount = (num: number): string => {
+  // Format with commas for thousands
+  if (num >= 1000000) {
+    return `$${(num / 1000000).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    return `$${(num / 1000).toFixed(1)}K`;
+  }
+  return `$${num.toLocaleString('en-US')}`;
+};
+// Helper function to format date from ISO string
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+// Helper function to get status from transaction data
+const getTransactionStatus = (item: any): string => {
+  if (item.isRejected) return 'Rejected';
+  if (item.isPending) return 'Pending';
+  return 'Completed';
+};
+
+// Helper function to get account type display name
+const getAccountTypeDisplay = (type: string): string => {
+  switch (type) {
+    case 'E_PRIVATEACCOUNT':
+      return 'Private Account';
+    case 'E_TEMPORYACCOUNT':
+      return 'Temporary Account';
+    default:
+      return type || 'N/A';
+  }
+};
+
 class PDFExportService {
   static async generateWalletReport(
     data: Transaction[],
@@ -109,7 +145,7 @@ class PDFExportService {
           // Draw stat box
           doc.setDrawColor(200, 200, 200);
           doc.setFillColor(245, 245, 245);
-          doc.rect(x, y, statBoxWidth, 25, 'FD');
+          doc.rect(x, y, statBoxWidth, 20, 'FD');
 
           // Add stat title
           doc.setFontSize(9);
@@ -118,31 +154,18 @@ class PDFExportService {
             stat.title.length > 20
               ? stat.title.substring(0, 17) + '...'
               : stat.title;
-          doc.text(title, x + 5, y + 8, {maxWidth: statBoxWidth - 10});
+          doc.text(title, x + 5, y + 6, {maxWidth: statBoxWidth - 10});
 
           // Add stat value
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
           const value = stat.value;
-          doc.text(value, x + 5, y + 17, {maxWidth: statBoxWidth - 10});
-
-          // Add stat change if available
-          if (stat.trend) {
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            const changeText =
-              `${stat.trend || ''} ${stat.subtext || ''}`.trim();
-            if (changeText) {
-              doc.text(changeText.substring(0, 20), x + 5, y + 23, {
-                maxWidth: statBoxWidth - 10,
-              });
-            }
-          }
+          doc.text(value, x + 5, y + 16, {maxWidth: statBoxWidth - 10});
         });
       }
 
       // Determine table start position
-      const tableStartY = margin + (stats && stats.length > 0 ? 70 : 45);
+      const tableStartY = margin + (stats && stats.length > 0 ? 60 : 45);
 
       // Generate table based on autoTable availability
       if (autoTableLoaded && (doc as any).autoTable) {
@@ -164,7 +187,7 @@ class PDFExportService {
           item.requestId || item.id || 'N/A',
           item.clientName?.substring(0, 20) || 'N/A',
           item.accountType || 'N/A',
-          item.amount ? `$${item.amount.toFixed(2)}` : '$0.00',
+          item.amount ? formatCurrency(item.amount) : '$0.00',
           item.paymentProof?.label?.substring(0, 15) || 'N/A',
           item.status || 'N/A',
         ]);
@@ -202,7 +225,7 @@ class PDFExportService {
             1: {cellWidth: 25}, // Request ID
             2: {cellWidth: 30}, // Client Name
             3: {cellWidth: 20}, // Account Type
-            4: {cellWidth: 20}, // Amount
+            4: {cellWidth: 25}, // Amount
             5: {cellWidth: 25}, // Payment Proof
             6: {cellWidth: 15}, // Status
           },
@@ -254,7 +277,7 @@ class PDFExportService {
             item.requestId?.substring(0, 8) || 'N/A',
             item.clientName?.substring(0, 10) || 'N/A',
             item.accountType?.substring(0, 8) || 'N/A',
-            item.amount ? `$${item.amount}` : '$0.00',
+            item.amount ? formatCurrency(item.amount) : '$0.00',
             item.status?.substring(0, 10) || 'N/A',
           ].join(' | ');
 
@@ -287,7 +310,11 @@ class PDFExportService {
         (sum, item) => sum + (item.amount || 0),
         0,
       );
-      doc.text(`Total Amount: $${totalAmount.toFixed(2)}`, margin, finalY + 17);
+      doc.text(
+        `Total Amount: ${formatCurrency(totalAmount)}`,
+        margin,
+        finalY + 17,
+      );
 
       // Add company info
       doc.setFontSize(8);
@@ -342,7 +369,8 @@ class PDFExportService {
 
 const WalletReport: React.FC = () => {
   const [filters, setFilters] = useState({
-    dateRange: '',
+    startDate: '',
+    endDate: '',
     accountType: 'All Account Types',
     status: 'All Statuses',
     search: '',
@@ -355,48 +383,42 @@ const WalletReport: React.FC = () => {
   const {data: apiResponse, isLoading, isError, error} = useGetTopup();
 
   // Extract data from API response
-  const apiData = useMemo(() => {
-    if (!apiResponse) {
-      return {transactions: [], stats: {}};
-    }
+  const transactions = useMemo(() => {
+    if (!apiResponse) return [];
 
-    console.log('API Response:', apiResponse);
-    return {
-      transactions: apiResponse.transactions || [],
-      stats: apiResponse.stats || {},
-      rawData: apiResponse.rawData || apiResponse,
-    };
+    console.log('API Response Data:', apiResponse);
+
+    // Map API data to Transaction format
+    return apiResponse?.transactions?.map((item: any, index: number) => {
+      const status = getTransactionStatus(item);
+
+      return {
+        id: item.id,
+        requestId: item.id?.slice(-8) || `REQ-${10000 + index}`,
+        clientName: item.fullname || 'Unknown Client',
+        clientInitials: (item.fullname || 'UC')
+          .split(' ')
+          .map((n: string) => n[0])
+          .join(''),
+        clientColor: `bg-${(index % 10) + 1}`,
+        accountType: getAccountTypeDisplay(item.accountType),
+        amount: item.amount || 0,
+        date: item.createdAt,
+        formattedDate: formatDate(item.createdAt),
+        paymentProof: {
+          type: item.proof ? 'View' : 'No Proof',
+          label: item.proof ? 'View' : 'No Proof',
+          url: item.proof,
+        },
+        status: status,
+        email: item.email,
+        phoneNumber: item.phoneNumber,
+        isPending: item.isPending,
+        isRejected: item.isRejected,
+        rawAccountType: item.accountType,
+      };
+    });
   }, [apiResponse]);
-
-  // Transform API data to Transaction format if needed
-  const transformedData = useMemo(() => {
-    const transactions = apiData.transactions;
-
-    // If transactions are already in the correct format, return them
-    if (transactions.length > 0 && transactions[0].id) {
-      return transactions;
-    }
-
-    // Transform if needed - adjust based on your actual API response structure
-    return transactions.map((tx: any, index: number) => ({
-      id: tx.id || `REQ-${10000 + index}`,
-      requestId: tx.requestId || `#REQ-${10000 + index}`,
-      clientName: tx.clientName || tx.user?.fullname || 'Unknown Client',
-      clientInitials: getInitials(tx.clientName || tx.user?.fullname || 'UC'),
-      clientColor: getColorClass(index),
-      accountType: tx.accountType || 'E-Private',
-      amount: tx.amount || 0,
-      date:
-        tx.date ||
-        tx.createdAt?.split('T')[0] ||
-        new Date().toLocaleDateString(),
-      paymentProof: {
-        type: tx.paymentProof?.type || 'View',
-        label: tx.paymentProof?.label || 'View',
-      },
-      status: tx.status || 'Pending',
-    }));
-  }, [apiData.transactions]);
 
   // Helper function to get initials
   const getInitials = (name: string): string => {
@@ -428,7 +450,6 @@ const WalletReport: React.FC = () => {
 
   // Calculate stats from the data
   const calculatedStats = useMemo(() => {
-    const transactions = transformedData;
     const totalAmount = transactions.reduce(
       (sum, tx) => sum + (tx.amount || 0),
       0,
@@ -457,26 +478,17 @@ const WalletReport: React.FC = () => {
     return [
       {
         title: 'Total Top-Ups Value',
-        value: `$${totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
-        trend: '8.2%',
-        trendDirection: 'up',
-        subtext: 'vs last month',
+        value: formatAmount(totalAmount),
         icon: <FaRupeeSign />,
       },
       {
         title: 'Total Requests',
         value: transactions.length.toString(),
-        trend: '12.5%',
-        trendDirection: 'up',
-        subtext: 'volume increase',
         icon: <FaCopy />,
       },
       {
         title: 'Most Used Method',
-        value: mostUsedType ? mostUsedType[0] : 'Bank Transfer',
-        subtext: mostUsedType
-          ? `${Math.round((mostUsedType[1] / transactions.length) * 100)}% of total`
-          : '65% of total volume',
+        value: mostUsedType ? mostUsedType[0] : 'Private Account',
         icon: <IoMdRadioButtonOff />,
         highlightValue: true,
       },
@@ -487,23 +499,44 @@ const WalletReport: React.FC = () => {
         alert: pendingCount > 0,
       },
     ];
-  }, [transformedData]);
+  }, [transactions]);
 
   // Filter data
   const filteredData = useMemo(() => {
-    let data = [...transformedData];
+    let data = [...transactions];
+
+    // Apply date range filter
+    if (filters.startDate) {
+      const startDate = new Date(filters.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      data = data.filter((transaction) => {
+        const txDate = new Date(transaction.date);
+        return txDate >= startDate;
+      });
+    }
+
+    if (filters.endDate) {
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      data = data.filter((transaction) => {
+        const txDate = new Date(transaction.date);
+        return txDate <= endDate;
+      });
+    }
 
     // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       data = data.filter(
         (transaction) =>
-          (transaction.requestId &&
-            transaction.requestId.toLowerCase().includes(searchLower)) ||
+          (transaction.id &&
+            transaction.id.toLowerCase().includes(searchLower)) ||
           (transaction.clientName &&
             transaction.clientName.toLowerCase().includes(searchLower)) ||
-          (transaction.id &&
-            transaction.id.toLowerCase().includes(searchLower)),
+          (transaction.email &&
+            transaction.email.toLowerCase().includes(searchLower)) ||
+          (transaction.phoneNumber &&
+            transaction.phoneNumber.includes(searchLower)),
       );
     }
 
@@ -522,11 +555,11 @@ const WalletReport: React.FC = () => {
     }
 
     return data;
-  }, [transformedData, filters]);
+  }, [transactions, filters]);
 
   // PDF Export handler
   const handleExportPDF = async () => {
-    if (transformedData.length === 0) {
+    if (transactions.length === 0) {
       alert('No data available to export');
       return;
     }
@@ -535,7 +568,6 @@ const WalletReport: React.FC = () => {
     setExportProgress(0);
 
     try {
-      // Simulate progress for PDF export
       const progressInterval = setInterval(() => {
         setExportProgress((prev) => {
           if (prev >= 90) {
@@ -546,35 +578,19 @@ const WalletReport: React.FC = () => {
         });
       }, 100);
 
-      console.log(
-        `Starting PDF export with ${transformedData.length} records...`,
-      );
-      await PDFExportService.exportTableData(transformedData, calculatedStats);
+      console.log(`Starting PDF export with ${transactions.length} records...`);
+      await PDFExportService.exportTableData(transactions, calculatedStats);
 
       clearInterval(progressInterval);
       setExportProgress(100);
 
-      // Reset after successful export
       setTimeout(() => {
         setIsExporting(false);
         setExportProgress(0);
       }, 500);
     } catch (error) {
       console.error('Export error:', error);
-
-      // Provide specific error messages
-      let errorMessage = 'Failed to export PDF. Please try again.';
-      if (error instanceof Error) {
-        if (error.message.includes('jspdf')) {
-          errorMessage = `PDF Export Error: ${error.message}\n\nPlease ensure you have installed the required packages:\nnpm install jspdf jspdf-autotable`;
-        } else if (error.message.includes('No data')) {
-          errorMessage = 'No data available to export.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
-      alert(errorMessage);
+      alert('Failed to export PDF. Please try again.');
       setIsExporting(false);
       setExportProgress(0);
     }
@@ -598,22 +614,20 @@ const WalletReport: React.FC = () => {
       hour12: true,
     });
 
-    // Helper to get status text and colour (same as in table column)
     const getStatusClass = (status: string) => {
       const s = status?.toLowerCase() || 'pending';
-      if (s === 'completed' || s === 'approved') return 'status-completed';
+      if (s === 'completed') return 'status-completed';
       if (s === 'pending') return 'status-pending';
-      if (s === 'rejected' || s === 'declined') return 'status-rejected';
+      if (s === 'rejected') return 'status-rejected';
       return 'status-pending';
     };
 
-    // Build table rows
     const tableRows = filteredData
       .map(
         (item, idx) => `
       <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.date || 'N/A'}</td>
-        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace; color: #f5813d;">${item.requestId || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.formattedDate || 'N/A'}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace; color: #f5813d;">${item.id?.slice(-8) || 'N/A'}</td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">
           <div style="display: flex; align-items: center;">
             <div style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; margin-right: 8px; font-weight: bold; font-size: 11px; background: ${item.clientColor?.split(' ')[0] || '#e5e7eb'}; color: ${item.clientColor?.split(' ')[1] || '#000'};">${item.clientInitials || '??'}</div>
@@ -622,10 +636,10 @@ const WalletReport: React.FC = () => {
         </td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;"><span class="account-badge">${item.accountType || 'N/A'}</span></td>
         <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
-          <strong>$${(item.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+          <strong>${formatAmount(item.amount || 0)}</strong>
         </td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">
-          <span style="color: #f5813d; text-decoration: none;">${item.paymentProof?.label || 'View'}</span>
+          <span style="color: #f5813d; text-decoration: none;">${item.paymentProof?.label || 'No Proof'}</span>
         </td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">
           <span class="status ${getStatusClass(item.status)}">${item.status || 'Pending'}</span>
@@ -679,7 +693,6 @@ const WalletReport: React.FC = () => {
             <div class="stat-card">
               <div class="stat-title">${stat.title}</div>
               <div class="stat-value">${stat.value}</div>
-              ${stat.subtext ? `<div style="font-size: 11px; color: #6b7280; margin-top: 4px;">${stat.subtext}</div>` : ''}
             </div>
           `,
             )
@@ -735,14 +748,34 @@ const WalletReport: React.FC = () => {
     setFilters((prev) => ({...prev, [key]: value}));
   };
 
+  // Clear date filters
+  const handleClearDates = () => {
+    setFilters((prev) => ({
+      ...prev,
+      startDate: '',
+      endDate: '',
+    }));
+  };
+
   // Define table columns for GenericTable
   const columns: Column<Transaction>[] = [
     {
       header: 'Date',
-      accessor: 'date',
+      accessor: 'formattedDate',
       render: (item: Transaction) => (
         <div className="text-header-text text-sm font-medium dark:text-white">
-          {item.date || 'N/A'}
+          {item.formattedDate || 'N/A'}
+        </div>
+      ),
+      className: 'min-w-[100px]',
+      sortable: true,
+    },
+    {
+      header: 'Request ID',
+      accessor: 'id',
+      render: (item: Transaction) => (
+        <div className="font-mono text-sm font-medium text-primary">
+          {item.id?.slice(-8) || 'N/A'}
         </div>
       ),
       className: 'min-w-[100px]',
@@ -758,12 +791,15 @@ const WalletReport: React.FC = () => {
           >
             {item.clientInitials}
           </div>
-          <div className="text-header-text text-sm font-medium dark:text-white">
-            {item.clientName || 'Unknown Client'}
+          <div>
+            <div className="text-header-text text-sm font-medium dark:text-white">
+              {item.clientName || 'Unknown Client'}
+            </div>
+            <div className="text-secondary-text text-xs">{item.email}</div>
           </div>
         </div>
       ),
-      className: 'min-w-[150px]',
+      className: 'min-w-[200px]',
       sortable: true,
     },
     {
@@ -774,56 +810,40 @@ const WalletReport: React.FC = () => {
           {item.accountType || 'N/A'}
         </span>
       ),
-      className: 'min-w-[100px]',
+      className: 'min-w-[120px]',
     },
     {
       header: 'Amount',
       accessor: 'amount',
       render: (item: Transaction) => (
         <div className="text-header-text text-right text-sm font-bold dark:text-white">
-          $
-          {(item.amount || 0).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-          })}
+          {formatAmount(item.amount || 0)}
         </div>
       ),
       className: 'min-w-[100px] text-right',
       sortable: true,
     },
-    // {
-    //   header: 'Payment Proof',
-    //   accessor: 'paymentProof',
-    //   render: (item: Transaction) => {
-    //     const getProofIcon = (type: string) => {
-    //       switch (type) {
-    //         case 'View':
-    //           return <span className="mr-1">📎</span>;
-    //         case 'Image':
-    //           return <span className="mr-1">🖼️</span>;
-    //         case 'PDF':
-    //           return <span className="mr-1">📄</span>;
-    //         case 'Missing':
-    //           return <span className="mr-1">❌</span>;
-    //         default:
-    //           return null;
-    //       }
-    //     };
-
-    //     return (
-    //       <span
-    //         className={`inline-flex items-center gap-1 text-sm font-medium ${
-    //           (item.paymentProof?.type || 'View') === 'Missing'
-    //             ? 'text-gray-400 dark:text-gray-500'
-    //             : 'cursor-pointer text-primary hover:text-blue-600 dark:text-orange-400'
-    //         }`}
-    //       >
-    //         {getProofIcon(item.paymentProof?.type || 'View')}
-    //         {item.paymentProof?.label || 'View'}
-    //       </span>
-    //     );
-    //   },
-    //   className: 'min-w-[120px]',
-    // },
+    {
+      header: 'Payment Proof',
+      accessor: 'paymentProof',
+      render: (item: Transaction) => (
+        <div>
+          {item.paymentProof?.url ? (
+            <a
+              href={item.paymentProof.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {item.paymentProof.label || 'View'}
+            </a>
+          ) : (
+            <span className="text-secondary-text">No Proof</span>
+          )}
+        </div>
+      ),
+      className: 'min-w-[100px]',
+    },
     {
       header: 'Status',
       accessor: 'status',
@@ -834,10 +854,6 @@ const WalletReport: React.FC = () => {
           Pending:
             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
           Rejected:
-            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-          Approved:
-            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-          Declined:
             'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
         };
 
@@ -852,11 +868,11 @@ const WalletReport: React.FC = () => {
           >
             <span
               className={`size-1.5 rounded-full ${
-                status === 'Completed' || status === 'Approved'
+                status === 'Completed'
                   ? 'bg-emerald-500'
                   : status === 'Pending'
                     ? 'bg-yellow-500'
-                    : status === 'Rejected' || status === 'Declined'
+                    : status === 'Rejected'
                       ? 'bg-red-500'
                       : 'bg-gray-500'
               }`}
@@ -907,10 +923,6 @@ const WalletReport: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {error?.message || 'Failed to load wallet top-up data'}
           </p>
-          <div className="text-gray-500 space-y-2 text-sm">
-            <p>API URL: /admin/transaction/pending/topup</p>
-            <p>Check browser console for detailed error information</p>
-          </div>
           <button
             onClick={() => window.location.reload()}
             className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-white"
@@ -936,9 +948,9 @@ const WalletReport: React.FC = () => {
                 Detailed log of all wallet funding requests, payment proofs, and
                 verification status
               </p>
-              {transformedData.length > 0 && (
+              {transactions.length > 0 && (
                 <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-                  Showing {filteredData.length} of {transformedData.length}{' '}
+                  Showing {filteredData.length} of {transactions.length}{' '}
                   transactions
                 </p>
               )}
@@ -947,9 +959,9 @@ const WalletReport: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleExportPDF}
-                disabled={isExporting || transformedData.length === 0}
+                disabled={isExporting || transactions.length === 0}
                 className={`border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 relative flex h-10 items-center gap-2 overflow-hidden rounded-lg border bg-white px-4 text-sm font-semibold transition-colors ${
-                  isExporting || transformedData.length === 0
+                  isExporting || transactions.length === 0
                     ? 'cursor-not-allowed opacity-50'
                     : ''
                 }`}
@@ -959,9 +971,7 @@ const WalletReport: React.FC = () => {
                   <>
                     <div className="border-gray-300 border-t-gray-600 h-4 w-4 animate-spin rounded-full border-2"></div>
                     <span>Exporting... {exportProgress}%</span>
-                    {/* Progress bar background */}
                     <div className="bg-gray-200 absolute bottom-0 left-0 h-0.5 w-full">
-                      {/* Progress bar fill */}
                       <div
                         className="h-full bg-green-500 transition-all duration-300 ease-out"
                         style={{width: `${exportProgress}%`}}
@@ -979,7 +989,7 @@ const WalletReport: React.FC = () => {
               <button
                 onClick={handlePrint}
                 className="flex h-10 items-center gap-2 whitespace-nowrap rounded-lg bg-orange-500 px-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
-                disabled={transformedData.length === 0}
+                disabled={transactions.length === 0}
               >
                 <MdPrint className="text-lg" />
                 <span>Print</span>
@@ -996,9 +1006,6 @@ const WalletReport: React.FC = () => {
                 key={index}
                 title={stat.title}
                 value={stat.value}
-                trend={stat.trend}
-                trendDirection={stat.trendDirection as any}
-                subtext={stat.subtext}
                 icon={<span className="text-xl">{stat.icon}</span>}
                 highlightValue={stat.highlightValue}
                 alert={stat.alert}
@@ -1013,20 +1020,33 @@ const WalletReport: React.FC = () => {
           <div className="dark:border-gray-800 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm dark:bg-[#111a22]">
             <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
               <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
-                {/* Date Picker */}
-                <div className="relative min-w-[200px] flex-1 lg:flex-none">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MdCalendarToday className="text-secondary-text text-lg" />
+                {/* Date Range Filters - Responsive */}
+                <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
+                  {/* Start Date Picker */}
+                  <div className="relative min-w-[140px] flex-1 sm:min-w-[150px]">
+                    <input
+                      type="date"
+                      value={filters.startDate}
+                      onChange={(e) =>
+                        handleFilterChange('startDate', e.target.value)
+                      }
+                      className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white px-3 py-2 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white sm:py-2.5 sm:text-sm"
+                      placeholder="Start Date"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={filters.dateRange}
-                    onChange={(e) =>
-                      handleFilterChange('dateRange', e.target.value)
-                    }
-                    className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-                    placeholder="Select date range..."
-                  />
+
+                  {/* End Date Picker */}
+                  <div className="relative min-w-[140px] flex-1 sm:min-w-[150px]">
+                    <input
+                      type="date"
+                      value={filters.endDate}
+                      onChange={(e) =>
+                        handleFilterChange('endDate', e.target.value)
+                      }
+                      className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white px-3 py-2 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white sm:py-2.5 sm:text-sm"
+                      placeholder="End Date"
+                    />
+                  </div>
                 </div>
 
                 {/* Account Type Dropdown */}
@@ -1039,9 +1059,8 @@ const WalletReport: React.FC = () => {
                     className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
                   >
                     <option>All Account Types</option>
-                    <option>E-Private</option>
-                    <option>Temp</option>
-                    <option>Corporate</option>
+                    <option value="Private Account">Private Account</option>
+                    <option value="Temporary Account">Temporary Account</option>
                   </select>
                   <div className="text-secondary-text pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <MdExpandMore className="text-xl" />
@@ -1058,11 +1077,9 @@ const WalletReport: React.FC = () => {
                     className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
                   >
                     <option>All Statuses</option>
-                    <option>Completed</option>
-                    <option>Pending</option>
-                    <option>Rejected</option>
-                    <option>Approved</option>
-                    <option>Declined</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Rejected">Rejected</option>
                   </select>
                   <div className="text-secondary-text pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
                     <MdExpandMore className="text-xl" />
@@ -1080,7 +1097,7 @@ const WalletReport: React.FC = () => {
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
                   className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-                  placeholder="Search client, ID..."
+                  placeholder="Search by name, email, phone..."
                 />
               </div>
             </div>
@@ -1089,7 +1106,7 @@ const WalletReport: React.FC = () => {
           {/* Table */}
           <div className="dark:border-gray-700 dark:bg-gray-800 overflow-hidden bg-white shadow-sm">
             <div className="flex-1">
-              {transformedData.length === 0 ? (
+              {transactions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <svg
                     className="text-gray-400 mb-4 h-12 w-12"
@@ -1129,6 +1146,20 @@ const WalletReport: React.FC = () => {
                   <p className="text-gray-500 mb-4">
                     Try adjusting your search or filters
                   </p>
+                  <button
+                    onClick={() =>
+                      setFilters({
+                        startDate: '',
+                        endDate: '',
+                        accountType: 'All Account Types',
+                        status: 'All Statuses',
+                        search: '',
+                      })
+                    }
+                    className="text-primary hover:underline"
+                  >
+                    Clear all filters
+                  </button>
                 </div>
               ) : (
                 <GenericTable
@@ -1142,8 +1173,6 @@ const WalletReport: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Export Instructions */}
         </div>
       </div>
     </div>

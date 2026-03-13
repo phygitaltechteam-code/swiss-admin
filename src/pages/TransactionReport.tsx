@@ -1,10 +1,21 @@
 import React, {useState, useMemo} from 'react';
-import {MdPrint} from 'react-icons/md';
+import {MdPrint, MdSearch} from 'react-icons/md';
 import {FaFileCsv} from 'react-icons/fa';
 import StatsCard from '@/components/transactionreport/StatsCard';
 import ChartSection from '@/components/transactionreport/ChartSection';
 import GenericTable, {Column} from '@/components/Forms/Table/GenericTable';
 import {useGetAllTransactions} from '@/lib/react-query/transfer';
+
+// Helper function for formatting currency with M/k suffixes
+const formatCurrency = (amount: number): string => {
+  if (amount === undefined || amount === null) return '$0';
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(1)}k`;
+  }
+  return `$${amount.toFixed(2)}`;
+};
 
 // ------------------------------------------------------------------
 // 1. TYPES
@@ -310,15 +321,15 @@ const TransactionReport: React.FC = () => {
         <div class="stats">
           <div class="stat-card">
             <div class="stat-title">Total Fees Collected</div>
-            <div class="stat-value">$${totalFees.toFixed(2)}</div>
+            <div class="stat-value">${formatCurrency(totalFees)}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Average Fee per Transaction</div>
-            <div class="stat-value">$${averageFee.toFixed(2)}</div>
+            <div class="stat-value">${formatCurrency(averageFee)}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Total Transaction Amount</div>
-            <div class="stat-value">$${totalAmount.toFixed(2)}</div>
+            <div class="stat-value">${formatCurrency(totalAmount)}</div>
           </div>
         </div>
 
@@ -428,22 +439,22 @@ const TransactionReport: React.FC = () => {
       className: 'min-w-[100px] text-right',
       sortable: true,
     },
-    {
-      header: 'Fee Type',
-      accessor: 'feeType',
-      render: (item) => (
-        <div className="text-secondary-text dark:text-gray-400 text-center text-sm">
-          {item.feeType}
-        </div>
-      ),
-      className: 'min-w-[100px] text-center',
-    },
+    // {
+    //   header: 'Fee Type',
+    //   accessor: 'feeType',
+    //   render: (item) => (
+    //     <div className="text-secondary-text dark:text-gray-400 text-center text-sm">
+    //       {item.feeType}
+    //     </div>
+    //   ),
+    //   className: 'min-w-[100px] text-center',
+    // },
     {
       header: 'Total Fee Charged',
       accessor: 'totalFeeCharged',
       render: (item) => (
         <div className="text-right text-sm font-bold text-primary dark:text-orange-400">
-          ${item.totalFeeCharged.toFixed(2)}
+          {formatCurrency(item.totalFeeCharged)}
         </div>
       ),
       className: 'min-w-[120px] text-right',
@@ -488,8 +499,8 @@ const TransactionReport: React.FC = () => {
                 Transaction Fee Report
               </h2>
               <p className="text-secondary-text dark:text-gray-400 mt-1 text-sm">
-                {filteredData.length} transactions • fees collected: $
-                {totalFees.toFixed(2)}
+                {filteredData.length} transactions • fees collected:{' '}
+                {formatCurrency(totalFees)}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -511,18 +522,18 @@ const TransactionReport: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Now using formatCurrency for display */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <StatsCard
             title="Total Fees Collected"
-            value={`$${totalFees.toLocaleString('en-US', {minimumFractionDigits: 2})}`}
+            value={formatCurrency(totalFees)}
             trend={8.2}
             trendLabel="vs last month"
             iconType="money"
           />
           <StatsCard
             title="Average Fee per Transaction"
-            value={`$${averageFee.toFixed(2)}`}
+            value={formatCurrency(averageFee)}
             trend={0}
             trendLabel="stable"
             iconType="analytics"
@@ -559,7 +570,7 @@ const TransactionReport: React.FC = () => {
             <div className="relative w-full lg:w-64">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <span className="text-secondary-text dark:text-gray-400 text-lg">
-                  🔍
+                  <MdSearch className="text-lg" />
                 </span>
               </div>
               <input
@@ -572,11 +583,6 @@ const TransactionReport: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* ---------- DEBUG PANEL (uncomment if needed) ---------- */}
-        {/* <pre className="mt-4 rounded bg-gray-100 p-4 text-xs dark:bg-gray-900">
-          {JSON.stringify({ allTransactions, filteredData, chartData }, null, 2)}
-        </pre> */}
 
         {/* Table */}
         <div id="fee-report-content">

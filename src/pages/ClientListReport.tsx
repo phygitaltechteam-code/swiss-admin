@@ -17,6 +17,7 @@ import {
   MdTrendingDown,
   MdPictureAsPdf,
   MdPrint,
+  MdClose,
 } from 'react-icons/md';
 
 // Types based on your API response
@@ -93,7 +94,7 @@ const StatCard: React.FC<StatCardProps> = ({stat}) => {
   const Icon = stat.icon;
 
   return (
-    <div className="border-gray-200 dark:border-gray-700 dark:bg-gray-800 flex flex-col gap-1 rounded-xl border bg-white p-5 shadow-sm">
+    <div className="dark:border-gray-700 dark:bg-gray-800 flex flex-col gap-1 rounded-xl border border-stroke bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md">
       <div className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.color.split(' ')[0]} ${stat.color.split(' ')[1]}`}
@@ -105,7 +106,7 @@ const StatCard: React.FC<StatCardProps> = ({stat}) => {
       <p className="text-gray-900 mt-1 text-2xl font-bold dark:text-white">
         {stat.value}
       </p>
-      <div className="mt-2 flex items-center gap-1">
+      {/* <div className="mt-2 flex items-center gap-1">
         <span
           className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${
             stat.trend === 'up'
@@ -118,7 +119,7 @@ const StatCard: React.FC<StatCardProps> = ({stat}) => {
         <span className="text-gray-500 dark:text-gray-400 text-xs">
           {stat.changeLabel}
         </span>
-      </div>
+      </div> */}
     </div>
   );
 };
@@ -131,365 +132,45 @@ const getStatus = (client: ApiClient): string => {
   return 'Active';
 };
 
-// Helper function to determine account type
-const getAccountType = (client: ApiClient): string => {
-  const totalBalance =
-    (client.wallets?.[0]?.eprivateAccount || 0) +
-    (client.wallets?.[0]?.temporyAccount || 0);
-
-  if (totalBalance >= 100000) return 'Premium';
-  if (totalBalance >= 50000) return 'Standard';
-  return 'Basic';
+// Helper function to determine account type based on balance with million limit
+const getAccountType = (balance: number): string => {
+  // Limit to million (10,00,000)
+  if (balance >= 1000000) return 'Premium';
+  if (balance >= 500000) return 'Standard';
+  if (balance >= 100000) return 'Basic';
+  return 'Regular';
 };
 
-// Helper function to calculate total balance
+// Helper function to calculate total balance (in rupees)
 const getTotalBalance = (client: ApiClient): number => {
-  return (
-    (client.wallets?.[0]?.eprivateAccount || 0) +
-    (client.wallets?.[0]?.temporyAccount || 0)
-  );
+  const balance =
+    ((client.wallets?.[0]?.eprivateAccount || 0) +
+      (client.wallets?.[0]?.temporyAccount || 0)) /
+    100; // Convert from cents/paisa to rupees
+
+  // Cap at 1 million for display purposes
+  return Math.min(balance, 1000000);
 };
 
 // Format currency helper
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 };
 
 // Format compact currency for stats
 const formatCompactCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(amount);
 };
-
-// PDF Export Service - Separate from React component
-class PDFExportService {
-  static async generateClientReport(
-    data: ClientRow[],
-    stats: any[],
-    filename: string = 'clients_report.pdf',
-  ): Promise<void> {
-    try {
-      // Check if data is empty
-      if (!data || data.length === 0) {
-        throw new Error('No data available to export');
-      }
-
-      // Check if we're in browser environment
-      if (typeof window === 'undefined') {
-        throw new Error(
-          'PDF generation is only available in browser environment',
-        );
-      }
-
-      // Dynamically import jsPDF
-      let jsPDFModule;
-      try {
-        jsPDFModule = await import('jspdf');
-        console.log('jsPDF loaded successfully');
-      } catch (error) {
-        console.error('Failed to import jsPDF:', error);
-        throw new Error(
-          'PDF library (jspdf) is not installed. Please install it using: npm install jspdf jspdf-autotable',
-        );
-      }
-
-      const {jsPDF} = jsPDFModule;
-
-      if (!jsPDF || typeof jsPDF !== 'function') {
-        throw new Error('Failed to initialize PDF library');
-      }
-
-      // Try to load autoTable
-      let autoTableLoaded = false;
-      try {
-        await import('jspdf-autotable');
-        autoTableLoaded = true;
-        console.log('AutoTable loaded successfully');
-      } catch (error) {
-        console.warn(
-          'AutoTable not available, using basic table generation:',
-          error,
-        );
-        autoTableLoaded = false;
-      }
-
-      const doc = new jsPDF('landscape');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 15;
-
-      // Add title
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Client List Report', pageWidth / 2, margin, {align: 'center'});
-
-      // Add generation date
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(
-        `Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
-        pageWidth / 2,
-        margin + 10,
-        {align: 'center'},
-      );
-
-      // Add statistics section if available
-      if (stats && stats.length > 0) {
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Summary Statistics', margin, margin + 25);
-
-        // Create stats boxes
-        const statsStartY = margin + 35;
-        const statBoxWidth =
-          (pageWidth - 2 * margin - 15) / Math.min(stats.length, 5);
-
-        stats.forEach((stat, index) => {
-          if (index >= 5) return; // Limit to 5 stats per row
-
-          const x = margin + index * (statBoxWidth + 5);
-          const y = statsStartY;
-
-          // Draw stat box
-          doc.setDrawColor(200, 200, 200);
-          doc.setFillColor(245, 245, 245);
-          doc.rect(x, y, statBoxWidth, 25, 'FD');
-
-          // Add stat title
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          const title =
-            stat.title.length > 15
-              ? stat.title.substring(0, 12) + '...'
-              : stat.title;
-          doc.text(title, x + 5, y + 8, {maxWidth: statBoxWidth - 10});
-
-          // Add stat value
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          const value = stat.value;
-          doc.text(value, x + 5, y + 17, {maxWidth: statBoxWidth - 10});
-
-          // Add stat change
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          const changeText =
-            `${stat.change || ''} ${stat.changeLabel || ''}`.trim();
-          if (changeText) {
-            doc.text(changeText.substring(0, 20), x + 5, y + 23, {
-              maxWidth: statBoxWidth - 10,
-            });
-          }
-        });
-      }
-
-      // Determine table start position
-      const tableStartY = margin + (stats && stats.length > 0 ? 70 : 45);
-
-      // Generate table based on autoTable availability
-      if (autoTableLoaded && (doc as any).autoTable) {
-        // Prepare table data for autoTable
-        const headers = [
-          [
-            '#',
-            'Client Name',
-            'Email',
-            'Phone',
-            'Account Number',
-            'Account Type',
-            'Balance',
-            'Status',
-            'Transactions',
-            'Join Date',
-          ],
-        ];
-
-        const tableData = data.map((item, index) => [
-          (index + 1).toString(),
-          item.name.substring(0, 20),
-          item.email.substring(0, 25),
-          item.phone || 'N/A',
-          item.accountNumber.substring(0, 15) || 'N/A',
-          item.accountType,
-          formatCurrency(item.balance),
-          item.status,
-          item.transactions.toString(),
-          new Date(item.createdAt).toLocaleDateString(),
-        ]);
-
-        // Configure and generate autoTable
-        (doc as any).autoTable({
-          startY: tableStartY,
-          head: headers,
-          body: tableData,
-          theme: 'grid',
-          headStyles: {
-            fillColor: [41, 128, 185],
-            textColor: 255,
-            fontStyle: 'bold',
-            fontSize: 8,
-            cellPadding: 3,
-          },
-          bodyStyles: {
-            fontSize: 7,
-            cellPadding: 2,
-            overflow: 'linebreak',
-          },
-          alternateRowStyles: {
-            fillColor: [245, 245, 245],
-          },
-          margin: {top: 10},
-          styles: {
-            overflow: 'linebreak',
-            cellPadding: 2,
-            fontSize: 7,
-            valign: 'middle',
-          },
-          columnStyles: {
-            0: {cellWidth: 8}, // Index
-            1: {cellWidth: 25}, // Name
-            2: {cellWidth: 30}, // Email
-            3: {cellWidth: 18}, // Phone
-            4: {cellWidth: 22}, // Account Number
-            5: {cellWidth: 16}, // Account Type
-            6: {cellWidth: 20}, // Balance
-            7: {cellWidth: 15}, // Status
-            8: {cellWidth: 15}, // Transactions
-            9: {cellWidth: 18}, // Join Date
-          },
-          didDrawPage: (data: any) => {
-            // Add page number
-            doc.setFontSize(8);
-            doc.text(
-              `Page ${data.pageNumber}`,
-              data.settings.margin.left,
-              doc.internal.pageSize.height - 10,
-            );
-          },
-        });
-      } else {
-        // Fallback: Simple table without autoTable
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Client List (Limited Preview)', margin, tableStartY);
-
-        // Simple header
-        const headers = ['No.', 'Name', 'Email', 'Balance', 'Status'];
-        let currentY = tableStartY + 10;
-
-        // Draw header
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.text(headers.join(' | '), margin, currentY);
-        currentY += 6;
-
-        // Draw separator
-        doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 4;
-
-        // Draw data rows (limited to 30 for performance)
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        data.slice(0, 30).forEach((item, index) => {
-          if (currentY > pageHeight - 20) {
-            doc.addPage();
-            currentY = margin;
-          }
-
-          const row = [
-            (index + 1).toString(),
-            item.name.substring(0, 15),
-            item.email.substring(0, 15),
-            formatCurrency(item.balance),
-            item.status.substring(0, 10),
-          ].join(' | ');
-
-          doc.text(row, margin, currentY);
-          currentY += 5;
-        });
-
-        // Add note about limited data
-        if (data.length > 30) {
-          doc.setFontSize(7);
-          doc.setFont('helvetica', 'italic');
-          doc.text(
-            `Note: Showing 30 of ${data.length} records. Install jspdf-autotable for full table.`,
-            margin,
-            currentY + 5,
-          );
-        }
-      }
-
-      // Get final Y position for footer
-      const finalY = (doc as any)?.lastAutoTable?.finalY || tableStartY + 150;
-
-      // Add footer
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'italic');
-      doc.text(`Total Clients: ${data.length}`, margin, finalY + 10);
-
-      // Add company info
-      doc.setFontSize(8);
-      doc.text('Client Management System © 2024', pageWidth / 2, finalY + 10, {
-        align: 'center',
-      });
-
-      // Add export info
-      doc.text(
-        `Exported by: ${window.location.hostname}`,
-        pageWidth - margin,
-        finalY + 10,
-        {align: 'right'},
-      );
-
-      // Save the PDF
-      doc.save(filename);
-
-      console.log(
-        `PDF exported successfully: ${filename}, ${data.length} records`,
-      );
-      return Promise.resolve();
-    } catch (error) {
-      console.error('Error in PDF generation:', error);
-
-      // Provide detailed error information
-      if (error instanceof Error) {
-        if (error.message.includes('jspdf')) {
-          throw new Error(
-            'PDF library error. Please ensure jspdf is installed: npm install jspdf jspdf-autotable',
-          );
-        } else if (error.message.includes('No data')) {
-          throw new Error('No data available to export.');
-        } else if (error.message.includes('browser')) {
-          throw new Error('PDF generation requires a browser environment.');
-        }
-        throw new Error(`PDF Generation Error: ${error.message}`);
-      }
-
-      throw new Error('Failed to generate PDF. Please try again.');
-    }
-  }
-
-  static async exportTableData(
-    data: ClientRow[],
-    stats: any[],
-    exportAll: boolean,
-  ): Promise<void> {
-    const filename = exportAll
-      ? 'all_clients_report.pdf'
-      : 'filtered_clients_report.pdf';
-    await this.generateClientReport(data, stats, filename);
-  }
-}
 
 // Main Page Component
 const ClientListReport: React.FC = () => {
@@ -534,11 +215,10 @@ const ClientListReport: React.FC = () => {
       return status === 'Active';
     }).length;
 
-    // Calculate total balance
-    const totalBalance =
-      rawClientData.reduce((sum, client) => {
-        return sum + getTotalBalance(client);
-      }, 0) / 100; // Divide by 100 if balance is in cents
+    // Calculate total balance (capped at 1 million per client for stats)
+    const totalBalance = rawClientData.reduce((sum, client) => {
+      return sum + getTotalBalance(client);
+    }, 0);
 
     // Calculate average transactions per client
     const totalTransactions = rawClientData.reduce((sum, client) => {
@@ -553,7 +233,13 @@ const ClientListReport: React.FC = () => {
       (client) => client.user?.isVerified,
     ).length;
 
-    // Calculate percentage changes (for demo, you can replace with real data)
+    // Calculate premium clients (balance >= 1 million)
+    const premiumClients = rawClientData.filter((client) => {
+      const balance = getTotalBalance(client);
+      return balance >= 1000000;
+    }).length;
+
+    // Calculate percentage changes (for demo)
     const clientGrowth = totalClients > 0 ? '+12%' : '+0%';
     const activeGrowth = activeClients > 0 ? '+8%' : '+0%';
     const balanceGrowth = totalBalance > 0 ? '+15%' : '+0%';
@@ -562,7 +248,7 @@ const ClientListReport: React.FC = () => {
     return [
       {
         title: 'Total Clients',
-        value: totalClients.toLocaleString(),
+        value: totalClients.toLocaleString('en-IN'),
         change: clientGrowth,
         changeLabel: 'vs last month',
         icon: MdPerson,
@@ -571,7 +257,7 @@ const ClientListReport: React.FC = () => {
       },
       {
         title: 'Active Clients',
-        value: activeClients.toLocaleString(),
+        value: activeClients.toLocaleString('en-IN'),
         change: activeGrowth,
         changeLabel: 'vs last month',
         icon: MdOutlineAccountBalance,
@@ -579,10 +265,10 @@ const ClientListReport: React.FC = () => {
         trend: 'up' as const,
       },
       {
-        title: 'Total Balance',
-        value: formatCompactCurrency(totalBalance),
-        change: balanceGrowth,
-        changeLabel: 'vs last quarter',
+        title: 'Premium Clients',
+        value: premiumClients.toLocaleString('en-IN'),
+        change: '+5%',
+        changeLabel: 'vs last month',
         icon: MdAttachMoney,
         color: 'bg-orange-100 text-orange-600',
         trend: 'up' as const,
@@ -600,8 +286,8 @@ const ClientListReport: React.FC = () => {
       },
       {
         title: 'Verified Clients',
-        value: verifiedClients.toString(),
-        change: verifiedClients > 0 ? '+5%' : '+0%',
+        value: verifiedClients.toLocaleString('en-IN'),
+        change: '+5%',
         changeLabel: 'vs last month',
         icon: MdCheckCircle,
         color: 'bg-orange-100 text-orange-600',
@@ -610,7 +296,7 @@ const ClientListReport: React.FC = () => {
     ];
   }, [rawClientData]);
 
-  // Transform API data to ClientRow format
+  // Transform API data to ClientRow format with million limit
   const clientData: ClientRow[] = useMemo(() => {
     console.log('Transforming', rawClientData.length, 'clients');
 
@@ -625,8 +311,8 @@ const ClientListReport: React.FC = () => {
         city: client.city || 'N/A',
         state: client.state || 'N/A',
         accountNumber: client.accountNumber || 'N/A',
-        accountType: getAccountType(client),
-        balance: balance / 100, // Assuming balance is in cents/paisa
+        accountType: getAccountType(balance),
+        balance: balance, // Already capped at 1 million
         status: getStatus(client),
         transactions: client._count?.senderTransactions || 0,
         createdAt: client.createdAt,
@@ -638,38 +324,47 @@ const ClientListReport: React.FC = () => {
   }, [rawClientData]);
 
   // Filter data
-  const filteredData = clientData.filter((item) => {
-    if (
-      searchQuery &&
-      !item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !item.email.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !item.accountNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !item.phone.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
+  const filteredData = useMemo(() => {
+    return clientData.filter((item) => {
+      // Search filter
+      if (
+        searchQuery &&
+        !item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !item.email.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !item.accountNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !item.phone.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
 
-    if (
-      accountTypeFilter &&
-      accountTypeFilter !== '' &&
-      accountTypeFilter !== 'All Types' &&
-      item.accountType.toLowerCase() !== accountTypeFilter.toLowerCase()
-    ) {
-      return false;
-    }
+      // Account type filter
+      if (accountTypeFilter && accountTypeFilter !== '') {
+        if (accountTypeFilter === 'premium' && item.accountType !== 'Premium')
+          return false;
+        if (accountTypeFilter === 'standard' && item.accountType !== 'Standard')
+          return false;
+        if (accountTypeFilter === 'basic' && item.accountType !== 'Basic')
+          return false;
+        if (accountTypeFilter === 'regular' && item.accountType !== 'Regular')
+          return false;
+      }
 
-    if (
-      statusFilter &&
-      statusFilter !== '' &&
-      statusFilter !== 'All Status' &&
-      item.status.toLowerCase() !== statusFilter.toLowerCase()
-    ) {
-      return false;
-    }
+      // Status filter
+      if (statusFilter && statusFilter !== '') {
+        if (statusFilter === 'active' && item.status !== 'Active') return false;
+        if (statusFilter === 'inactive' && item.status !== 'Inactive')
+          return false;
+        if (statusFilter === 'pending' && item.status !== 'Pending')
+          return false;
+        if (statusFilter === 'rejected' && item.status !== 'Rejected')
+          return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [clientData, searchQuery, accountTypeFilter, statusFilter]);
 
+  // Handle print
   const handlePrint = () => {
     if (filteredData.length === 0) {
       alert('No data to print. Adjust your filters and try again.');
@@ -688,6 +383,9 @@ const ClientListReport: React.FC = () => {
           totalClients
         : 0;
     const verifiedClients = filteredData.filter((c) => c.isVerified).length;
+    const premiumClients = filteredData.filter(
+      (c) => c.accountType === 'Premium',
+    ).length;
 
     // Current date/time
     const now = new Date();
@@ -705,10 +403,14 @@ const ClientListReport: React.FC = () => {
     // Build filter summary
     const filterParts = [];
     if (searchQuery) filterParts.push(`Search: "${searchQuery}"`);
-    if (accountTypeFilter && accountTypeFilter !== 'All Types')
-      filterParts.push(`Account Type: ${accountTypeFilter}`);
-    if (statusFilter && statusFilter !== 'All Status')
-      filterParts.push(`Status: ${statusFilter}`);
+    if (accountTypeFilter && accountTypeFilter !== '')
+      filterParts.push(
+        `Account Type: ${accountTypeFilter.charAt(0).toUpperCase() + accountTypeFilter.slice(1)}`,
+      );
+    if (statusFilter && statusFilter !== '')
+      filterParts.push(
+        `Status: ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`,
+      );
     const filterSummary = filterParts.length
       ? filterParts.join(' • ')
       : 'No filters applied';
@@ -780,6 +482,12 @@ const ClientListReport: React.FC = () => {
           @media print {
             body { margin: 0.5in; }
           }
+          @media (max-width: 768px) {
+            .stats { flex-direction: column; }
+            .stat-card { width: 100%; }
+            table { font-size: 10px; }
+            td, th { padding: 4px; }
+          }
         </style>
       </head>
       <body>
@@ -801,12 +509,12 @@ const ClientListReport: React.FC = () => {
             <div class="stat-value">${activeClients}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-title">Total Balance</div>
-            <div class="stat-value">${formatCurrency(totalBalance)}</div>
+            <div class="stat-title">Premium Clients</div>
+            <div class="stat-value">${premiumClients}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-title">Avg. Transactions</div>
-            <div class="stat-value">${avgTransactions.toFixed(1)}</div>
+            <div class="stat-title">Total Balance</div>
+            <div class="stat-value">${formatCurrency(totalBalance)}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">Verified Clients</div>
@@ -864,6 +572,13 @@ const ClientListReport: React.FC = () => {
     }, 250);
   };
 
+  // Handle clear filters
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setAccountTypeFilter('');
+    setStatusFilter('');
+  };
+
   // Define columns for GenericTable
   const columns: Column<ClientRow>[] = [
     {
@@ -874,26 +589,26 @@ const ClientListReport: React.FC = () => {
           <span className="text-gray-900 text-sm font-semibold dark:text-white">
             {item.name}
           </span>
-          <span className="text-gray-500 dark:text-gray-400 text-xs">
+          <span className="text-gray-500 dark:text-gray-400 max-w-[150px] truncate text-xs sm:max-w-[200px]">
             {item.email}
           </span>
-          <div className="mt-1 flex items-center gap-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1">
             {item.isVerified && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                <MdCheckCircle className="h-3 w-3" />
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <MdCheckCircle className="h-2.5 w-2.5" />
                 Verified
               </span>
             )}
             {item.isRejected && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                <MdCancel className="h-3 w-3" />
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                <MdCancel className="h-2.5 w-2.5" />
                 Rejected
               </span>
             )}
           </div>
         </div>
       ),
-      className: 'min-w-[200px]',
+      className: 'min-w-[180px] sm:min-w-[220px]',
       sortable: true,
     },
     {
@@ -904,19 +619,19 @@ const ClientListReport: React.FC = () => {
           <span className="text-gray-900 text-sm dark:text-white">
             {item.phone}
           </span>
-          <span className="text-gray-500 dark:text-gray-400 text-xs">
+          <span className="text-gray-500 dark:text-gray-400 max-w-[100px] truncate text-xs">
             {item.city}, {item.state}
           </span>
         </div>
       ),
-      className: 'min-w-[140px]',
+      className: 'min-w-[120px] sm:min-w-[150px]',
     },
     {
       header: 'Account Details',
       accessor: 'accountNumber',
       render: (item) => (
         <div className="flex flex-col">
-          <span className="text-gray-900 text-sm font-medium dark:text-white">
+          <span className="text-gray-900 max-w-[120px] truncate text-sm font-medium dark:text-white">
             {item.accountNumber}
           </span>
           <span className="text-gray-500 dark:text-gray-400 text-xs">
@@ -924,7 +639,7 @@ const ClientListReport: React.FC = () => {
           </span>
         </div>
       ),
-      className: 'min-w-[140px]',
+      className: 'min-w-[120px] sm:min-w-[150px]',
     },
     {
       header: 'Balance',
@@ -934,31 +649,37 @@ const ClientListReport: React.FC = () => {
           {formatCurrency(item.balance)}
         </span>
       ),
-      className: 'min-w-[120px]',
+      className: 'min-w-[100px] sm:min-w-[120px]',
       sortable: true,
     },
     {
       header: 'Status',
       accessor: 'status',
       render: (item) => {
-        const getStatusIcon = () => {
-          switch (item.status) {
-            case 'Active':
-              return;
-            case 'Pending':
-              return;
-            case 'Rejected':
-              return;
-            case 'Inactive':
-              return;
-            default:
-              return null;
-          }
+        const statusColors = {
+          Active:
+            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+          Inactive:
+            'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+          Pending:
+            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+          Rejected:
+            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
         };
 
-        return <span>{item.status}</span>;
+        const colorClass =
+          statusColors[item.status as keyof typeof statusColors] ||
+          statusColors.Pending;
+
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${colorClass}`}
+          >
+            {item.status}
+          </span>
+        );
       },
-      className: 'min-w-[110px]',
+      className: 'min-w-[100px]',
     },
     {
       header: 'Transactions',
@@ -969,11 +690,11 @@ const ClientListReport: React.FC = () => {
             {item.transactions}
           </span>
           <span className="text-gray-500 dark:text-gray-400 text-xs">
-            {item.transactions > 0 ? 'Completed' : 'No transactions'}
+            {item.transactions > 0 ? 'Completed' : 'No txns'}
           </span>
         </div>
       ),
-      className: 'min-w-[120px]',
+      className: 'min-w-[100px] sm:min-w-[120px]',
       sortable: true,
     },
     {
@@ -982,14 +703,14 @@ const ClientListReport: React.FC = () => {
       render: (item) => (
         <div className="flex flex-col">
           <span className="text-gray-900 text-sm dark:text-white">
-            {new Date(item.createdAt).toLocaleDateString()}
+            {new Date(item.createdAt).toLocaleDateString('en-IN')}
           </span>
           <span className="text-gray-500 dark:text-gray-400 text-xs">
-            Last: {new Date(item.updatedAt).toLocaleDateString()}
+            Updated: {new Date(item.updatedAt).toLocaleDateString('en-IN')}
           </span>
         </div>
       ),
-      className: 'min-w-[140px]',
+      className: 'min-w-[120px] sm:min-w-[150px]',
       sortable: true,
     },
   ];
@@ -1009,8 +730,8 @@ const ClientListReport: React.FC = () => {
   // Error state
   if (isError) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="max-w-md text-center">
           <div className="mb-4 text-red-500">
             <svg
               className="mx-auto h-12 w-12"
@@ -1030,10 +751,6 @@ const ClientListReport: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {error?.message || 'Failed to load client data'}
           </p>
-          <div className="text-gray-500 space-y-2 text-sm">
-            <p>API URL: http://192.168.29.165:4400/api/v1/admin/customer</p>
-            <p>Check browser console for detailed error information</p>
-          </div>
           <button
             onClick={() => window.location.reload()}
             className="hover:bg-primary-dark mt-4 rounded-lg bg-primary px-4 py-2 text-white"
@@ -1048,99 +765,112 @@ const ClientListReport: React.FC = () => {
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen w-full">
       <main className="flex min-h-screen flex-1 flex-col">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-8 p-6 md:p-10">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6 md:p-8">
           {/* Page Title & Actions */}
-          <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
-              <h2 className="text-2xl font-bold text-black dark:text-white sm:text-3xl">
+              <h2 className="text-xl font-bold text-black dark:text-white sm:text-2xl md:text-3xl">
                 Client List Report
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-base">
-                Comprehensive directory of all registered clients, assets, and
-                account statuses.
+              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+                Comprehensive directory of all registered clients
               </p>
               {clientData.length > 0 && (
-                <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+                <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs sm:text-sm">
                   Showing {filteredData.length} of {clientData.length} clients
                 </p>
               )}
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={handlePrint}
-                className="flex h-10 items-center gap-2 whitespace-nowrap rounded-lg bg-orange-500 px-3 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg bg-orange-500 px-3 text-xs font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:h-10 sm:gap-2 sm:px-4 sm:text-sm"
                 title="Print"
               >
-                <MdPrint className="text-lg" />
-                <span>Print</span>
+                <MdPrint className="text-base sm:text-lg" />
+                <span className="xs:inline hidden">Print</span>
               </button>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {/* Stats Grid - Responsive */}
+          <div className="xs:grid-cols-2 grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-5">
             {dynamicStats.map((stat, index) => (
               <StatCard key={index} stat={stat} />
             ))}
           </div>
 
           {/* Table Section */}
-          <div className="flex flex-col gap-4">
-            {/* Custom Filter Bar */}
-            <div className="dark:border-gray-700 dark:bg-gray-800 flex flex-col items-start justify-between gap-4 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
-              <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
-                {/* Search */}
-                <div className="relative flex-1 lg:w-64 lg:flex-none">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MdSearch className="text-gray-400" size={20} />
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Filter Bar - Responsive */}
+            <div className="dark:border-gray-700 dark:bg-gray-800 flex flex-col gap-3 bg-white p-3 shadow-sm sm:p-4">
+              <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:gap-3">
+                  {/* Search - Full width on mobile */}
+                  <div className="relative w-full sm:w-auto sm:min-w-[250px] lg:min-w-[300px]">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <MdSearch className="text-gray-400" size={18} />
+                    </div>
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2 pl-9 pr-3 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white sm:text-sm"
+                      placeholder="Search by name, email, account..."
+                      type="text"
+                    />
                   </div>
-                  <input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="dark:border-gray-700 dark:bg-gray-800 text-header-text placeholder-gray-500 block w-full rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-white"
-                    placeholder="Search clients by name, email, account..."
-                    type="text"
-                  />
+
+                  {/* Account Type Filter */}
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={accountTypeFilter}
+                      onChange={(e) => setAccountTypeFilter(e.target.value)}
+                      className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2 pl-3 pr-8 text-xs focus:border-primary focus:outline-none focus:ring-primary dark:text-white sm:text-sm"
+                    >
+                      <option value="">All Types</option>
+                      <option value="premium">Premium (₹1M+)</option>
+                      <option value="standard">Standard (₹5L-₹1M)</option>
+                      <option value="basic">Basic (₹1L-₹5L)</option>
+                      <option value="regular">Regular (Below ₹1L)</option>
+                    </select>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2 pl-3 pr-8 text-xs focus:border-primary focus:outline-none focus:ring-primary dark:text-white sm:text-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="pending">Pending</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
                 </div>
 
-                {/* Account Type Filter */}
-                <div className="relative">
-                  <select
-                    value={accountTypeFilter}
-                    onChange={(e) => setAccountTypeFilter(e.target.value)}
-                    className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
+                {/* Clear Filters Button */}
+                {(searchQuery || accountTypeFilter || statusFilter) && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="text-gray-600 flex items-center gap-1 whitespace-nowrap text-xs hover:text-primary sm:text-sm"
                   >
-                    <option value="">All Types</option>
-                    <option value="premium">Premium</option>
-                    <option value="standard">Standard</option>
-                    <option value="basic">Basic</option>
-                  </select>
-                </div>
-
-                {/* Status Filter */}
-                <div className="relative">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="dark:border-gray-700 dark:bg-gray-800 text-header-text block w-full cursor-pointer appearance-none rounded-lg border border-[#dce0e5] bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-primary dark:text-white"
-                  >
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="pending">Pending</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                </div>
+                    <MdClose className="text-base" />
+                    <span>Clear</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Generic Table Container */}
+            {/* Generic Table Container - Responsive */}
             <div className="dark:border-gray-700 dark:bg-gray-800 overflow-hidden bg-white shadow-sm">
-              <div className="flex-1">
+              <div className="flex-1 overflow-x-auto">
                 {clientData.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <div className="flex flex-col items-center justify-center p-6 text-center sm:p-8">
                     <svg
-                      className="text-gray-400 mb-4 h-12 w-12"
+                      className="text-gray-400 mb-3 h-10 w-10 sm:mb-4 sm:h-12 sm:w-12"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1152,19 +882,17 @@ const ClientListReport: React.FC = () => {
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    <h3 className="text-gray-900 mb-2 text-lg font-medium">
+                    <h3 className="text-gray-900 mb-1 text-base font-medium sm:mb-2 sm:text-lg">
                       No clients found
                     </h3>
-                    <p className="text-gray-500 mb-4">
-                      {rawClientData.length === 0
-                        ? 'No data loaded from API. Check console for details.'
-                        : 'Data transformation may have failed.'}
+                    <p className="text-gray-500 text-xs sm:text-sm">
+                      No data loaded from API. Check console for details.
                     </p>
                   </div>
                 ) : filteredData.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <div className="flex flex-col items-center justify-center p-6 text-center sm:p-8">
                     <svg
-                      className="text-gray-400 mb-4 h-12 w-12"
+                      className="text-gray-400 mb-3 h-10 w-10 sm:mb-4 sm:h-12 sm:w-12"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1176,12 +904,18 @@ const ClientListReport: React.FC = () => {
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                       />
                     </svg>
-                    <h3 className="text-gray-900 mb-2 text-lg font-medium">
+                    <h3 className="text-gray-900 mb-1 text-base font-medium sm:mb-2 sm:text-lg">
                       No matching clients
                     </h3>
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-gray-500 mb-3 text-xs sm:mb-4 sm:text-sm">
                       Try adjusting your search or filters
                     </p>
+                    <button
+                      onClick={handleClearFilters}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Clear all filters
+                    </button>
                   </div>
                 ) : (
                   <GenericTable
@@ -1197,8 +931,6 @@ const ClientListReport: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {/* Export Instructions */}
           </div>
         </div>
       </main>

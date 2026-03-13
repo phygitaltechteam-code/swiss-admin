@@ -27,13 +27,24 @@ import {useGetPendingTransfers} from '@/lib/react-query/transfer';
 import toast from 'react-hot-toast';
 
 // ========== Helper Functions (unchanged) ==========
-const formatCompactIndian = (num: number): string => {
-  const abs = Math.abs(num);
-  if (abs >= 10000000)
-    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
-  if (abs >= 100000) return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
-  if (abs >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  return num.toString();
+// const formatCompactIndian = (num: number): string => {
+//   const abs = Math.abs(num);
+//   if (abs >= 10000000)
+//     return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+//   if (abs >= 100000) return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+//   if (abs >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+//   return num.toString();
+// };
+
+const formatAmount = (num: number): string => {
+  // Format with commas for thousands
+  if (num >= 1000000) {
+    return `$${(num / 1000000).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    return `$${(num / 1000).toFixed(1)}K`;
+  }
+  return `$${num.toLocaleString('en-US')}`;
 };
 
 const formatTransactionDate = (dateString: string) => {
@@ -364,7 +375,7 @@ export const TransferDashboard = () => {
                       Total Pending Amount
                     </p>
                     <h3 className="mt-2 text-2xl font-bold text-[#0F1535]">
-                      ${formatCompactIndian(stats.totalPendingAmount)}
+                      {formatAmount(stats.totalPendingAmount)}
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2">

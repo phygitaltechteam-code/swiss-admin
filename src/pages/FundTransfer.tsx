@@ -451,7 +451,7 @@
 import {useGetClients, useTransferFund} from '@/lib/react-query/client';
 import React, {useState, useEffect} from 'react';
 import {motion} from 'framer-motion';
-import {Send, AlertCircle, CheckCircle} from 'lucide-react';
+import {Send, AlertCircle, CheckCircle, Wallet} from 'lucide-react';
 import clsx from 'clsx';
 import {useNavigate} from '@tanstack/react-router';
 import {MdArrowBack} from 'react-icons/md';
@@ -498,6 +498,7 @@ interface Client {
 interface TransferData {
   id: string;
   amount: number;
+  type: 'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT';
 }
 
 const FundTransfer = () => {
@@ -515,6 +516,9 @@ const FundTransfer = () => {
   const {mutate: transferFund, isPending: isTransferring} = useTransferFund();
 
   const [amount, setAmount] = useState<string>('');
+  const [accountType, setAccountType] = useState<
+    'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT'
+  >('E_PRIVATEACCOUNT');
   const [transferStatus, setTransferStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
@@ -533,9 +537,25 @@ const FundTransfer = () => {
     }
   }, [clients, id]);
 
+  // Get current balance based on selected account type
+  const getCurrentBalance = (client: Client | null) => {
+    if (!client?.wallets?.[0]) return 0;
+
+    return accountType === 'E_PRIVATEACCOUNT'
+      ? client.wallets[0].eprivateAccount || 0
+      : client.wallets[0].temporyAccount || 0;
+  };
+
   // Get client display name
   const getClientDisplayName = (client: Client | null) => {
     return client?.user?.fullname || 'Unknown Client';
+  };
+
+  // Helper function to format account type for display
+  const formatAccountTypeForDisplay = (
+    type: 'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT',
+  ) => {
+    return type === 'E_PRIVATEACCOUNT' ? 'Private' : 'Temporary';
   };
 
   // Handle amount change
@@ -548,6 +568,14 @@ const FundTransfer = () => {
       setValidationError('');
       setSuccessMessage('');
     }
+  };
+
+  // Handle account type change
+  const handleAccountTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setAccountType(e.target.value as 'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT');
+    setTransferStatus('idle');
+    setValidationError('');
+    setSuccessMessage('');
   };
 
   // Handle form submission
@@ -569,10 +597,14 @@ const FundTransfer = () => {
 
     setTransferStatus('loading');
 
+    // Prepare transfer data with 'type' field as required by API
     const transferData: TransferData = {
       id: selectedClient.id,
       amount: parseFloat(amount),
+      type: accountType, // Send as 'type' with correct enum values
     };
+
+    console.log('Sending transfer data:', transferData); // For debugging
 
     transferFund(transferData, {
       onSuccess: (data) => {
@@ -584,7 +616,7 @@ const FundTransfer = () => {
             currency: 'INR',
           }).format(
             parseFloat(amount),
-          )} to ${getClientDisplayName(selectedClient)}`,
+          )} from ${formatAccountTypeForDisplay(accountType)} account to ${getClientDisplayName(selectedClient)}`,
         );
 
         refetch();
@@ -594,11 +626,27 @@ const FundTransfer = () => {
           setTransferStatus('idle');
         }, 5000);
       },
-      onError: (error) => {
+      onError: (error: any) => {
         setTransferStatus('error');
-        setValidationError(
-          error?.message || 'Transfer failed. Please try again.',
-        );
+
+        // Check if it's a validation error from the API
+        if (error?.response?.data?.errors) {
+          const validationErrors = error.response.data.errors;
+          const typeError = validationErrors.find(
+            (err: any) => err.field === 'type',
+          );
+          if (typeError) {
+            setValidationError(`Type error: ${typeError.message}`);
+          } else {
+            setValidationError(
+              validationErrors[0]?.message || 'Validation failed',
+            );
+          }
+        } else {
+          setValidationError(
+            error?.message || 'Transfer failed. Please try again.',
+          );
+        }
 
         setTimeout(() => {
           setValidationError('');
@@ -696,7 +744,7 @@ const FundTransfer = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-5">
-            {/* Client Name Field - Like an input but with client name */}
+            {/* Client Name Field */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium uppercase tracking-wider text-slate-500">
                 Client Name <span className="text-rose-500">*</span>
@@ -718,7 +766,7 @@ const FundTransfer = () => {
               </div>
             </div>
 
-            {/* Account Details - Single line */}
+            {/* Account Details */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -730,12 +778,75 @@ const FundTransfer = () => {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                  Available Balance
+                  Selected Account Balance
                 </label>
                 <div className="font-mono rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-emerald-700">
-                  {formatCurrency(
-                    selectedClient.wallets?.[0]?.eprivateAccount || 0,
+                  {formatCurrency(getCurrentBalance(selectedClient))}
+                </div>
+              </div>
+            </div>
+
+            {/* Account Type Selection */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                Select Account Type <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={accountType}
+                  onChange={handleAccountTypeChange}
+                  disabled={isTransferring || transferStatus === 'loading'}
+                  className={clsx(
+                    'w-full appearance-none rounded-lg border px-3 py-2.5 text-sm transition-all',
+                    'focus:outline-none focus:ring-1 focus:ring-orange-500',
+                    isTransferring
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                      : 'border-slate-200 bg-white text-slate-900',
                   )}
+                >
+                  <option value="E_PRIVATEACCOUNT">Private Account</option>
+                  <option value="E_TEMPORYACCOUNT">Temporary Account</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
+                  <svg
+                    className="h-4 w-4 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Wallet Balances Summary */}
+            <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Private Balance</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatCurrency(
+                      selectedClient.wallets?.[0]?.eprivateAccount || 0,
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-orange-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Temporary Balance</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatCurrency(
+                      selectedClient.wallets?.[0]?.temporyAccount || 0,
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
@@ -816,7 +927,8 @@ const FundTransfer = () => {
               ) : (
                 <>
                   <Send className="h-4 w-4" />
-                  Transfer
+                  Transfer from {formatAccountTypeForDisplay(accountType)}{' '}
+                  Account
                 </>
               )}
             </button>
@@ -829,11 +941,13 @@ const FundTransfer = () => {
 
 // Helper function for formatting currency
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(amount);
+  if (amount === undefined || amount === null) return '$0';
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(1)}k`;
+  }
+  return `$${amount.toFixed(2)}`;
 };
 
 export default FundTransfer;

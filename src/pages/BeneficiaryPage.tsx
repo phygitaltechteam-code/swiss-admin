@@ -1,13 +1,15 @@
 import BeneficiaryTable from './BeneficiaryTable';
 import React, {useRef} from 'react';
 import {FaFilePdf, FaFileCsv} from 'react-icons/fa6';
-import {MdPrint, MdDownload, MdLock} from 'react-icons/md';
+import {MdPrint, MdDownload, MdLock, MdClose} from 'react-icons/md';
 
 const BeneficiaryPage: React.FC = () => {
   // Create ref to access table functions
   const tableRef = useRef<{
     getFilteredData: () => any[];
     getAllData: () => any[];
+    getFilters: () => any;
+    clearAllFilters: () => void;
   }>(null);
 
   // Function to get filtered data from table
@@ -26,13 +28,20 @@ const BeneficiaryPage: React.FC = () => {
     return [];
   };
 
+  // Function to get current filters
+  const getCurrentFilters = () => {
+    if (tableRef.current?.getFilters) {
+      return tableRef.current.getFilters();
+    }
+    return {};
+  };
+
   const handleExportPDF = () => {
     const data = getFilteredData();
     if (data.length === 0) {
       alert('No data to export');
       return;
     }
-    // You'll need to implement or import ExportFunctions here
     console.log('Export PDF with filtered data:', data.length);
   };
 
@@ -57,6 +66,8 @@ const BeneficiaryPage: React.FC = () => {
   const handlePrint = () => {
     // Get filtered data from the table ref
     const filteredData = tableRef.current?.getFilteredData() || [];
+    const filters = tableRef.current?.getFilters() || {};
+
     if (filteredData.length === 0) {
       alert('No data to print. Adjust your filters and try again.');
       return;
@@ -79,6 +90,33 @@ const BeneficiaryPage: React.FC = () => {
       return 'Pending';
     };
 
+    // Build filter summary
+    const filterParts = [];
+    if (filters.startDate) filterParts.push(`From: ${filters.startDate}`);
+    if (filters.endDate) filterParts.push(`To: ${filters.endDate}`);
+    if (filters.searchQuery)
+      filterParts.push(`Search: "${filters.searchQuery}"`);
+    if (filters.statusFilter)
+      filterParts.push(
+        `Status: ${filters.statusFilter === 'active' ? 'Active' : 'Inactive'}`,
+      );
+    if (filters.verificationFilter)
+      filterParts.push(
+        `Verification: ${filters.verificationFilter === 'verified' ? 'Verified' : 'Not Verified'}`,
+      );
+    if (filters.rejectionFilter)
+      filterParts.push(
+        `Rejection: ${filters.rejectionFilter === 'rejected' ? 'Rejected' : 'Not Rejected'}`,
+      );
+    if (filters.hasForeignFilter)
+      filterParts.push(
+        `Foreign: ${filters.hasForeignFilter === 'has-foreign' ? 'Has Foreign' : 'No Foreign'}`,
+      );
+
+    const filterSummary = filterParts.length
+      ? filterParts.join(' • ')
+      : 'No filters applied';
+
     // Build table rows
     const tableRows = filteredData
       .map(
@@ -92,7 +130,23 @@ const BeneficiaryPage: React.FC = () => {
         <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.bankName || 'N/A'}</td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.accountNumber || 'N/A'}</td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.bankCountry || 'N/A'}</td>
-        <td style="padding: 8px; border: 1px solid #e5e7eb;">${getStatusText(item)}</td>
+        <td style="padding: 8px; border: 1px solid #e5e7eb;">
+          <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; background: ${
+            item.isRejected
+              ? '#fee2e2'
+              : item.isVerified
+                ? '#d1fae5'
+                : '#fef3c7'
+          }; color: ${
+            item.isRejected
+              ? '#991b1b'
+              : item.isVerified
+                ? '#065f46'
+                : '#92400e'
+          };">
+            ${getStatusText(item)}
+          </span>
+        </td>
       </tr>
     `,
       )
@@ -122,14 +176,15 @@ const BeneficiaryPage: React.FC = () => {
           body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
           h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 4px; }
           .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 12px; margin-bottom: 16px; }
+          .header-row { display: flex; justify-content: space-between; align-items: center; }
           .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
           .stat-card { background: #f3f4f6; border-radius: 8px; padding: 12px 16px; flex: 1 0 180px; }
           .stat-title { font-size: 14px; color: #4b5563; }
           .stat-value { font-size: 24px; font-weight: bold; color: #1e3a8a; }
           .filter-summary { background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
-          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
           th { background: #ff7207; color: white; padding: 8px; text-align: left; }
-          td {  padding: 6px; }
+          td { padding: 6px; border: 1px solid #e5e7eb; }
           .footer { margin-top: 20px; font-size: 12px; color: #6b7280; text-align: right; }
           @media print {
             body { margin: 0.5in; }
@@ -140,14 +195,34 @@ const BeneficiaryPage: React.FC = () => {
       <body>
         <div class="header">
           <h1>Beneficiary Report</h1>
-          <div style="display: flex; justify-content: space-between;">
+          <div class="header-row">
             <span>Generated: ${dateStr} ${timeStr}</span>
             <span>Total records: ${total}</span>
           </div>
         </div>
 
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-title">Total Beneficiaries</div>
+            <div class="stat-value">${total}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Active</div>
+            <div class="stat-value">${active}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Verified</div>
+            <div class="stat-value">${verified}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">With Foreign</div>
+            <div class="stat-value">${withForeign}</div>
+          </div>
+        </div>
 
-
+        <div class="filter-summary">
+          <strong>Applied filters:</strong> ${filterSummary}
+        </div>
 
         <table>
           <thead>
@@ -193,7 +268,6 @@ const BeneficiaryPage: React.FC = () => {
     // Trigger print after content loads
     printWindow.onload = () => {
       printWindow.print();
-      // Optionally close after printing (some browsers may need a delay)
       printWindow.onafterprint = () => printWindow.close();
     };
   };
@@ -207,11 +281,27 @@ const BeneficiaryPage: React.FC = () => {
     console.log('Lock & Pin with filtered data:', data.length);
   };
 
+  const handleClearAllFilters = () => {
+    if (tableRef.current?.clearAllFilters) {
+      tableRef.current.clearAllFilters();
+    }
+  };
+
+  const filters = getCurrentFilters();
+  const hasActiveFilters =
+    filters.startDate ||
+    filters.endDate ||
+    filters.searchQuery ||
+    filters.statusFilter ||
+    filters.verificationFilter ||
+    filters.rejectionFilter ||
+    filters.hasForeignFilter;
+
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="mx-auto max-w-[1600px] p-6 md:p-10">
+      <div className="mx-auto max-w-[1600px] p-4 sm:p-6 md:p-10">
         {/* Page Title & Actions */}
-        <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl">
               All Beneficiary List Report
@@ -223,42 +313,30 @@ const BeneficiaryPage: React.FC = () => {
           </div>
 
           {/* Export Buttons at Top */}
-          <div className="flex flex-wrap gap-3">
-            {/* <button
-              onClick={handleExportPDF}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
-              title="Export current filtered view as PDF"
-            >
-              <FaFilePdf />
-              <span>Export PDF</span>
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
-              title="Export current filtered view as CSV"
-            >
-              <FaFileCsv />
-              <span>Export CSV</span>
-            </button>
-            <button
-              onClick={handleExportAll}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex h-10 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold transition-colors"
-              title="Export all formats (PDF, Excel, CSV)"
-            >
-              <MdDownload />
-              <span>Export All</span>
-            </button> */}
-
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
               onClick={handlePrint}
-              className="hover:bg-primary-dark flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-colors"
+              className="hover:bg-primary-dark flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-white shadow-sm transition-colors sm:h-10 sm:gap-2 sm:px-4 sm:text-sm"
               title="Print current filtered view"
             >
-              <MdPrint className="text-lg" />
-              Print
+              <MdPrint className="text-base sm:text-lg" />
+              <span className="xs:inline hidden">Print</span>
             </button>
           </div>
         </div>
+
+        {/* Clear All Filters Button - Shows when any filter is active */}
+        {hasActiveFilters && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={handleClearAllFilters}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 rounded-lg border bg-white px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            >
+              <MdClose className="text-sm sm:text-base" />
+              Clear All Filters
+            </button>
+          </div>
+        )}
 
         {/* Beneficiary Table Component with container for printing */}
         <div id="beneficiary-table-container">

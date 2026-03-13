@@ -31,7 +31,7 @@ const StatsCard: React.FC<StatCardProps> = ({
         {value}
       </p>
 
-      {(trend || subtext || alert) && (
+      {/* {(trend || subtext || alert) && (
         <div className="mt-3 flex items-center gap-2">
           {alert && (
             <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
@@ -61,7 +61,7 @@ const StatsCard: React.FC<StatCardProps> = ({
             </span>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

@@ -25,21 +25,31 @@ import toast from 'react-hot-toast';
 import {MdTrendingUp} from 'react-icons/md';
 
 // Format large numbers in Indian style (K, L, Cr)
-const formatCompactIndian = (num: number): string => {
-  const abs = Math.abs(num);
+// const formatCompactIndian = (num: number): string => {
+//   const abs = Math.abs(num);
 
-  if (abs >= 10000000) {
-    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+//   if (abs >= 10000000) {
+//     return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+//   }
+//   if (abs >= 100000) {
+//     return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+//   }
+//   if (abs >= 1000) {
+//     return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+//   }
+//   return num.toString();
+// };
+
+const formatAmount = (num: number): string => {
+  // Format with commas for thousands
+  if (num >= 1000000) {
+    return `$${(num / 1000000).toFixed(1)}M`;
   }
-  if (abs >= 100000) {
-    return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  if (num >= 1000) {
+    return `$${(num / 1000).toFixed(1)}K`;
   }
-  if (abs >= 1000) {
-    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  }
-  return num.toString();
+  return `$${num.toLocaleString('en-US')}`;
 };
-
 interface TopUpListProps {
   transactions: any;
   onSelectTransaction: (transaction: any) => void;
@@ -261,7 +271,6 @@ export const TopUpList: React.FC<TopUpListProps> = ({
       render: (item) => (
         <span className="text-gray-900 whitespace-nowrap text-sm font-bold">
           ${item.amount.toLocaleString('en-US')}
-          <span className="text-gray-500 ml-1 text-xs">{item.amountType}</span>
         </span>
       ),
     },
@@ -360,7 +369,7 @@ export const TopUpList: React.FC<TopUpListProps> = ({
                       Total Pending Amount
                     </p>
                     <p className="text-2xl font-bold text-[#0F1535] dark:text-white">
-                      ${formatCompactIndian(stats.totalPendingAmount)}
+                      {formatAmount(stats.totalPendingAmount)}
                     </p>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">

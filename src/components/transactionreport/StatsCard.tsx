@@ -43,7 +43,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
       <p className="text-header-text text-2xl font-bold dark:text-white lg:text-3xl">
         {value}
       </p>
-      <div className="mt-3 flex items-center gap-2">
+      {/* <div className="mt-3 flex items-center gap-2">
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
             isPositive
@@ -65,7 +65,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
         <span className="text-secondary-text dark:text-gray-500 text-xs">
           {trendLabel}
         </span>
-      </div>
+      </div> */}
     </div>
   );
 };

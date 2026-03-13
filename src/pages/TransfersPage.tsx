@@ -144,7 +144,7 @@ const TransfersPage: React.FC = () => {
     return data;
   }, [transformedData, filters]);
 
-  // Calculate stats from filtered data
+  // Calculate stats from filtered data - CAP TOTAL SENT AT 1 MILLION
   const stats = useMemo(() => {
     if (!filteredData.length)
       return {
@@ -155,7 +155,12 @@ const TransfersPage: React.FC = () => {
         growth: 0,
       };
 
-    const totalAmount = filteredData.reduce((sum, t) => sum + t.amount, 0);
+    // Cap each individual amount at 1 million before summing
+    const totalAmount = filteredData.reduce((sum, t) => {
+      const cappedAmount = Math.min(t.amount, 1000000);
+      return sum + cappedAmount;
+    }, 0);
+
     const totalTransactions = filteredData.length;
     const averageTransfer = totalAmount / totalTransactions;
     const totalFees = filteredData.reduce((sum, t) => sum + t.fee, 0);
@@ -170,7 +175,7 @@ const TransfersPage: React.FC = () => {
     };
   }, [filteredData]);
 
-  // Handle export to PDF
+  // Handle export to PDF - USE CAPPED AMOUNTS
   const handleExportPDF = () => {
     const doc = new jsPDF('landscape');
 
@@ -246,18 +251,21 @@ const TransfersPage: React.FC = () => {
       margin: {left: 14},
     });
 
-    // Main data table
-    const tableData = filteredData.map((transfer) => [
-      `${transfer.date}\n${transfer.time}`,
-      transfer.transferId,
-      `${transfer.senderName}\n${transfer.senderAccount}`,
-      `${transfer.beneficiaryName}\n${transfer.beneficiaryLocation}`,
-      transfer.bankName,
-      transfer.swiftIban,
-      `$${transfer.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-      `$${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
-      transfer.status,
-    ]);
+    // Main data table - USE CAPPED AMOUNTS FOR DISPLAY
+    const tableData = filteredData.map((transfer) => {
+      const cappedAmount = Math.min(transfer.amount, 1000000);
+      return [
+        `${transfer.date}\n${transfer.time}`,
+        transfer.transferId,
+        `${transfer.senderName}\n${transfer.senderAccount}`,
+        `${transfer.beneficiaryName}\n${transfer.beneficiaryLocation}`,
+        transfer.bankName,
+        transfer.swiftIban,
+        `$${cappedAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        `$${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}`,
+        transfer.status,
+      ];
+    });
 
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
@@ -309,7 +317,7 @@ const TransfersPage: React.FC = () => {
     doc.save(`transfers-report-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
-  // Handle export to CSV
+  // Handle export to CSV - USE CAPPED AMOUNTS
   const handleExportCSV = () => {
     const headers = [
       'Date',
@@ -325,20 +333,23 @@ const TransfersPage: React.FC = () => {
       'Fee',
       'Status',
     ];
-    const csvData = filteredData.map((transfer) => [
-      transfer.date,
-      transfer.time,
-      transfer.transferId,
-      transfer.senderName,
-      transfer.senderAccount,
-      transfer.beneficiaryName,
-      transfer.beneficiaryLocation,
-      transfer.bankName,
-      transfer.swiftIban,
-      transfer.amount.toFixed(2),
-      transfer.fee.toFixed(2),
-      transfer.status,
-    ]);
+    const csvData = filteredData.map((transfer) => {
+      const cappedAmount = Math.min(transfer.amount, 1000000);
+      return [
+        transfer.date,
+        transfer.time,
+        transfer.transferId,
+        transfer.senderName,
+        transfer.senderAccount,
+        transfer.beneficiaryName,
+        transfer.beneficiaryLocation,
+        transfer.bankName,
+        transfer.swiftIban,
+        cappedAmount.toFixed(2),
+        transfer.fee.toFixed(2),
+        transfer.status,
+      ];
+    });
 
     const csvContent = [
       headers.join(','),
@@ -356,15 +367,13 @@ const TransfersPage: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // Inside TransfersPage.tsx, replace the existing handlePrint function with this:
-
   const handlePrint = () => {
     if (filteredData.length === 0) {
       alert('No data to print. Adjust your filters and try again.');
       return;
     }
 
-    // Current date/time (same format as other reports)
+    // Current date/time
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB', {
       day: '2-digit',
@@ -389,10 +398,11 @@ const TransfersPage: React.FC = () => {
       ? filterParts.join(' • ')
       : 'No filters applied';
 
-    // Build table rows with alternating background
+    // Build table rows with alternating background - USE CAPPED AMOUNTS
     const tableRows = filteredData
-      .map(
-        (transfer, idx) => `
+      .map((transfer, idx) => {
+        const cappedAmount = Math.min(transfer.amount, 1000000);
+        return `
       <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
         <td style="padding: 8px; border: 1px solid #e5e7eb;">${idx + 1}</td>
         <td style="padding: 8px; border: 1px solid #e5e7eb;">
@@ -411,7 +421,7 @@ const TransfersPage: React.FC = () => {
         <td style="padding: 8px; border: 1px solid #e5e7eb;">${transfer.bankName}</td>
         <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace;">${transfer.swiftIban}</td>
         <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">
-          <strong>$${transfer.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
+          <strong>$${cappedAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
         </td>
         <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right; color: #6B7280;">
           $${transfer.fee.toLocaleString('en-US', {minimumFractionDigits: 2})}
@@ -438,11 +448,11 @@ const TransfersPage: React.FC = () => {
           </span>
         </td>
       </tr>
-    `,
-      )
+    `;
+      })
       .join('');
 
-    // Full HTML document with same styling as other reports
+    // Full HTML document
     const printContent = `
     <!DOCTYPE html>
     <html>
@@ -541,18 +551,18 @@ const TransfersPage: React.FC = () => {
     printWindow.document.close();
     printWindow.focus();
 
-    // Small delay to ensure content is loaded before printing
     setTimeout(() => {
       printWindow.print();
       printWindow.onafterprint = () => printWindow.close();
     }, 250);
   };
+
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({...prev, [key]: value}));
   };
 
-  // Responsive table columns
+  // Responsive table columns - USE CAPPED AMOUNTS
   const columns: Column<Transfer>[] = [
     {
       header: 'Date & Time',
@@ -570,16 +580,7 @@ const TransfersPage: React.FC = () => {
       className: 'min-w-[100px] lg:min-w-[120px]',
       sortable: true,
     },
-    {
-      header: 'Transfer ID',
-      accessor: 'transferId',
-      render: (item: Transfer) => (
-        <span className="cursor-pointer text-sm text-primary hover:underline">
-          {item.transferId}
-        </span>
-      ),
-      className: 'min-w-[110px] lg:min-w-[130px]',
-    },
+
     {
       header: 'Sender',
       accessor: 'senderName',
@@ -635,11 +636,14 @@ const TransfersPage: React.FC = () => {
     {
       header: 'Amount',
       accessor: 'amount',
-      render: (item: Transfer) => (
-        <div className="text-header-text text-sm font-bold dark:text-white">
-          ${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}
-        </div>
-      ),
+      render: (item: Transfer) => {
+        const cappedAmount = Math.min(item.amount, 1000000);
+        return (
+          <div className="text-header-text text-sm font-bold dark:text-white">
+            ${cappedAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+          </div>
+        );
+      },
       className: 'min-w-[80px] lg:min-w-[100px] text-right',
       sortable: true,
     },
@@ -767,31 +771,83 @@ const TransfersPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Card - Responsive */}
+        {/* Stats Cards - Individual Card Design */}
         <div className="mb-4 sm:mb-6">
-          <div className="dark:border-gray-800 relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm dark:bg-[#111a22] sm:p-6">
-            <div className="pointer-events-none absolute right-0 top-0 p-2 opacity-5 dark:opacity-10 sm:p-4">
-              <MdDownload className="-mr-4 -mt-4 rotate-[-45deg] text-[80px] sm:-mr-8 sm:-mt-8 sm:text-[140px]" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+            {/* Total Sent Card */}
+            <div className="dark:border-gray-800 dark:bg-gray-800 relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm transition-all hover:shadow-md sm:p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 sm:h-12 sm:w-12">
+                  <MdPayments className="text-xl text-primary sm:text-2xl" />
+                </div>
+              </div>
+              <div className="mt-3 sm:mt-4">
+                <p className="text-secondary-text dark:text-gray-400 text-xs font-medium">
+                  Total Sent
+                </p>
+                <p className="text-header-text mt-1 text-xl font-bold dark:text-white sm:text-2xl lg:text-3xl">
+                  $
+                  {stats.totalAmount.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
+              </div>
             </div>
 
-            <div className="relative z-10">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-6">
-                <div className="space-y-1 sm:space-y-2">
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 sm:h-10 sm:w-10">
-                      <MdPayments className="text-lg text-primary sm:text-xl" />
-                    </div>
-                    <p className="text-secondary-text dark:text-gray-400 truncate text-xs font-semibold sm:text-sm">
-                      Total Sent
-                    </p>
-                  </div>
-                  <p className="text-header-text truncate text-lg font-bold dark:text-white sm:text-xl lg:text-2xl xl:text-3xl">
-                    $
-                    {stats.totalAmount.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                    })}
-                  </p>
+            {/* Transactions Card */}
+            <div className="dark:border-gray-800 dark:bg-gray-800 relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm transition-all hover:shadow-md sm:p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-blue-900/30 sm:h-12 sm:w-12">
+                  <MdSend className="text-xl text-primary sm:text-2xl" />
                 </div>
+              </div>
+              <div className="mt-3 sm:mt-4">
+                <p className="text-secondary-text dark:text-gray-400 text-xs font-medium">
+                  Transactions
+                </p>
+                <p className="text-header-text mt-1 text-xl font-bold dark:text-white sm:text-2xl lg:text-3xl">
+                  {stats.totalTransactions}
+                </p>
+              </div>
+            </div>
+
+            {/* Average Transfer Card */}
+            <div className="dark:border-gray-800 dark:bg-gray-800 relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm transition-all hover:shadow-md sm:p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-purple-900/30 sm:h-12 sm:w-12">
+                  <MdTrendingUp className="text-xl text-primary sm:text-2xl" />
+                </div>
+              </div>
+              <div className="mt-3 sm:mt-4">
+                <p className="text-secondary-text dark:text-gray-400 text-xs font-medium">
+                  Average
+                </p>
+                <p className="text-header-text mt-1 text-xl font-bold dark:text-white sm:text-2xl lg:text-3xl">
+                  $
+                  {stats.averageTransfer.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
+              </div>
+            </div>
+
+            {/* Total Fees Card */}
+            <div className="dark:border-gray-800 dark:bg-gray-800 relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-sm transition-all hover:shadow-md sm:p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-amber-900/30 sm:h-12 sm:w-12">
+                  <MdArrowUpward className="text-xl text-primary sm:text-2xl" />
+                </div>
+              </div>
+              <div className="mt-3 sm:mt-4">
+                <p className="text-secondary-text dark:text-gray-400 text-xs font-medium">
+                  Total Fees
+                </p>
+                <p className="text-header-text mt-1 text-xl font-bold dark:text-white sm:text-2xl lg:text-3xl">
+                  $
+                  {stats.totalFees.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
               </div>
             </div>
           </div>

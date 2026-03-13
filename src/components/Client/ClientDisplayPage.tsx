@@ -101,20 +101,17 @@ const formatCurrency = (amount: number) => {
 //   return num.toString();
 // };
 
-const formatCompactIndian = (num: number): string => {
-  const abs = Math.abs(num);
-
-  if (abs >= 10000000) {
-    return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'M';
+const formatAmount = (num: number): string => {
+  // Format with commas for thousands
+  if (num >= 1000000) {
+    return `$${(num / 1000000).toFixed(1)}M`;
   }
-  if (abs >= 100000) {
-    return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  if (num >= 1000) {
+    return `$${(num / 1000).toFixed(1)}K`;
   }
-  if (abs >= 1000) {
-    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  }
-  return num.toString();
+  return `$${num.toLocaleString('en-US')}`;
 };
+
 const ClientDisplay: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [privateBalanceFilter, setPrivateBalanceFilter] = useState('');
@@ -472,7 +469,7 @@ const ClientDisplay: React.FC = () => {
                       Total Private Balance
                     </p>
                     <p className="text-base font-bold text-[#0F1535] dark:text-white sm:text-lg md:text-xl lg:text-2xl">
-                      {formatCompactIndian(totalPrivateBalance)}
+                      {formatAmount(totalPrivateBalance)}
                     </p>
                   </div>
                   <div className="ml-2 shrink-0 rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
@@ -500,7 +497,7 @@ const ClientDisplay: React.FC = () => {
                       Total Temp Balance
                     </p>
                     <p className="text-base font-bold text-[#0F1535] dark:text-white sm:text-lg md:text-xl lg:text-2xl">
-                      {formatCompactIndian(totalTempBalance)}
+                      {formatAmount(totalTempBalance)}
                     </p>
                   </div>
                   <div className="ml-2 shrink-0 rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">

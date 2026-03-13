@@ -38,8 +38,8 @@ const AppLayout = () => {
           <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
           <main>
             <div className="mx-auto max-w-screen-2xl p-1">
-              <Outlet />
-            </div>
+            <Outlet />
+          </div>
           </main>
         </div>
       </div>

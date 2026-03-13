@@ -1,3 +1,4 @@
+import {useNavigate} from '@tanstack/react-router';
 import React, {useState} from 'react';
 import toast from 'react-hot-toast';
 import {MdGavel, MdClose, MdVerified, MdWarning} from 'react-icons/md';
@@ -16,6 +17,7 @@ const DecisionActions: React.FC<Props> = ({
   const [isRejecting, setIsRejecting] = useState(false);
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleReject = async () => {
     if (!note.trim()) {
@@ -26,8 +28,11 @@ const DecisionActions: React.FC<Props> = ({
     setIsSubmitting(true);
     try {
       await onReject(note);
+      toast.success('Application rejected successfully');
       setNote('');
       setIsRejecting(false);
+      // Navigate to approval list after successful rejection
+      navigate({to: '/approval/customerregisterapprove'});
     } catch (error) {
       toast.error('Failed to reject application');
     } finally {
@@ -39,6 +44,9 @@ const DecisionActions: React.FC<Props> = ({
     setIsSubmitting(true);
     try {
       await onAccept();
+      toast.success('Application approved successfully');
+      // Navigate to approval list after successful approval
+      navigate({to: '/approval/customerregisterapprove'});
     } catch (error) {
       toast.error('Failed to approve application');
     } finally {

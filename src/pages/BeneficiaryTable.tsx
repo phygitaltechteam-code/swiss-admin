@@ -262,7 +262,7 @@ const ForeignBeneficiariesModal: React.FC<ForeignBeneficiariesModalProps> = ({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg border bg-white px-4 py-2 font-medium transition-colors"
+                className="border-stroketext-gray-700 hover:bg-gray-50 rounded-lg border bg-white px-4 py-2 font-medium transition-colors"
               >
                 Close
               </button>
@@ -295,7 +295,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
   const isPositive = change.startsWith('+');
 
   return (
-    <div className="border-gray-200 flex flex-col gap-1 rounded-xl border bg-white p-5 shadow-sm">
+    <div className="border-stroke flex flex-col gap-1 rounded-xl border bg-white p-5 shadow-sm">
       <div className="text-gray-600 flex items-center gap-2">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${color.split(' ')[0]} ${color.split(' ')[1]}`}
@@ -348,7 +348,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   setRejectionFilter,
 }) => {
   return (
-    <div className="border-gray-200 flex flex-col items-start justify-between gap-4 rounded-xl border bg-white p-4 shadow-sm lg:flex-row lg:items-center">
+    <div className="border-stroke flex flex-col items-start justify-between gap-4 rounded-xl border bg-white p-4 shadow-sm lg:flex-row lg:items-center">
       <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
         {/* Search */}
         <div className="relative flex-1 lg:w-64 lg:flex-none">
@@ -358,7 +358,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border-gray-300 text-gray-900 placeholder-gray-500 block w-full rounded-lg border bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="border-stroke text-gray-900 placeholder-gray-500 block w-full rounded-lg border bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             placeholder="Search by name, email, account, phone..."
             type="text"
           />
@@ -369,7 +369,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border-gray-300 text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="border-stroke text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">Active Status</option>
             <option value="active">Active</option>
@@ -397,7 +397,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={verificationFilter}
             onChange={(e) => setVerificationFilter(e.target.value)}
-            className="border-gray-300 text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="border-stroke text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">Verification</option>
             <option value="verified">Verified</option>
@@ -425,7 +425,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={rejectionFilter}
             onChange={(e) => setRejectionFilter(e.target.value)}
-            className="border-gray-300 text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="border-stroke text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">Rejection Status</option>
             <option value="rejected">Rejected</option>
@@ -453,7 +453,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={hasForeignFilter}
             onChange={(e) => setHasForeignFilter(e.target.value)}
-            className="border-gray-300 text-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="border-stroketext-gray-900 block appearance-none rounded-lg border bg-white py-2.5 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">Foreign Beneficiaries</option>
             <option value="has-foreign">Has Foreign</option>
@@ -486,7 +486,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           setRejectionFilter('');
           setHasForeignFilter('');
         }}
-        className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold transition-colors"
+        className="border-stroke text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold transition-colors"
       >
         <MdFilterList className="text-lg" />
         Clear Filters
@@ -1012,7 +1012,7 @@ const BeneficiaryTable = forwardRef((props, ref) => {
                   searchAble={false}
                   action={false}
                   itemsPerPage={10}
-                  pagination={true}
+                  paginationOff={false}
                 />
               </div>
             )}

@@ -207,19 +207,29 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
     }
   };
 
-  const formatCompactIndian = (num: number): string => {
-    const abs = Math.abs(num);
+  // const formatCompactIndian = (num: number): string => {
+  //   const abs = Math.abs(num);
 
-    if (abs >= 10000000) {
-      return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  //   if (abs >= 10000000) {
+  //     return (num / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  //   }
+  //   if (abs >= 100000) {
+  //     return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  //   }
+  //   if (abs >= 1000) {
+  //     return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  //   }
+  //   return num.toString();
+  // };
+  const formatAmount = (num: number): string => {
+    // Format with commas for thousands
+    if (num >= 1000000) {
+      return `$${(num / 1000000).toFixed(1)}M`;
     }
-    if (abs >= 100000) {
-      return (num / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+    if (num >= 1000) {
+      return `$${(num / 1000).toFixed(1)}K`;
     }
-    if (abs >= 1000) {
-      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    }
-    return num.toString();
+    return `$${num.toLocaleString('en-US')}`;
   };
 
   const columns: Column<any>[] = [
@@ -367,7 +377,7 @@ export const WithdrawList: React.FC<TopUpListProps> = ({
                       Total Pending Amount
                     </p>
                     <h3 className="mt-2 text-2xl font-bold text-[#0F1535] dark:text-white">
-                      ${formatCompactIndian(stats.totalPendingAmount)}
+                      {formatAmount(stats.totalPendingAmount)}
                     </h3>
                   </div>
                   <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">

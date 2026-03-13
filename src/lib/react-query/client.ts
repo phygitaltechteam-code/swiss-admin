@@ -68,8 +68,11 @@ export const useGettransactionCustomerById = (id: string) => {
 
 export const useTransferFund = () => {
   return useMutation({
-    mutationFn: (data: {id: string; amount: number}) =>
-      transferFund(data.id, data.amount),
+    mutationFn: (data: {
+      id: string;
+      amount: number;
+      type: 'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT';
+    }) => transferFund(data.id, data.amount, data.type),
     onSuccess: () => {
       toast.success('Fund transferred successfully!');
     },
@@ -79,11 +82,16 @@ export const useTransferFund = () => {
   });
 };
 
-export const transferFund = async (id: string, amount: number) => {
+export const transferFund = async (
+  id: string,
+  amount: number,
+  type: 'E_PRIVATEACCOUNT' | 'E_TEMPORYACCOUNT',
+) => {
   try {
     const response = await api.post(`/admin/transaction/topup`, {
       id: id,
       amount: amount,
+      type: type,
     });
     return response.data;
   } catch (error) {
