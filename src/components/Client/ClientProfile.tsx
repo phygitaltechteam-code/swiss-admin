@@ -27,6 +27,8 @@ import {
 } from 'react-icons/md';
 import {Card} from './Card';
 import {Beneficiary} from './../../types/transactionhistory';
+import {useMutation} from '@tanstack/react-query';
+import {api} from '@/utils/axios';
 
 const ClientProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +46,16 @@ const ClientProfile: React.FC = () => {
     setIsModalOpen(false);
     setModalImage(null);
   };
+
+  const {mutateAsync: changeStatus} = useMutation({
+    mutationFn: () => {
+      const res = api.put(`/admin/customer/denied/${clientId}`);
+      return res;
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
   const {
     data: apiResponse,
@@ -352,7 +364,10 @@ const ClientProfile: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={isActive && !isRejected} // Show active only if not rejected
-                    onChange={(e) => handleStatusToggle(e.target.checked)}
+                    onChange={(e) => {
+                      handleStatusToggle(e.target.checked);
+                      changeStatus();
+                    }}
                     className="peer sr-only"
                     disabled={isRejected || activateMutation.isLoading}
                   />
